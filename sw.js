@@ -140,6 +140,8 @@ self.addEventListener('message', async e => {
       e.source.postMessage({ type: 'CACHE_ERROR', course, message: 'Unknown course' });
       return;
     }
+    // Always wipe the entire video cache first — only one course at a time
+    await caches.delete(VIDEO_CACHE);
     const cache = await caches.open(VIDEO_CACHE);
     let done = 0;
     const total = keys.length;
@@ -147,12 +149,8 @@ self.addEventListener('message', async e => {
     for (const key of keys) {
       const url = VIDEO_BASE + key + '.mp4';
       try {
-        // Check if already cached
-        const existing = await cache.match(url);
-        if (!existing) {
-          const res = await fetch(url);
-          if (res.ok) await cache.put(url, res);
-        }
+        const res = await fetch(url);
+        if (res.ok) await cache.put(url, res);
       } catch (err) {
         console.warn('SW: video cache failed', url, err);
       }
@@ -162,28 +160,32 @@ self.addEventListener('message', async e => {
     e.source.postMessage({ type: 'CACHE_DONE', course });
   }
 
-  if (type === 'DELETE_COURSE') {
-    const keys = COURSE_VIDEOS[course];
-    if (!keys) return;
-    const cache = await caches.open(VIDEO_CACHE);
-    await Promise.all(
-      keys.map(key => cache.delete(VIDEO_BASE + key + '.mp4'))
-    );
-    e.source.postMessage({ type: 'DELETE_DONE', course });
+  if (type === 'CLEAR_VIDEOS') {
+    await caches.delete(VIDEO_CACHE);
+    e.source.postMessage({ type: 'CLEAR_DONE' });
   }
 
   if (type === 'GET_STATUS') {
     const cache = await caches.open(VIDEO_CACHE);
-    const status = {};
-    for (const [courseId, keys] of Object.entries(COURSE_VIDEOS)) {
-      let cached = 0;
-      for (const key of keys) {
-        const match = await cache.match(VIDEO_BASE + key + '.mp4');
-        if (match) cached++;
+    const keys = await cache.keys();
+    const cachedUrls = new Set(keys.map(r => r.url));
+    // Find which course (if any) has all its videos cached
+    let activeCourse = null;
+    let activeDone = 0;
+    for (const [courseId, videoKeys] of Object.entries(COURSE_VIDEOS)) {
+      const matched = videoKeys.filter(k => cachedUrls.has(VIDEO_BASE + k + '.mp4')).length;
+      if (matched > 0) {
+        activeCourse = courseId;
+        activeDone = matched;
+        break; // only one course can be cached at a time
       }
-      status[courseId] = { cached, total: keys.length };
     }
-    e.source.postMessage({ type: 'STATUS', status });
+    e.source.postMessage({
+      type: 'STATUS',
+      activeCourse,
+      activeDone,
+      activeTotal: activeCourse ? COURSE_VIDEOS[activeCourse].length : 0,
+    });
   }
 });
 

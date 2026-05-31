@@ -16,14 +16,11 @@ if ('serviceWorker' in navigator) {
   --accent:#B8621A;--accent-light:#FDF0E4;--accent-dark:#7A4B1F;
   --border:#E7E0D6;--radius:14px;
   --shadow:0 2px 16px rgba(28,25,23,.07);
-  --shadow-hover:0 8px 32px rgba(28,25,23,.13);
   --green:#2D6A4F;--green-bg:#EBF7F1;
-  --red:#991B1B;--red-bg:#FEF2F2;
 }
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
-  background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px;
-  line-height:1.6;
+  background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px;line-height:1.6;
 }
 
 /* ── top bar ── */
@@ -49,7 +46,7 @@ body{
 }
 
 /* ── page header ── */
-.page-head{max-width:680px;margin:0 auto;padding:36px 24px 24px;text-align:center}
+.page-head{max-width:680px;margin:0 auto;padding:36px 24px 20px;text-align:center}
 .page-head h2{
   font-family:Georgia,'Times New Roman',serif;
   font-size:28px;font-weight:700;color:var(--text);margin-bottom:8px;
@@ -58,9 +55,7 @@ body{
 .page-head p{font-size:14px;color:var(--muted);max-width:460px;margin:0 auto;line-height:1.7}
 
 /* ── tip box ── */
-.tip{
-  max-width:680px;margin:0 auto 8px;padding:0 24px;
-}
+.tip{max-width:680px;margin:0 auto 4px;padding:0 24px}
 .tip-inner{
   background:var(--accent-light);border:1px solid #E8C8A0;border-radius:10px;
   padding:12px 16px;font-size:13px;color:var(--accent-dark);
@@ -69,83 +64,61 @@ body{
 .tip-icon{font-size:16px;flex-shrink:0;margin-top:1px}
 
 /* ── course cards ── */
-.cards{max-width:680px;margin:0 auto;padding:16px 24px;display:flex;flex-direction:column;gap:14px}
+.cards{max-width:680px;margin:0 auto;padding:16px 24px;display:flex;flex-direction:column;gap:12px}
 
 .course-card{
   background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
   box-shadow:var(--shadow);overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
-
-.card-top{
-  display:flex;align-items:center;gap:16px;padding:18px 20px;
+.course-card.active{
+  border-color:var(--accent);
+  box-shadow:0 4px 20px rgba(184,98,26,.15);
 }
-.card-strip{width:4px;height:100%;position:absolute;top:0;left:0}
-.course-card{position:relative;padding-left:4px}
+.course-card.cached{
+  border-color:var(--green);
+  box-shadow:0 4px 20px rgba(45,106,79,.12);
+}
+.course-card.busy{cursor:not-allowed}
 
 .c1{border-left:4px solid #B8621A}
 .c2{border-left:4px solid #2D6A4F}
 .c3{border-left:4px solid #1D3557}
 .c4{border-left:4px solid #6B2D8B}
 
-.card-icon{font-size:28px;flex-shrink:0}
+.card-top{display:flex;align-items:center;gap:14px;padding:16px 20px}
+.card-icon{font-size:26px;flex-shrink:0}
 .card-info{flex:1;min-width:0}
 .card-title{font-family:Georgia,'Times New Roman',serif;font-size:16px;font-weight:600;color:var(--text);margin-bottom:2px}
 .card-meta{font-size:12px;color:var(--muted)}
 
-.card-status{
-  font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;flex-shrink:0;
-  letter-spacing:.3px;
+.card-badge{
+  font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;flex-shrink:0;letter-spacing:.3px;
 }
-.status-none{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
-.status-partial{background:#FFF7ED;color:#92400E;border:1px solid #FCD29F}
-.status-done{background:var(--green-bg);color:var(--green);border:1px solid #86EFAC}
+.badge-idle{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.badge-active{background:var(--accent-light);color:var(--accent-dark);border:1px solid #E8C8A0}
+.badge-cached{background:var(--green-bg);color:var(--green);border:1px solid #86EFAC}
 
-/* ── progress bar ── */
-.card-progress{padding:0 20px 16px}
-.progress-bar-wrap{
-  background:var(--border);border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px;
-}
-.progress-bar-fill{
-  height:100%;border-radius:99px;background:var(--accent);
-  transition:width .3s ease;width:0%;
-}
+/* ── progress area (only shown when this card is active) ── */
+.card-progress{padding:0 20px 16px;display:none}
+.progress-bar-wrap{background:var(--border);border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px}
+.progress-bar-fill{height:100%;border-radius:99px;background:var(--accent);transition:width .3s ease;width:0%}
 .progress-bar-fill.done{background:var(--green)}
 .progress-label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
 .progress-file{max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* ── action buttons ── */
-.card-actions{
-  padding:0 20px 18px;display:flex;gap:8px;flex-wrap:wrap;
-}
-.btn{
-  display:inline-flex;align-items:center;gap:6px;
-  border:none;border-radius:8px;padding:9px 18px;
-  font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.2px;
-  transition:background .15s,transform .1s,box-shadow .15s;
-  -webkit-tap-highlight-color:transparent;text-decoration:none;
-}
-.btn:active{transform:scale(.97)}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:var(--accent-dark);box-shadow:0 4px 12px rgba(184,98,26,.3)}
-.btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;box-shadow:none;transform:none}
-.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid #FECACA}
-.btn-danger:hover{background:#FEE2E2}
-.btn-danger:disabled{opacity:.4;cursor:not-allowed}
-.btn-sm{padding:6px 14px;font-size:12px}
-
-/* ── storage estimate ── */
+/* ── storage note ── */
 .storage-note{
-  max-width:680px;margin:0 auto;padding:0 24px 16px;
+  max-width:680px;margin:4px auto 0;padding:0 24px;
   font-size:12px;color:var(--muted);text-align:center;
 }
 
-/* ── no-SW warning ── */
-.no-sw{
-  max-width:680px;margin:24px auto;padding:0 24px;
-}
-.no-sw-inner{
-  background:var(--red-bg);border:1px solid #FECACA;border-radius:10px;
-  padding:16px;font-size:13px;color:var(--red);text-align:center;line-height:1.6;
+/* ── replace note (shown when switching courses) ── */
+.replace-note{
+  max-width:680px;margin:0 auto;padding:0 24px 12px;
+  font-size:12px;color:var(--muted);text-align:center;display:none;
 }
 </style>
 </head>
@@ -158,246 +131,233 @@ body{
 </div>
 
 <div class="page-head">
-  <h2>Download Videos for Offline</h2>
+  <h2>Cache Videos for Offline</h2>
   <div class="page-rule"></div>
-  <p>Cache one course at a time while you have internet. Once downloaded, videos play without any connection.</p>
+  <p>Select one course to cache while on WiFi. Videos play offline once cached. Selecting a different course replaces the current cache.</p>
 </div>
 
 <div class="tip">
   <div class="tip-inner">
-    <span class="tip-icon">💡</span>
-    <span>Connect to WiFi before caching — each course is 300–700 MB. Videos are stored on your device and play instantly offline once cached.</span>
+    <span class="tip-icon">📶</span>
+    <span>Stay on WiFi while caching — videos stream from GitHub and are saved to your device. One course at a time.</span>
   </div>
 </div>
 
-<div id="no-sw-msg" class="no-sw" style="display:none">
-  <div class="no-sw-inner">
-    Your browser doesn't support Service Workers. Try opening this site in Chrome or Safari on your phone.
-  </div>
-</div>
+<div class="cards">
 
-<div class="cards" id="cards">
-
-  <div class="course-card c1" id="card-langchain">
+  <div class="course-card c1" id="card-langchain" onclick="selectCourse('langchain')">
     <div class="card-top">
       <div class="card-icon">🔗</div>
       <div class="card-info">
         <div class="card-title">LangChain Course</div>
         <div class="card-meta">16 videos · ~700 MB</div>
       </div>
-      <div class="card-status status-none" id="status-langchain">Not cached</div>
+      <div class="card-badge badge-idle" id="badge-langchain">Tap to cache</div>
     </div>
-    <div class="card-progress" id="progress-langchain" style="display:none">
+    <div class="card-progress" id="progress-langchain">
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="bar-langchain"></div>
       </div>
       <div class="progress-label">
         <span class="progress-file" id="file-langchain">Starting…</span>
-        <span id="count-langchain">0 / 16</span>
+        <span id="count-langchain"></span>
       </div>
-    </div>
-    <div class="card-actions">
-      <button class="btn btn-primary" id="btn-langchain" onclick="startCache('langchain')">&#8681; Cache for Offline</button>
-      <button class="btn btn-danger btn-sm" id="del-langchain" onclick="deleteCourse('langchain')" style="display:none">&#128465; Remove</button>
     </div>
   </div>
 
-  <div class="course-card c2" id="card-langgraph">
+  <div class="course-card c2" id="card-langgraph" onclick="selectCourse('langgraph')">
     <div class="card-top">
       <div class="card-icon">🕸️</div>
       <div class="card-info">
         <div class="card-title">LangGraph Course</div>
         <div class="card-meta">33 videos · ~1.7 GB</div>
       </div>
-      <div class="card-status status-none" id="status-langgraph">Not cached</div>
+      <div class="card-badge badge-idle" id="badge-langgraph">Tap to cache</div>
     </div>
-    <div class="card-progress" id="progress-langgraph" style="display:none">
+    <div class="card-progress" id="progress-langgraph">
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="bar-langgraph"></div>
       </div>
       <div class="progress-label">
         <span class="progress-file" id="file-langgraph">Starting…</span>
-        <span id="count-langgraph">0 / 33</span>
+        <span id="count-langgraph"></span>
       </div>
-    </div>
-    <div class="card-actions">
-      <button class="btn btn-primary" id="btn-langgraph" onclick="startCache('langgraph')">&#8681; Cache for Offline</button>
-      <button class="btn btn-danger btn-sm" id="del-langgraph" onclick="deleteCourse('langgraph')" style="display:none">&#128465; Remove</button>
     </div>
   </div>
 
-  <div class="course-card c3" id="card-deepagent">
+  <div class="course-card c3" id="card-deepagent" onclick="selectCourse('deepagent')">
     <div class="card-top">
       <div class="card-icon">🤖</div>
       <div class="card-info">
         <div class="card-title">Project — Deep Agent</div>
         <div class="card-meta">7 videos · ~285 MB</div>
       </div>
-      <div class="card-status status-none" id="status-deepagent">Not cached</div>
+      <div class="card-badge badge-idle" id="badge-deepagent">Tap to cache</div>
     </div>
-    <div class="card-progress" id="progress-deepagent" style="display:none">
+    <div class="card-progress" id="progress-deepagent">
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="bar-deepagent"></div>
       </div>
       <div class="progress-label">
         <span class="progress-file" id="file-deepagent">Starting…</span>
-        <span id="count-deepagent">0 / 7</span>
+        <span id="count-deepagent"></span>
       </div>
-    </div>
-    <div class="card-actions">
-      <button class="btn btn-primary" id="btn-deepagent" onclick="startCache('deepagent')">&#8681; Cache for Offline</button>
-      <button class="btn btn-danger btn-sm" id="del-deepagent" onclick="deleteCourse('deepagent')" style="display:none">&#128465; Remove</button>
     </div>
   </div>
 
-  <div class="course-card c4" id="card-deepresearch">
+  <div class="course-card c4" id="card-deepresearch" onclick="selectCourse('deepresearch')">
     <div class="card-top">
       <div class="card-icon">🔬</div>
       <div class="card-info">
         <div class="card-title">Project — Deep Agent with Research</div>
         <div class="card-meta">6 videos · ~316 MB</div>
       </div>
-      <div class="card-status status-none" id="status-deepresearch">Not cached</div>
+      <div class="card-badge badge-idle" id="badge-deepresearch">Tap to cache</div>
     </div>
-    <div class="card-progress" id="progress-deepresearch" style="display:none">
+    <div class="card-progress" id="progress-deepresearch">
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="bar-deepresearch"></div>
       </div>
       <div class="progress-label">
         <span class="progress-file" id="file-deepresearch">Starting…</span>
-        <span id="count-deepresearch">0 / 6</span>
+        <span id="count-deepresearch"></span>
       </div>
-    </div>
-    <div class="card-actions">
-      <button class="btn btn-primary" id="btn-deepresearch" onclick="startCache('deepresearch')">&#8681; Cache for Offline</button>
-      <button class="btn btn-danger btn-sm" id="del-deepresearch" onclick="deleteCourse('deepresearch')" style="display:none">&#128465; Remove</button>
     </div>
   </div>
 
 </div>
 
+<div class="replace-note" id="replace-note">
+  Caching a new course removes the previous one from your device.
+</div>
 <div class="storage-note" id="storage-note"></div>
 
 <script>
-const TOTALS = { langchain: 16, langgraph: 33, deepagent: 7, deepresearch: 6 };
-let sw = null;
+const COURSES = ['langchain','langgraph','deepagent','deepresearch'];
+const TOTALS  = { langchain: 16, langgraph: 33, deepagent: 7, deepresearch: 6 };
 
-if (!('serviceWorker' in navigator)) {
-  document.getElementById('no-sw-msg').style.display = 'block';
-  document.getElementById('cards').style.opacity = '.4';
-  document.getElementById('cards').style.pointerEvents = 'none';
-}
+let activeCourse = null; // currently cached or being cached
+let isBusy = false;      // caching in progress
 
 async function getSW() {
-  if (sw) return sw;
   const reg = await navigator.serviceWorker.ready;
-  sw = reg.active;
-  return sw;
+  return reg.active;
 }
 
-// Listen for messages from SW
-navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e => {
+navigator.serviceWorker.addEventListener('message', e => {
   const { type, course, done, total, key } = e.data;
 
   if (type === 'CACHE_PROGRESS') {
     const pct = Math.round((done / total) * 100);
     document.getElementById('bar-' + course).style.width = pct + '%';
     document.getElementById('count-' + course).textContent = done + ' / ' + total;
-    document.getElementById('file-' + course).textContent = key.replace(/_/g, ' ') + '.mp4';
-    setStatus(course, 'partial', done + ' / ' + total + ' cached');
+    document.getElementById('file-' + course).textContent = key.replace(/_/g,' ') + '.mp4';
+    setBadge(course, 'active', done + '/' + total);
   }
 
   if (type === 'CACHE_DONE') {
+    isBusy = false;
+    activeCourse = course;
     document.getElementById('bar-' + course).classList.add('done');
     document.getElementById('bar-' + course).style.width = '100%';
-    document.getElementById('file-' + course).textContent = 'All videos cached ✓';
+    document.getElementById('file-' + course).textContent = 'All videos ready offline ✓';
     document.getElementById('count-' + course).textContent = TOTALS[course] + ' / ' + TOTALS[course];
-    setStatus(course, 'done', 'Cached ✓');
-    document.getElementById('btn-' + course).disabled = true;
-    document.getElementById('btn-' + course).textContent = '✓ Cached';
-    document.getElementById('del-' + course).style.display = 'inline-flex';
+    setBadge(course, 'cached', 'Cached ✓');
+    setCardState(course, 'cached');
+    // Re-enable other cards
+    COURSES.filter(c => c !== course).forEach(c => {
+      document.getElementById('card-' + c).classList.remove('busy');
+    });
+    document.getElementById('replace-note').style.display = 'block';
     updateStorage();
   }
 
-  if (type === 'DELETE_DONE') {
-    document.getElementById('progress-' + course).style.display = 'none';
-    document.getElementById('bar-' + course).style.width = '0%';
-    document.getElementById('bar-' + course).classList.remove('done');
-    setStatus(course, 'none', 'Not cached');
-    const btn = document.getElementById('btn-' + course);
-    btn.disabled = false;
-    btn.innerHTML = '&#8681; Cache for Offline';
-    document.getElementById('del-' + course).style.display = 'none';
-    updateStorage();
+  if (type === 'CLEAR_DONE') {
+    // nothing — was called internally before new cache starts
   }
 
   if (type === 'STATUS') {
-    for (const [courseId, { cached, total }] of Object.entries(e.data.status)) {
-      if (cached === 0) {
-        setStatus(courseId, 'none', 'Not cached');
-      } else if (cached < total) {
-        setStatus(courseId, 'partial', cached + ' / ' + total + ' cached');
-        document.getElementById('progress-' + courseId).style.display = 'block';
-        const pct = Math.round((cached / total) * 100);
-        document.getElementById('bar-' + courseId).style.width = pct + '%';
-        document.getElementById('count-' + courseId).textContent = cached + ' / ' + total;
-        document.getElementById('file-' + courseId).textContent = 'Partially cached — click to resume';
-        document.getElementById('del-' + courseId).style.display = 'inline-flex';
+    const { activeCourse: ac, activeDone, activeTotal } = e.data;
+    if (ac) {
+      activeCourse = ac;
+      const pct = Math.round((activeDone / activeTotal) * 100);
+      document.getElementById('bar-' + ac).style.width = pct + '%';
+      document.getElementById('bar-' + ac).classList.add('done');
+      document.getElementById('progress-' + ac).style.display = 'block';
+      document.getElementById('count-' + ac).textContent = activeDone + ' / ' + activeTotal;
+      document.getElementById('file-' + ac).textContent =
+        activeDone === activeTotal ? 'All videos ready offline ✓' : activeDone + ' videos cached';
+      if (activeDone === activeTotal) {
+        setBadge(ac, 'cached', 'Cached ✓');
+        setCardState(ac, 'cached');
       } else {
-        setStatus(courseId, 'done', 'Cached ✓');
-        document.getElementById('progress-' + courseId).style.display = 'block';
-        document.getElementById('bar-' + courseId).style.width = '100%';
-        document.getElementById('bar-' + courseId).classList.add('done');
-        document.getElementById('count-' + courseId).textContent = total + ' / ' + total;
-        document.getElementById('file-' + courseId).textContent = 'All videos cached ✓';
-        document.getElementById('btn-' + courseId).disabled = true;
-        document.getElementById('btn-' + courseId).textContent = '✓ Cached';
-        document.getElementById('del-' + courseId).style.display = 'inline-flex';
+        setBadge(ac, 'active', activeDone + '/' + activeTotal);
+        setCardState(ac, 'active');
       }
+      document.getElementById('replace-note').style.display = 'block';
     }
     updateStorage();
   }
 });
 
-function setStatus(course, state, text) {
-  const el = document.getElementById('status-' + course);
-  el.className = 'card-status status-' + state;
+function setCardState(course, state) {
+  const card = document.getElementById('card-' + course);
+  card.classList.remove('active','cached','busy');
+  if (state) card.classList.add(state);
+}
+
+function setBadge(course, type, text) {
+  const el = document.getElementById('badge-' + course);
+  el.className = 'card-badge badge-' + type;
   el.textContent = text;
 }
 
-async function startCache(course) {
-  const worker = await getSW();
-  document.getElementById('progress-' + course).style.display = 'block';
-  document.getElementById('btn-' + course).disabled = true;
-  document.getElementById('btn-' + course).textContent = 'Caching…';
-  setStatus(course, 'partial', 'Downloading…');
-  worker.postMessage({ type: 'CACHE_COURSE', course });
-}
+async function selectCourse(course) {
+  if (isBusy) return; // ignore taps while caching in progress
 
-async function deleteCourse(course) {
-  if (!confirm('Remove cached videos for this course? You can re-download anytime.')) return;
-  const worker = await getSW();
-  document.getElementById('btn-' + course).disabled = true;
-  worker.postMessage({ type: 'DELETE_COURSE', course });
+  // If already fully cached, tapping again does nothing
+  if (activeCourse === course) return;
+
+  // Confirm switch if something is already cached
+  if (activeCourse && activeCourse !== course) {
+    const ok = confirm('This will replace the cached videos for the current course. Continue?');
+    if (!ok) return;
+  }
+
+  isBusy = true;
+
+  // Reset all cards
+  COURSES.forEach(c => {
+    setCardState(c, c === course ? 'active' : 'busy');
+    setBadge(c, c === course ? 'active' : 'idle', c === course ? 'Caching…' : 'Tap to cache');
+    document.getElementById('bar-' + c).style.width = '0%';
+    document.getElementById('bar-' + c).classList.remove('done');
+    document.getElementById('progress-' + c).style.display = c === course ? 'block' : 'none';
+    document.getElementById('count-' + c).textContent = '';
+    document.getElementById('file-' + c).textContent = 'Starting…';
+  });
+
+  document.getElementById('replace-note').style.display = 'none';
+  activeCourse = null;
+
+  const sw = await getSW();
+  sw.postMessage({ type: 'CACHE_COURSE', course });
 }
 
 async function updateStorage() {
   if (!navigator.storage || !navigator.storage.estimate) return;
   const { usage, quota } = await navigator.storage.estimate();
-  if (!usage || !quota) return;
+  if (!usage) return;
   const usedMB = Math.round(usage / 1024 / 1024);
   const totalGB = (quota / 1024 / 1024 / 1024).toFixed(1);
   document.getElementById('storage-note').textContent =
     `Device storage used by this site: ${usedMB} MB of ${totalGB} GB available`;
 }
 
-// Load current cache status on page open
 async function loadStatus() {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.ready;
-  if (reg.active) {
-    reg.active.postMessage({ type: 'GET_STATUS' });
-  }
+  if (reg.active) reg.active.postMessage({ type: 'GET_STATUS' });
   updateStorage();
 }
 
