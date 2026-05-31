@@ -90,15 +90,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* notebook-only row (no video) */
 .nb-only{padding:14px 16px;border-top:1px solid var(--border)}
 </style>
-<script src="video-ids.js"></script>
-<script>
-const BASE = 'https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/';
-function vid(key) {
-  const name = (window.VIDEO_NAMES || {})[key];
-  if (!name) return '<div class="video-placeholder"><span>🎬</span><p>Video coming soon</p></div>';
-  return '<div class="video-wrap"><video controls preload="none" playsinline><source src="' + BASE + encodeURIComponent(name) + '" type="video/mp4"></video></div>';
-}
-</script>
 </head>
 <body>
 
@@ -125,34 +116,29 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Lesson 1 — Foundational Models</div>
-        <div id="v_lc_m1_l1"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m1_l1.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m1_foundational_models.html" target="_blank">Foundational Models</a><a class="nb-link" href="notebooks/lc_m1_prompting.html" target="_blank">Prompting</a></div>
       </div>
-<script>document.getElementById('v_lc_m1_l1').outerHTML=vid('lc_m1_l1');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 2 — Tools</div>
-        <div id="v_lc_m1_l2"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m1_l2.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m1_tools.html" target="_blank">Tools</a><a class="nb-link" href="notebooks/lc_m1_web_search.html" target="_blank">Web Search</a></div>
       </div>
-<script>document.getElementById('v_lc_m1_l2').outerHTML=vid('lc_m1_l2');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 3 — Short-Term Memory</div>
-        <div id="v_lc_m1_l3"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m1_l3.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m1_memory.html" target="_blank">Memory</a></div>
       </div>
-<script>document.getElementById('v_lc_m1_l3').outerHTML=vid('lc_m1_l3');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 4 — Multimodal Messages</div>
-        <div id="v_lc_m1_l4"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m1_l4.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m1_multimodal.html" target="_blank">Multimodal Messages</a></div>
       </div>
-<script>document.getElementById('v_lc_m1_l4').outerHTML=vid('lc_m1_l4');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 5 — Personal Chef Project</div>
-        <div id="v_lc_m1_l5"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m1_l5.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m1_personal_chef.html" target="_blank">Personal Chef</a></div>
       </div>
-<script>document.getElementById('v_lc_m1_l5').outerHTML=vid('lc_m1_l5');</script>
         </div>
       </div>
     </div>
@@ -171,28 +157,24 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Lesson 1 — Model Context Protocol</div>
-        <div id="v_lc_m2_l1"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m2_l1.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m2_mcp.html" target="_blank">MCP</a><a class="nb-link" href="notebooks/lc_m2_travel_agent.html" target="_blank">Travel Agent</a></div>
       </div>
-<script>document.getElementById('v_lc_m2_l1').outerHTML=vid('lc_m2_l1');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 2 — Context and State</div>
-        <div id="v_lc_m2_l2"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m2_l2.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m2_runtime_context.html" target="_blank">Runtime Context</a><a class="nb-link" href="notebooks/lc_m2_state.html" target="_blank">State</a></div>
       </div>
-<script>document.getElementById('v_lc_m2_l2').outerHTML=vid('lc_m2_l2');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 3 — Multi-Agent Systems</div>
-        <div id="v_lc_m2_l3"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m2_l3.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m2_multi_agent.html" target="_blank">Multi-Agent</a></div>
       </div>
-<script>document.getElementById('v_lc_m2_l3').outerHTML=vid('lc_m2_l3');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 4 — Wedding Planner Project</div>
-        <div id="v_lc_m2_l4"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m2_l4.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m2_wedding_planners.html" target="_blank">Wedding Planners</a><a class="nb-link" href="notebooks/lc_m2_bonus_rag.html" target="_blank">Bonus — RAG</a><a class="nb-link" href="notebooks/lc_m2_bonus_sql.html" target="_blank">Bonus — SQL</a></div>
       </div>
-<script>document.getElementById('v_lc_m2_l4').outerHTML=vid('lc_m2_l4');</script>
         </div>
       </div>
     </div>
@@ -211,43 +193,36 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Lesson 1 — What is Middleware</div>
-        <div id="v_lc_m3_l1"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m3_l1.mp4" type="video/mp4"></video></div>
       </div>
-<script>document.getElementById('v_lc_m3_l1').outerHTML=vid('lc_m3_l1');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 2 — Managing Long Conversations</div>
-        <div id="v_lc_m3_l2"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m3_l2.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m3_managing_messages.html" target="_blank">Managing Messages</a></div>
       </div>
-<script>document.getElementById('v_lc_m3_l2').outerHTML=vid('lc_m3_l2');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 3 — Human In The Loop</div>
-        <div id="v_lc_m3_l3"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m3_l3.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m3_hitl.html" target="_blank">HITL</a></div>
       </div>
-<script>document.getElementById('v_lc_m3_l3').outerHTML=vid('lc_m3_l3');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 4 — Dynamic Agents</div>
-        <div id="v_lc_m3_l4"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m3_l4.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m3_dynamic_models.html" target="_blank">Dynamic Models</a><a class="nb-link" href="notebooks/lc_m3_dynamic_prompts.html" target="_blank">Dynamic Prompts</a><a class="nb-link" href="notebooks/lc_m3_dynamic_tools.html" target="_blank">Dynamic Tools</a></div>
       </div>
-<script>document.getElementById('v_lc_m3_l4').outerHTML=vid('lc_m3_l4');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 5 — Email Assistant Project</div>
-        <div id="v_lc_m3_l5"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m3_l5.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/lc_m3_email_agent.html" target="_blank">Email Agent</a></div>
       </div>
-<script>document.getElementById('v_lc_m3_l5').outerHTML=vid('lc_m3_l5');</script>
       <div class="lesson">
         <div class="lesson-title">Lesson 6 — Agent Chat UI Bonus</div>
-        <div id="v_lc_m3_l6"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m3_l6.mp4" type="video/mp4"></video></div>
       </div>
-<script>document.getElementById('v_lc_m3_l6').outerHTML=vid('lc_m3_l6');</script>
       <div class="lesson">
         <div class="lesson-title">Conclusion</div>
-        <div id="v_lc_m3_conclusion"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/lc_m3_conclusion.mp4" type="video/mp4"></video></div>
       </div>
-<script>document.getElementById('v_lc_m3_conclusion').outerHTML=vid('lc_m3_conclusion');</script>
         </div>
       </div>
     </div>

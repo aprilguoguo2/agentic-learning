@@ -90,15 +90,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* notebook-only row (no video) */
 .nb-only{padding:14px 16px;border-top:1px solid var(--border)}
 </style>
-<script src="video-ids.js"></script>
-<script>
-const BASE = 'https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/';
-function vid(key) {
-  const name = (window.VIDEO_NAMES || {})[key];
-  if (!name) return '<div class="video-placeholder"><span>🎬</span><p>Video coming soon</p></div>';
-  return '<div class="video-wrap"><video controls preload="none" playsinline><source src="' + BASE + encodeURIComponent(name) + '" type="video/mp4"></video></div>';
-}
-</script>
 </head>
 <body>
 
@@ -125,9 +116,8 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Course Overview</div>
-        <div id="v_dar_m1"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/dar_m1.mp4" type="video/mp4"></video></div>
       </div>
-<script>document.getElementById('v_dar_m1').outerHTML=vid('dar_m1');</script>
         </div>
       </div>
     </div>
@@ -146,10 +136,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Scoping</div>
-        <div id="v_dar_m2"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/dar_m2.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/dar_m2_scoping.html" target="_blank">Scoping</a></div>
       </div>
-<script>document.getElementById('v_dar_m2').outerHTML=vid('dar_m2');</script>
         </div>
       </div>
     </div>
@@ -168,10 +157,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Research Agent</div>
-        <div id="v_dar_m3"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/dar_m3.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/dar_m3_research.html" target="_blank">Research Agent</a></div>
       </div>
-<script>document.getElementById('v_dar_m3').outerHTML=vid('dar_m3');</script>
         </div>
       </div>
     </div>
@@ -190,10 +178,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Research Agent with MCP</div>
-        <div id="v_dar_m4"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/dar_m4.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/dar_m4_mcp.html" target="_blank">Research Agent + MCP</a></div>
       </div>
-<script>document.getElementById('v_dar_m4').outerHTML=vid('dar_m4');</script>
         </div>
       </div>
     </div>
@@ -212,10 +199,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Research Supervisor</div>
-        <div id="v_dar_m5"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/dar_m5.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/dar_m5_supervisor.html" target="_blank">Research Supervisor</a></div>
       </div>
-<script>document.getElementById('v_dar_m5').outerHTML=vid('dar_m5');</script>
         </div>
       </div>
     </div>
@@ -234,10 +220,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Multi-Agent Research System</div>
-        <div id="v_dar_m6"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/dar_m6.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/dar_m6_full_system.html" target="_blank">Full Multi-Agent System</a></div>
       </div>
-<script>document.getElementById('v_dar_m6').outerHTML=vid('dar_m6');</script>
         </div>
       </div>
     </div>

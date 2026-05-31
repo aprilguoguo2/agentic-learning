@@ -90,15 +90,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* notebook-only row (no video) */
 .nb-only{padding:14px 16px;border-top:1px solid var(--border)}
 </style>
-<script src="video-ids.js"></script>
-<script>
-const BASE = 'https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/';
-function vid(key) {
-  const name = (window.VIDEO_NAMES || {})[key];
-  if (!name) return '<div class="video-placeholder"><span>🎬</span><p>Video coming soon</p></div>';
-  return '<div class="video-wrap"><video controls preload="none" playsinline><source src="' + BASE + encodeURIComponent(name) + '" type="video/mp4"></video></div>';
-}
-</script>
 </head>
 <body>
 
@@ -125,9 +116,8 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Course Overview</div>
-        <div id="v_da_m1"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/da_m1.mp4" type="video/mp4"></video></div>
       </div>
-<script>document.getElementById('v_da_m1').outerHTML=vid('da_m1');</script>
         </div>
       </div>
     </div>
@@ -146,10 +136,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Create Agent</div>
-        <div id="v_da_m2"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/da_m2.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/da_m2_create_agent.html" target="_blank">Create Agent</a></div>
       </div>
-<script>document.getElementById('v_da_m2').outerHTML=vid('da_m2');</script>
         </div>
       </div>
     </div>
@@ -168,10 +157,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Todo Lists</div>
-        <div id="v_da_m3"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/da_m3.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/da_m3_todo.html" target="_blank">Todo Lists</a></div>
       </div>
-<script>document.getElementById('v_da_m3').outerHTML=vid('da_m3');</script>
         </div>
       </div>
     </div>
@@ -190,10 +178,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Files</div>
-        <div id="v_da_m4"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/da_m4.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/da_m4_files.html" target="_blank">Files</a></div>
       </div>
-<script>document.getElementById('v_da_m4').outerHTML=vid('da_m4');</script>
         </div>
       </div>
     </div>
@@ -212,10 +199,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Subagents</div>
-        <div id="v_da_m5"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/da_m5.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/da_m5_subagents.html" target="_blank">Subagents</a></div>
       </div>
-<script>document.getElementById('v_da_m5').outerHTML=vid('da_m5');</script>
         </div>
       </div>
     </div>
@@ -234,10 +220,9 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Full Agent</div>
-        <div id="v_da_m6"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/da_m6.mp4" type="video/mp4"></video></div>
         <div class="nb-links"><a class="nb-link" href="notebooks/da_m6_full_agent.html" target="_blank">Full Agent</a></div>
       </div>
-<script>document.getElementById('v_da_m6').outerHTML=vid('da_m6');</script>
         </div>
       </div>
     </div>
@@ -256,9 +241,8 @@ function vid(key) {
         <div class="mod-inner">
       <div class="lesson">
         <div class="lesson-title">Conclusion</div>
-        <div id="v_da_m7"></div>
+        <div class="video-wrap"><video controls preload="none" playsinline><source src="https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/da_m7.mp4" type="video/mp4"></video></div>
       </div>
-<script>document.getElementById('v_da_m7').outerHTML=vid('da_m7');</script>
         </div>
       </div>
     </div>
