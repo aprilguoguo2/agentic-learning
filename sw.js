@@ -1,12 +1,15 @@
 // Service Worker — April's Agentic Learning
-// Cache-first strategy for all site pages and notebooks
+// Cache-first strategy for pages/notebooks; on-demand video caching per course
 
-const CACHE = 'agentic-v3';
-const BASE  = '/agentic-learning';
+const CACHE       = 'agentic-v4';
+const VIDEO_CACHE = 'agentic-videos-v1';
+const BASE        = '/agentic-learning';
+const VIDEO_BASE  = 'https://github.com/aprilguoguo2/agentic-learning/releases/download/videos/';
 
 const PRECACHE = [
   BASE + '/',
   BASE + '/index.html',
+  BASE + '/cache.html',
   BASE + '/langchain.html',
   BASE + '/langgraph.html',
   BASE + '/deep-agent.html',
@@ -75,41 +78,133 @@ const PRECACHE = [
   BASE + '/notebooks/dar_m6_full_system.html',
 ];
 
-// Install: cache everything
+// Video keys per course — must match GitHub Release filenames exactly
+const COURSE_VIDEOS = {
+  langchain: [
+    'lc_m1_l1','lc_m1_l2','lc_m1_l3','lc_m1_l4','lc_m1_l5',
+    'lc_m2_l1','lc_m2_l2','lc_m2_l3','lc_m2_l4',
+    'lc_m3_l1','lc_m3_l2','lc_m3_l3','lc_m3_l4','lc_m3_l5','lc_m3_l6','lc_m3_conclusion',
+  ],
+  langgraph: [
+    'lg_m1_l1','lg_m1_l2','lg_m1_l3','lg_m1_l4','lg_m1_l5','lg_m1_l6','lg_m1_l7','lg_m1_l8',
+    'lg_m2_l1','lg_m2_l2','lg_m2_l3','lg_m2_l4','lg_m2_l5','lg_m2_l6',
+    'lg_m3_l1','lg_m3_l2','lg_m3_l3','lg_m3_l4','lg_m3_l5',
+    'lg_m4_l1','lg_m4_l2','lg_m4_l3','lg_m4_l4',
+    'lg_m5_l1','lg_m5_l2','lg_m5_l3','lg_m5_l4','lg_m5_l5',
+    'lg_m6_l1','lg_m6_l2','lg_m6_l3','lg_m6_l4','lg_m6_l5',
+  ],
+  deepagent: [
+    'da_m1','da_m2','da_m3','da_m4','da_m5','da_m6','da_m7',
+  ],
+  deepresearch: [
+    'dar_m1','dar_m2','dar_m3','dar_m4','dar_m5','dar_m6',
+  ],
+};
+
+// ── Install ────────────────────────────────────────────────────────────────────
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(cache => {
-        // Cache each file individually so one failure doesn't block the rest
-        return Promise.allSettled(
+      .then(cache =>
+        Promise.allSettled(
           PRECACHE.map(url =>
             cache.add(url).catch(err => console.warn('SW: failed to cache', url, err))
           )
-        );
-      })
+        )
+      )
       .then(() => self.skipWaiting())
   );
 });
 
-// Activate: clean up old caches
+// ── Activate ───────────────────────────────────────────────────────────────────
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+        // Keep current page cache and video cache; delete old versions
+        keys
+          .filter(k => k !== CACHE && k !== VIDEO_CACHE)
+          .map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
 });
 
-// Fetch: cache-first for same-origin, network-only for everything else
+// ── Message: on-demand video caching ──────────────────────────────────────────
+self.addEventListener('message', async e => {
+  const { type, course } = e.data || {};
+
+  if (type === 'CACHE_COURSE') {
+    const keys = COURSE_VIDEOS[course];
+    if (!keys) {
+      e.source.postMessage({ type: 'CACHE_ERROR', course, message: 'Unknown course' });
+      return;
+    }
+    const cache = await caches.open(VIDEO_CACHE);
+    let done = 0;
+    const total = keys.length;
+
+    for (const key of keys) {
+      const url = VIDEO_BASE + key + '.mp4';
+      try {
+        // Check if already cached
+        const existing = await cache.match(url);
+        if (!existing) {
+          const res = await fetch(url);
+          if (res.ok) await cache.put(url, res);
+        }
+      } catch (err) {
+        console.warn('SW: video cache failed', url, err);
+      }
+      done++;
+      e.source.postMessage({ type: 'CACHE_PROGRESS', course, done, total, key });
+    }
+    e.source.postMessage({ type: 'CACHE_DONE', course });
+  }
+
+  if (type === 'DELETE_COURSE') {
+    const keys = COURSE_VIDEOS[course];
+    if (!keys) return;
+    const cache = await caches.open(VIDEO_CACHE);
+    await Promise.all(
+      keys.map(key => cache.delete(VIDEO_BASE + key + '.mp4'))
+    );
+    e.source.postMessage({ type: 'DELETE_DONE', course });
+  }
+
+  if (type === 'GET_STATUS') {
+    const cache = await caches.open(VIDEO_CACHE);
+    const status = {};
+    for (const [courseId, keys] of Object.entries(COURSE_VIDEOS)) {
+      let cached = 0;
+      for (const key of keys) {
+        const match = await cache.match(VIDEO_BASE + key + '.mp4');
+        if (match) cached++;
+      }
+      status[courseId] = { cached, total: keys.length };
+    }
+    e.source.postMessage({ type: 'STATUS', status });
+  }
+});
+
+// ── Fetch: cache-first for pages; video cache for GitHub Release MP4s ─────────
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
 
-  // Skip external resources (GitHub video releases, fonts, etc.)
+  // Intercept GitHub Release video requests — serve from video cache if available
+  if (url.hostname === 'github.com' && url.pathname.includes('/releases/download/videos/')) {
+    e.respondWith(
+      caches.open(VIDEO_CACHE).then(cache =>
+        cache.match(req).then(cached => cached || fetch(req))
+      )
+    );
+    return;
+  }
+
+  // Skip all other external resources
   if (url.origin !== self.location.origin) return;
 
   // Skip non-agentic-learning paths
@@ -118,27 +213,19 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(req).then(cached => {
       if (cached) {
-        // Serve from cache, update in background
+        // Serve from cache; refresh in background
         fetch(req).then(res => {
-          if (res && res.ok) {
-            caches.open(CACHE).then(c => c.put(req, res));
-          }
+          if (res && res.ok) caches.open(CACHE).then(c => c.put(req, res));
         }).catch(() => {});
         return cached;
       }
-
-      // Not in cache — fetch from network and cache it
       return fetch(req).then(res => {
         if (res && res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(req, clone));
+          caches.open(CACHE).then(c => c.put(req, res.clone()));
         }
         return res;
       }).catch(() => {
-        // Offline and not cached — return offline page if we have index
-        if (req.destination === 'document') {
-          return caches.match(BASE + '/index.html');
-        }
+        if (req.destination === 'document') return caches.match(BASE + '/index.html');
         return new Response('Offline', { status: 503 });
       });
     })
