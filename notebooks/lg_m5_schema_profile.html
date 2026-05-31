@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -116,7 +122,7 @@ user_profile: UserProfile = {
     &quot;interests&quot;: [&quot;biking&quot;, &quot;technology&quot;, &quot;coffee&quot;]
 }
 user_profile</code></pre></div>
-      <div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking', 'technology', 'coffee']}</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking', 'technology', 'coffee']}</pre></div></div>
     </div>
 <div class="md-cell"><p>We use the <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore.put" target="_blank">put</a> method to save the TypedDict to the store.</p></div>
 <div class="code-cell">
@@ -141,15 +147,15 @@ in_memory_store.put(namespace_for_memory, key, value)</code></pre></div>
       <div class="code-in"><pre><code># Search 
 for m in in_memory_store.search(namespace_for_memory):
     print(m.dict())</code></pre></div>
-      <div class="out out-stream"><pre>{'value': {'user_name': 'Lance', 'interests': ['biking', 'technology', 'coffee']}, 'key': 'user_profile', 'namespace': ['1', 'memory'], 'created_at': '2024-11-04T23:37:34.871675+00:00', 'updated_at': '2024-11-04T23:37:34.871680+00:00'}
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'value': {'user_name': 'Lance', 'interests': ['biking', 'technology', 'coffee']}, 'key': 'user_profile', 'namespace': ['1', 'memory'], 'created_at': '2024-11-04T23:37:34.871675+00:00', 'updated_at': '2024-11-04T23:37:34.871680+00:00'}
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We can also use <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore.get" target="_blank">get</a> to retrieve a specific object by namespace and key.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Get the memory by namespace and key
 profile = in_memory_store.get(namespace_for_memory, &quot;user_profile&quot;)
 profile.value</code></pre></div>
-      <div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking', 'technology', 'coffee']}</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking', 'technology', 'coffee']}</pre></div></div>
     </div>
 <div class="md-cell"><h2>Chatbot with profile schema</h2>
 <p>Now we know how to specify a schema for the memories and save it to the store.</p>
@@ -179,7 +185,7 @@ model_with_structure = model.with_structured_output(UserProfile)
 # Invoke the model to produce structured output that matches the schema
 structured_output = model_with_structure.invoke([HumanMessage(&quot;My name is Lance, I like to bike.&quot;)])
 structured_output</code></pre></div>
-      <div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking']}</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking']}</pre></div></div>
     </div>
 <div class="md-cell"><p>Now, let's use this with our chatbot.</p>
 <p>This only requires minor changes to the <code class="ic">write_memory</code> function.</p>
@@ -283,7 +289,7 @@ graph = builder.compile(checkpointer=within_thread_memory, store=across_thread_m
 
 # View
 display(Image(graph.get_graph(xray=1).draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># We supply a thread ID for short-term (within-thread) memory
@@ -296,13 +302,13 @@ input_messages = [HumanMessage(content=&quot;Hi, my name is Lance and I like to 
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Hi, my name is Lance and I like to bike around San Francisco and eat at bakeries.
 ================================== Ai Message ==================================
 
 Hi Lance! It's great to meet you. Biking around San Francisco sounds like a fantastic way to explore the city, and there are so many amazing bakeries to try. Do you have any favorite bakeries or biking routes in the city?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Let's check the memory in the store.</p>
 <p>We can see that the memory is a dictionary that matches our schema.</p></div>
@@ -312,7 +318,7 @@ user_id = &quot;1&quot;
 namespace = (&quot;memory&quot;, user_id)
 existing_memory = across_thread_memory.get(namespace, &quot;user_memory&quot;)
 existing_memory.value</code></pre></div>
-      <div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking', 'bakeries', 'San Francisco']}</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking', 'bakeries', 'San Francisco']}</pre></div></div>
     </div>
 <div class="md-cell"><h2>When can this fail?</h2>
 <p><a href="https://docs.langchain.com/oss/python/langchain/models#structured-outputs" target="_blank"><code class="ic">with_structured_output</code></a> is very useful, but what happens if we're working with a more complex schema?</p>
@@ -382,11 +388,11 @@ try:
     &lt;/convo&gt;&quot;&quot;&quot;)
 except ValidationError as e:
     print(e)</code></pre></div>
-      <div class="out out-stream"><pre>1 validation error for TelegramAndTrustFallPreferences
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>1 validation error for TelegramAndTrustFallPreferences
 pertinent_user_preferences.communication_preferences.semaphore
   Input should be a valid dictionary or instance of Semaphore [type=model_type, input_value=None, input_type=NoneType]
     For further information visit https://errors.pydantic.dev/2.9/v/model_type
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>If we naively extract more complex schemas, even using high capacity model like <code class="ic">gpt-4o</code>, it is prone to failure.</p></div>
 <div class="md-cell"><h2>Trustcall for creating and updating profile schemas</h2>
@@ -448,27 +454,27 @@ result = trustcall_extractor.invoke({&quot;messages&quot;: [SystemMessage(conten
 <div class="code-cell">
       <div class="code-in"><pre><code>for m in result[&quot;messages&quot;]: 
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Tool Calls:
   UserProfile (call_spGGUsoaUFXU7oOrUNCASzfL)
  Call ID: call_spGGUsoaUFXU7oOrUNCASzfL
   Args:
     user_name: Lance
     interests: ['biking around San Francisco']
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>schema = result[&quot;responses&quot;]
 schema</code></pre></div>
-      <div class="out"><pre>[UserProfile(user_name='Lance', interests=['biking around San Francisco'])]</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[UserProfile(user_name='Lance', interests=['biking around San Francisco'])]</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>schema[0].model_dump()</code></pre></div>
-      <div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking around San Francisco']}</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking around San Francisco']}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>result[&quot;response_metadata&quot;]</code></pre></div>
-      <div class="out"><pre>[{'id': 'call_spGGUsoaUFXU7oOrUNCASzfL'}]</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[{'id': 'call_spGGUsoaUFXU7oOrUNCASzfL'}]</pre></div></div>
     </div>
 <div class="md-cell"><p>Let's see how we can use it to <em>update</em> the profile.</p>
 <p>For updating, TrustCall takes a set of messages as well as the existing schema.</p>
@@ -497,23 +503,23 @@ result = trustcall_extractor.invoke({&quot;messages&quot;: [SystemMessage(conten
 <div class="code-cell">
       <div class="code-in"><pre><code>for m in result[&quot;messages&quot;]: 
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Tool Calls:
   UserProfile (call_WeZl0ACfQStxblim0ps8LNKT)
  Call ID: call_WeZl0ACfQStxblim0ps8LNKT
   Args:
     user_name: Lance
     interests: ['biking', 'visiting bakeries']
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>result[&quot;response_metadata&quot;]</code></pre></div>
-      <div class="out"><pre>[{'id': 'call_WeZl0ACfQStxblim0ps8LNKT'}]</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[{'id': 'call_WeZl0ACfQStxblim0ps8LNKT'}]</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>updated_schema = result[&quot;responses&quot;][0]
 updated_schema.model_dump()</code></pre></div>
-      <div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking', 'visiting bakeries']}</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'user_name': 'Lance', 'interests': ['biking', 'visiting bakeries']}</pre></div></div>
     </div>
 <div class="md-cell"><p>LangSmith trace:</p>
 <p>https://smith.langchain.com/public/229eae22-1edb-44c6-93e6-489124a43968/r</p>
@@ -545,7 +551,7 @@ result = bound.invoke(
 
 # Extract the preferences
 result[&quot;responses&quot;][0]</code></pre></div>
-      <div class="out"><pre>TelegramAndTrustFallPreferences(pertinent_user_preferences=UserPreferences(communication_preferences=CommunicationPreferences(telegram=TelegramPreferences(preferred_encoding=[OutputFormat(preference='standard encoding', sentence_preference_revealed='standard encoding')], favorite_telegram_operators=None, preferred_telegram_paper=[OutputFormat(preference='Daredevil', sentence_preference_revealed='Daredevil')]), morse_code=MorseCode(preferred_key_type=[OutputFormat(preference='straight key', sentence_preference_revealed='straight key')], favorite_morse_abbreviations=None), semaphore=Semaphore(preferred_flag_color=None, semaphore_skill_level=None)), trust_fall_preferences=TrustFallPreferences(preferred_fall_height=[OutputFormat(preference='higher', sentence_preference_revealed='higher')], trust_level=None, preferred_catching_technique=[OutputFormat(preference='diamond formation', sentence_preference_revealed='diamond formation')])))</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>TelegramAndTrustFallPreferences(pertinent_user_preferences=UserPreferences(communication_preferences=CommunicationPreferences(telegram=TelegramPreferences(preferred_encoding=[OutputFormat(preference='standard encoding', sentence_preference_revealed='standard encoding')], favorite_telegram_operators=None, preferred_telegram_paper=[OutputFormat(preference='Daredevil', sentence_preference_revealed='Daredevil')]), morse_code=MorseCode(preferred_key_type=[OutputFormat(preference='straight key', sentence_preference_revealed='straight key')], favorite_morse_abbreviations=None), semaphore=Semaphore(preferred_flag_color=None, semaphore_skill_level=None)), trust_fall_preferences=TrustFallPreferences(preferred_fall_height=[OutputFormat(preference='higher', sentence_preference_revealed='higher')], trust_level=None, preferred_catching_technique=[OutputFormat(preference='diamond formation', sentence_preference_revealed='diamond formation')])))</pre></div></div>
     </div>
 <div class="md-cell"><p>Trace:</p>
 <p>https://smith.langchain.com/public/5cd23009-3e05-4b00-99f0-c66ee3edd06e/r</p>
@@ -659,7 +665,7 @@ graph = builder.compile(checkpointer=within_thread_memory, store=across_thread_m
 
 # View
 display(Image(graph.get_graph(xray=1).draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># We supply a thread ID for short-term (within-thread) memory
@@ -672,13 +678,13 @@ input_messages = [HumanMessage(content=&quot;Hi, my name is Lance&quot;)]
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Hi, my name is Lance
 ================================== Ai Message ==================================
 
 Hello, Lance! It's nice to meet you. How can I assist you today?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input 
@@ -687,13 +693,13 @@ input_messages = [HumanMessage(content=&quot;I like to bike around San Francisco
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 I like to bike around San Francisco
 ================================== Ai Message ==================================
 
 That sounds like a great way to explore the city! San Francisco has some beautiful routes and views. Do you have any favorite trails or spots you like to visit while biking?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Namespace for the memory to save
@@ -701,20 +707,20 @@ user_id = &quot;1&quot;
 namespace = (&quot;memory&quot;, user_id)
 existing_memory = across_thread_memory.get(namespace, &quot;user_memory&quot;)
 existing_memory.dict()</code></pre></div>
-      <div class="out"><pre>{'value': {'user_name': 'Lance',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'value': {'user_name': 'Lance',
   'user_location': 'San Francisco',
   'interests': ['biking']},
  'key': 'user_memory',
  'namespace': ['memory', '1'],
  'created_at': '2024-11-04T23:51:17.662428+00:00',
- 'updated_at': '2024-11-04T23:51:41.697652+00:00'}</pre></div>
+ 'updated_at': '2024-11-04T23:51:41.697652+00:00'}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># The user profile saved as a JSON object
 existing_memory.value</code></pre></div>
-      <div class="out"><pre>{'user_name': 'Lance',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'user_name': 'Lance',
  'user_location': 'San Francisco',
- 'interests': ['biking']}</pre></div>
+ 'interests': ['biking']}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input 
@@ -723,13 +729,13 @@ input_messages = [HumanMessage(content=&quot;I also enjoy going to bakeries&quot
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 I also enjoy going to bakeries
 ================================== Ai Message ==================================
 
 Biking and visiting bakeries sounds like a delightful combination! San Francisco has some fantastic bakeries. Do you have any favorites, or are you looking for new recommendations to try out?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Continue the conversation in a new thread.</p></div>
 <div class="code-cell">
@@ -743,7 +749,7 @@ input_messages = [HumanMessage(content=&quot;What bakeries do you recommend for 
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 What bakeries do you recommend for me?
 ================================== Ai Message ==================================
@@ -757,7 +763,7 @@ Since you're in San Francisco and enjoy going to bakeries, here are a few recomm
 5. **Mr. Holmes Bakehouse** - Famous for their cruffins and other creative pastries.
 
 These spots should offer a great variety of treats for you to enjoy. Happy bakery hopping!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Trace:</p>
 <p>https://smith.langchain.com/public/f45bdaf0-6963-4c19-8ec9-f4b7fe0f68ad/r</p>

@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -128,13 +134,13 @@ model_with_structure = model.with_structured_output(MemoryCollection)
 # Invoke the model to produce structured output that matches the schema
 memory_collection = model_with_structure.invoke([HumanMessage(&quot;My name is Lance. I like to bike.&quot;)])
 memory_collection.memories</code></pre></div>
-      <div class="out"><pre>[Memory(content=&quot;User's name is Lance.&quot;),
- Memory(content='Lance likes to bike.')]</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[Memory(content=&quot;User's name is Lance.&quot;),
+ Memory(content='Lance likes to bike.')]</pre></div></div>
     </div>
 <div class="md-cell"><p>We can use <code class="ic">model_dump()</code> to serialize a Pydantic model instance into a Python dictionary.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>memory_collection.memories[0].model_dump()</code></pre></div>
-      <div class="out"><pre>{'content': &quot;User's name is Lance.&quot;}</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'content': &quot;User's name is Lance.&quot;}</pre></div></div>
     </div>
 <div class="md-cell"><p>Save dictionary representation of each memory to the store.</p></div>
 <div class="code-cell">
@@ -163,9 +169,9 @@ in_memory_store.put(namespace_for_memory, key, value)</code></pre></div>
       <div class="code-in"><pre><code># Search 
 for m in in_memory_store.search(namespace_for_memory):
     print(m.dict())</code></pre></div>
-      <div class="out out-stream"><pre>{'value': {'content': &quot;User's name is Lance.&quot;}, 'key': 'e1c4e5ab-ab0f-4cbb-822d-f29240a983af', 'namespace': ['1', 'memories'], 'created_at': '2024-10-30T21:43:26.893775+00:00', 'updated_at': '2024-10-30T21:43:26.893779+00:00'}
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'value': {'content': &quot;User's name is Lance.&quot;}, 'key': 'e1c4e5ab-ab0f-4cbb-822d-f29240a983af', 'namespace': ['1', 'memories'], 'created_at': '2024-10-30T21:43:26.893775+00:00', 'updated_at': '2024-10-30T21:43:26.893779+00:00'}
 {'value': {'content': 'Lance likes to bike.'}, 'key': 'e132a1ea-6202-43ac-a9a6-3ecf2c1780a8', 'namespace': ['1', 'memories'], 'created_at': '2024-10-30T21:43:26.893833+00:00', 'updated_at': '2024-10-30T21:43:26.893834+00:00'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Updating collection schema</h2>
 <p>We discussed the challenges with updating a profile schema in the last lesson.</p>
@@ -207,27 +213,27 @@ result = trustcall_extractor.invoke({&quot;messages&quot;: [SystemMessage(conten
       <div class="code-in"><pre><code># Messages contain the tool calls
 for m in result[&quot;messages&quot;]:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Tool Calls:
   Memory (call_Pj4kctFlpg9TgcMBfMH33N30)
  Call ID: call_Pj4kctFlpg9TgcMBfMH33N30
   Args:
     content: Lance had a nice bike ride in San Francisco this morning.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Responses contain the memories that adhere to the schema
 for m in result[&quot;responses&quot;]: 
     print(m)</code></pre></div>
-      <div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning.'
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning.'
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Metadata contains the tool call  
 for m in result[&quot;response_metadata&quot;]: 
     print(m)</code></pre></div>
-      <div class="out out-stream"><pre>{'id': 'call_Pj4kctFlpg9TgcMBfMH33N30'}
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'id': 'call_Pj4kctFlpg9TgcMBfMH33N30'}
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Update the conversation
@@ -243,9 +249,9 @@ system_msg = &quot;&quot;&quot;Update existing memories and create new ones base
 tool_name = &quot;Memory&quot;
 existing_memories = [(str(i), tool_name, memory.model_dump()) for i, memory in enumerate(result[&quot;responses&quot;])] if result[&quot;responses&quot;] else None
 existing_memories</code></pre></div>
-      <div class="out"><pre>[('0',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[('0',
   'Memory',
-  {'content': 'Lance had a nice bike ride in San Francisco this morning.'})]</pre></div>
+  {'content': 'Lance had a nice bike ride in San Francisco this morning.'})]</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Invoke the extractor with our updated conversation and existing memories
@@ -257,7 +263,7 @@ result = trustcall_extractor.invoke({&quot;messages&quot;: updated_conversation,
       <div class="code-in"><pre><code># Messages from the model indicate two tool calls were made
 for m in result[&quot;messages&quot;]:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Tool Calls:
   Memory (call_vxks0YH1hwUxkghv4f5zdkTr)
  Call ID: call_vxks0YH1hwUxkghv4f5zdkTr
@@ -267,24 +273,24 @@ Tool Calls:
  Call ID: call_Y4S3poQgFmDfPy2ExPaMRk8g
   Args:
     content: Lance went to Tartine and ate a croissant. He was thinking about his trip to Japan and going back this winter!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Responses contain the memories that adhere to the schema
 for m in result[&quot;responses&quot;]: 
     print(m)</code></pre></div>
-      <div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning. He went to Tartine and ate a croissant. He was thinking about his trip to Japan and going back this winter!'
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning. He went to Tartine and ate a croissant. He was thinking about his trip to Japan and going back this winter!'
 content='Lance went to Tartine and ate a croissant. He was thinking about his trip to Japan and going back this winter!'
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>This tells us that we updated the first memory in the collection by specifying the <code class="ic">json_doc_id</code>.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Metadata contains the tool call  
 for m in result[&quot;response_metadata&quot;]: 
     print(m)</code></pre></div>
-      <div class="out out-stream"><pre>{'id': 'call_vxks0YH1hwUxkghv4f5zdkTr', 'json_doc_id': '0'}
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'id': 'call_vxks0YH1hwUxkghv4f5zdkTr', 'json_doc_id': '0'}
 {'id': 'call_Y4S3poQgFmDfPy2ExPaMRk8g'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>LangSmith trace:</p>
 <p>https://smith.langchain.com/public/ebc1cb01-f021-4794-80c0-c75d6ea90446/r</p></div>
@@ -409,7 +415,7 @@ graph = builder.compile(checkpointer=within_thread_memory, store=across_thread_m
 
 # View
 display(Image(graph.get_graph(xray=1).draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># We supply a thread ID for short-term (within-thread) memory
@@ -422,13 +428,13 @@ input_messages = [HumanMessage(content=&quot;Hi, my name is Lance&quot;)]
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Hi, my name is Lance
 ================================== Ai Message ==================================
 
 Hi Lance! It's great to meet you. How can I assist you today?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input 
@@ -437,13 +443,13 @@ input_messages = [HumanMessage(content=&quot;I like to bike around San Francisco
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 I like to bike around San Francisco
 ================================== Ai Message ==================================
 
 That sounds like a lot of fun! San Francisco has some beautiful routes for biking. Do you have a favorite trail or area you like to explore?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Namespace for the memory to save
@@ -452,9 +458,9 @@ namespace = (&quot;memories&quot;, user_id)
 memories = across_thread_memory.search(namespace)
 for m in memories:
     print(m.dict())</code></pre></div>
-      <div class="out out-stream"><pre>{'value': {'content': &quot;User's name is Lance.&quot;}, 'key': 'dee65880-dd7d-4184-8ca1-1f7400f7596b', 'namespace': ['memories', '1'], 'created_at': '2024-10-30T22:18:52.413283+00:00', 'updated_at': '2024-10-30T22:18:52.413284+00:00'}
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'value': {'content': &quot;User's name is Lance.&quot;}, 'key': 'dee65880-dd7d-4184-8ca1-1f7400f7596b', 'namespace': ['memories', '1'], 'created_at': '2024-10-30T22:18:52.413283+00:00', 'updated_at': '2024-10-30T22:18:52.413284+00:00'}
 {'value': {'content': 'User likes to bike around San Francisco.'}, 'key': '662195fc-8ea4-4f64-a6b6-6b86d9cb85c0', 'namespace': ['memories', '1'], 'created_at': '2024-10-30T22:18:56.597813+00:00', 'updated_at': '2024-10-30T22:18:56.597814+00:00'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input 
@@ -463,13 +469,13 @@ input_messages = [HumanMessage(content=&quot;I also enjoy going to bakeries&quot
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 I also enjoy going to bakeries
 ================================== Ai Message ==================================
 
 Biking and bakeries make a great combination! Do you have a favorite bakery in San Francisco, or are you on the hunt for new ones to try?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Continue the conversation in a new thread.</p></div>
 <div class="code-cell">
@@ -483,7 +489,7 @@ input_messages = [HumanMessage(content=&quot;What bakeries do you recommend for 
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 What bakeries do you recommend for me?
 ================================== Ai Message ==================================
@@ -501,7 +507,7 @@ Since you enjoy biking around San Francisco, you might like to check out some of
 5. **Noe Valley Bakery** - A cozy spot in Noe Valley, perfect for a stop after exploring the hilly streets of the area.
 
 Do any of these sound like a good fit for your next biking adventure?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h3>LangSmith </h3>
 <p>https://smith.langchain.com/public/c87543ec-b426-4a82-a3ab-94d01c01d9f4/r</p>

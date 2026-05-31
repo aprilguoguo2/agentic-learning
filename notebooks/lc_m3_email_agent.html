@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -72,7 +78,7 @@ warnings.filterwarnings(&quot;ignore&quot;, message=&quot;.*Pydantic serializer 
 from dotenv import load_dotenv
 
 load_dotenv()</code></pre></div>
-      <div class="out"><pre>True</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>True</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>from dataclasses import dataclass
@@ -205,7 +211,7 @@ response = agent.invoke(
 )
 
 print(response['messages'][-1].content)</code></pre></div>
-      <div class="out out-stream"><pre>I checked your inbox. Here’s the message I found:
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>I checked your inbox. Here’s the message I found:
 
 From: Jane (jane@example.com)
 Subject: (not shown)
@@ -232,7 +238,7 @@ Hi Jane,
 I’d love to catch up. Want to meet at [Cafe Name] next week? I’m free Tue and Thu afternoon. What works for you?
 
 If you have a preferred tone or a preferred cafe, tell me and I’ll tailor the draft. Once you pick a draft, I can send the email for you.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>
@@ -247,10 +253,10 @@ print(response['messages'][-1].content)</code></pre></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>print(response['__interrupt__'][0].value['action_requests'][0]['args']['body'])</code></pre></div>
-      <div class="out out-stream"><pre>Hi Jane,
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Hi Jane,
 That sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.
 Looking forward to it!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>from langgraph.types import Command
@@ -263,17 +269,17 @@ response = agent.invoke(
 )
 
 print(response[&quot;messages&quot;][-1].content)</code></pre></div>
-      <div class="out out-stream"><pre>Email sent to jane@example.com with subject &quot;Re: Coffee next week&quot; and body:
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Email sent to jane@example.com with subject &quot;Re: Coffee next week&quot; and body:
 Hi Jane,
 That sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.
 Looking forward to it!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>from pprint import pprint
 
 pprint(response)</code></pre></div>
-      <div class="out out-stream"><pre>{'authenticated': True,
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'authenticated': True,
  'messages': [HumanMessage(content='julie@example.com, password123', additional_kwargs={}, response_metadata={}, id='cd6784ff-58d9-400d-bb0e-3da84fc0dc46'),
               AIMessage(content='', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 286, 'prompt_tokens': 151, 'total_tokens': 437, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 256, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DOoSKZcepxV1pNVbCpkTQRJqWnZzV', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None}, id='lc_run--019d3ab1-5dbd-7223-9e59-5edf45a39d77-0', tool_calls=[{'name': 'authenticate', 'args': {'email': 'julie@example.com', 'password': 'password123'}, 'id': 'call_nGaIRLsjvsIr8BHfSN4dxN0k', 'type': 'tool_call'}], invalid_tool_calls=[], usage_metadata={'input_tokens': 151, 'output_tokens': 286, 'total_tokens': 437, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 256}}),
               ToolMessage(content='Successfully authenticated', name='authenticate', id='b1d708d2-332a-4403-ad02-eb8b6a43d858', tool_call_id='call_nGaIRLsjvsIr8BHfSN4dxN0k'),
@@ -284,7 +290,7 @@ pprint(response)</code></pre></div>
               AIMessage(content='', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 595, 'prompt_tokens': 592, 'total_tokens': 1187, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 512, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DOoSdXb69hI0RspjP91GgPqKeluj0', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None}, id='lc_run--019d3ab1-a92d-7fa0-aa51-ca0841aad97f-0', tool_calls=[{'name': 'send_email', 'args': {'to': 'jane@example.com', 'subject': 'Re: Coffee next week', 'body': 'Hi Jane,\nThat sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.\nLooking forward to it!'}, 'id': 'call_Z3176PTpfLJaAAZAFngWEqKJ', 'type': 'tool_call'}], invalid_tool_calls=[], usage_metadata={'input_tokens': 592, 'output_tokens': 595, 'total_tokens': 1187, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 512}}),
               ToolMessage(content='Email sent to jane@example.com with subject Re: Coffee next week and body Hi Jane,\nThat sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.\nLooking forward to it!', name='send_email', id='5da47fd6-a274-40d3-8165-5bebeb38dd8b', tool_call_id='call_Z3176PTpfLJaAAZAFngWEqKJ'),
               AIMessage(content='Email sent to jane@example.com with subject &quot;Re: Coffee next week&quot; and body:\nHi Jane,\nThat sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.\nLooking forward to it!', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 65, 'prompt_tokens': 739, 'total_tokens': 804, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DOoSlLB1fh1ysL4fRM9H7zHrKpuOO', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None}, id='lc_run--019d3ab1-c937-7e91-bfb1-0b41d10a03f6-0', tool_calls=[], invalid_tool_calls=[], usage_metadata={'input_tokens': 739, 'output_tokens': 65, 'total_tokens': 804, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}})]}
-</pre></div>
+</pre></div></div>
     </div>
 
 </div>

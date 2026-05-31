@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -184,27 +190,27 @@ result = trustcall_extractor.invoke({&quot;messages&quot;: [SystemMessage(conten
       <div class="code-in"><pre><code># Messages contain the tool calls
 for m in result[&quot;messages&quot;]:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Tool Calls:
   Memory (call_NkjwwJGjrgxHzTb7KwD8lTaH)
  Call ID: call_NkjwwJGjrgxHzTb7KwD8lTaH
   Args:
     content: Lance had a nice bike ride in San Francisco this morning.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Responses contain the memories that adhere to the schema
 for m in result[&quot;responses&quot;]: 
     print(m)</code></pre></div>
-      <div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning.'
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning.'
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Metadata contains the tool call  
 for m in result[&quot;response_metadata&quot;]: 
     print(m)</code></pre></div>
-      <div class="out out-stream"><pre>{'id': 'call_NkjwwJGjrgxHzTb7KwD8lTaH'}
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'id': 'call_NkjwwJGjrgxHzTb7KwD8lTaH'}
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Update the conversation
@@ -220,9 +226,9 @@ system_msg = &quot;&quot;&quot;Update existing memories and create new ones base
 tool_name = &quot;Memory&quot;
 existing_memories = [(str(i), tool_name, memory.model_dump()) for i, memory in enumerate(result[&quot;responses&quot;])] if result[&quot;responses&quot;] else None
 existing_memories</code></pre></div>
-      <div class="out"><pre>[('0',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[('0',
   'Memory',
-  {'content': 'Lance had a nice bike ride in San Francisco this morning.'})]</pre></div>
+  {'content': 'Lance had a nice bike ride in San Francisco this morning.'})]</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Invoke the extractor with our updated conversation and existing memories
@@ -234,15 +240,15 @@ result = trustcall_extractor_see_all_tool_calls.invoke({&quot;messages&quot;: up
       <div class="code-in"><pre><code># Metadata contains the tool call  
 for m in result[&quot;response_metadata&quot;]: 
     print(m)</code></pre></div>
-      <div class="out out-stream"><pre>{'id': 'call_bF0w0hE4YZmGyDbuJVe1mh5H', 'json_doc_id': '0'}
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'id': 'call_bF0w0hE4YZmGyDbuJVe1mh5H', 'json_doc_id': '0'}
 {'id': 'call_fQAxxRypV914Xev6nJ9VKw3X'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Messages contain the tool calls
 for m in result[&quot;messages&quot;]:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Tool Calls:
   Memory (call_bF0w0hE4YZmGyDbuJVe1mh5H)
  Call ID: call_bF0w0hE4YZmGyDbuJVe1mh5H
@@ -252,20 +258,20 @@ Tool Calls:
  Call ID: call_fQAxxRypV914Xev6nJ9VKw3X
   Args:
     content: Lance went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Parsed responses
 for m in result[&quot;responses&quot;]:
     print(m)</code></pre></div>
-      <div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning. Afterward, he went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning. Afterward, he went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'
 content='Lance went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Inspect the tool calls made by Trustcall
 spy.called_tools</code></pre></div>
-      <div class="out"><pre>[[{'name': 'PatchDoc',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[[{'name': 'PatchDoc',
    'args': {'json_doc_id': '0',
     'planned_edits': '1. Replace the existing content with the updated memory that includes the new activities: going to Tartine for a croissant and thinking about going back to Japan this winter.',
     'patches': [{'op': 'replace',
@@ -276,7 +282,7 @@ spy.called_tools</code></pre></div>
   {'name': 'Memory',
    'args': {'content': 'Lance went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'},
    'id': 'call_fQAxxRypV914Xev6nJ9VKw3X',
-   'type': 'tool_call'}]]</pre></div>
+   'type': 'tool_call'}]]</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>def extract_tool_info(tool_calls, schema_name=&quot;Memory&quot;):
@@ -326,13 +332,13 @@ spy.called_tools</code></pre></div>
 schema_name = &quot;Memory&quot;
 changes = extract_tool_info(spy.called_tools, schema_name)
 print(changes)</code></pre></div>
-      <div class="out out-stream"><pre>Document 0 updated:
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Document 0 updated:
 Plan: 1. Replace the existing content with the updated memory that includes the new activities: going to Tartine for a croissant and thinking about going back to Japan this winter.
 Added content: Lance had a nice bike ride in San Francisco this morning. Afterward, he went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.
 
 New Memory created:
 Content: {'content': 'Lance went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Creating an agent</h2>
 <p>There are many different agent architectures to choose from.</p>
@@ -677,7 +683,7 @@ graph = builder.compile(checkpointer=within_thread_memory, store=across_thread_m
 
 # View
 display(Image(graph.get_graph(xray=1).draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># We supply a thread ID for short-term (within-thread) memory
@@ -690,7 +696,7 @@ input_messages = [HumanMessage(content=&quot;My name is Lance. I live in SF with
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 My name is Lance. I live in SF with my wife. I have a 1 year old daughter.
 ================================== Ai Message ==================================
@@ -705,7 +711,7 @@ updated profile
 ================================== Ai Message ==================================
 
 Got it! How can I assist you today, Lance?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input for a ToDo
@@ -714,7 +720,7 @@ input_messages = [HumanMessage(content=&quot;My wife asked me to book swim lesso
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 My wife asked me to book swim lessons for the baby.
 ================================== Ai Message ==================================
@@ -730,7 +736,7 @@ Content: {'task': 'Book swim lessons for 1-year-old daughter.', 'time_to_complet
 ================================== Ai Message ==================================
 
 I've added &quot;Book swim lessons for your 1-year-old daughter&quot; to your ToDo list. If you need any help with that, just let me know!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input to update instructions for creating ToDos
@@ -739,7 +745,7 @@ input_messages = [HumanMessage(content=&quot;When creating or updating ToDo item
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 When creating or updating ToDo items, include specific local businesses / vendors.
 ================================== Ai Message ==================================
@@ -754,7 +760,7 @@ updated instructions
 ================================== Ai Message ==================================
 
 Got it! I'll make sure to include specific local businesses or vendors in San Francisco when creating or updating your ToDo items. Let me know if there's anything else you need!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Check for updated instructions
@@ -763,8 +769,8 @@ user_id = &quot;Lance&quot;
 # Search 
 for memory in across_thread_memory.search((&quot;instructions&quot;, user_id)):
     print(memory.value)</code></pre></div>
-      <div class="out out-stream"><pre>{'memory': '&lt;current_instructions&gt;\nWhen creating or updating ToDo list items for Lance, include specific local businesses or vendors in San Francisco. For example, when adding a task like booking swim lessons, suggest local swim schools or classes in the area.\n&lt;/current_instructions&gt;'}
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'memory': '&lt;current_instructions&gt;\nWhen creating or updating ToDo list items for Lance, include specific local businesses or vendors in San Francisco. For example, when adding a task like booking swim lessons, suggest local swim schools or classes in the area.\n&lt;/current_instructions&gt;'}
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input for a ToDo
@@ -773,7 +779,7 @@ input_messages = [HumanMessage(content=&quot;I need to fix the jammed electric Y
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 I need to fix the jammed electric Yale lock on the door.
 ================================== Ai Message ==================================
@@ -793,7 +799,7 @@ Added content: ['Check local swim schools in SF', 'Look for baby swim classes on
 ================================== Ai Message ==================================
 
 I've added &quot;Fix the jammed electric Yale lock on the door&quot; to your ToDo list. If you need any specific recommendations or help, feel free to ask!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Namespace for the memory to save
@@ -802,9 +808,9 @@ user_id = &quot;Lance&quot;
 # Search 
 for memory in across_thread_memory.search((&quot;todo&quot;, user_id)):
     print(memory.value)</code></pre></div>
-      <div class="out out-stream"><pre>{'task': 'Book swim lessons for 1-year-old daughter.', 'time_to_complete': 30, 'deadline': None, 'solutions': ['Check local swim schools in SF', 'Look for baby swim classes online', 'Ask friends for recommendations', 'Contact La Petite Baleen Swim School', 'Check with SF Recreation and Parks for classes'], 'status': 'not started'}
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'task': 'Book swim lessons for 1-year-old daughter.', 'time_to_complete': 30, 'deadline': None, 'solutions': ['Check local swim schools in SF', 'Look for baby swim classes online', 'Ask friends for recommendations', 'Contact La Petite Baleen Swim School', 'Check with SF Recreation and Parks for classes'], 'status': 'not started'}
 {'task': 'Fix the jammed electric Yale lock on the door.', 'time_to_complete': 60, 'deadline': None, 'solutions': ['Contact a local locksmith in SF', &quot;Check Yale's customer support for troubleshooting&quot;, 'Look for repair guides online'], 'status': 'not started'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input to update an existing ToDo
@@ -813,7 +819,7 @@ input_messages = [HumanMessage(content=&quot;For the swim lessons, I need to get
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 For the swim lessons, I need to get that done by end of November.
 ================================== Ai Message ==================================
@@ -830,7 +836,7 @@ Added content: 2024-11-30T23:59:59
 ================================== Ai Message ==================================
 
 I've updated the swim lessons task with a deadline to be completed by the end of November. If there's anything else you need, just let me know!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We can see that Trustcall performs patching of the existing memory:</p>
 <p>https://smith.langchain.com/public/4ad3a8af-3b1e-493d-b163-3111aa3d575a/r</p></div>
@@ -841,7 +847,7 @@ input_messages = [HumanMessage(content=&quot;Need to call back City Toyota to sc
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Need to call back City Toyota to schedule car service.
 ================================== Ai Message ==================================
@@ -861,7 +867,7 @@ Added content: Contact City Locksmith SF
 ================================== Ai Message ==================================
 
 I've added &quot;Call back City Toyota to schedule car service&quot; to your ToDo list. If you need any assistance with that, just let me know!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Namespace for the memory to save
@@ -870,10 +876,10 @@ user_id = &quot;Lance&quot;
 # Search 
 for memory in across_thread_memory.search((&quot;todo&quot;, user_id)):
     print(memory.value)</code></pre></div>
-      <div class="out out-stream"><pre>{'task': 'Book swim lessons for 1-year-old daughter.', 'time_to_complete': 30, 'deadline': '2024-11-30T23:59:59', 'solutions': ['Check local swim schools in SF', 'Look for baby swim classes online', 'Ask friends for recommendations', 'Contact La Petite Baleen Swim School', 'Check with SF Recreation and Parks for classes'], 'status': 'not started'}
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'task': 'Book swim lessons for 1-year-old daughter.', 'time_to_complete': 30, 'deadline': '2024-11-30T23:59:59', 'solutions': ['Check local swim schools in SF', 'Look for baby swim classes online', 'Ask friends for recommendations', 'Contact La Petite Baleen Swim School', 'Check with SF Recreation and Parks for classes'], 'status': 'not started'}
 {'task': 'Fix the jammed electric Yale lock on the door.', 'time_to_complete': 60, 'deadline': None, 'solutions': ['Contact a local locksmith in SF', &quot;Check Yale's customer support for troubleshooting&quot;, 'Look for repair guides online', 'Contact City Locksmith SF', 'Visit SF Lock and Key for assistance'], 'status': 'not started'}
 {'task': 'Call back City Toyota to schedule car service.', 'time_to_complete': 10, 'deadline': None, 'solutions': [&quot;Find City Toyota's contact number&quot;, 'Check car service availability', 'Prepare car details for service scheduling'], 'status': 'not started'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Now we can create a new thread.</p>
 <p>This creates a new session.</p>
@@ -889,7 +895,7 @@ input_messages = [HumanMessage(content=&quot;I have 30 minutes, what tasks can I
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 I have 30 minutes, what tasks can I get done?
 ================================== Ai Message ==================================
@@ -905,7 +911,7 @@ You can work on the following tasks that fit within your 30-minute timeframe:
    - Solutions include finding City Toyota's contact number, checking car service availability, and preparing car details for service scheduling.
 
 You can choose either of these tasks to complete within your available time.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Chat with the chatbot
@@ -914,7 +920,7 @@ input_messages = [HumanMessage(content=&quot;Yes, give me some options to call f
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Yes, give me some options to call for swim lessons.
 ================================== Ai Message ==================================
@@ -930,7 +936,7 @@ Here are some options you can consider for booking swim lessons for your 1-year-
 4. **Ask Friends for Recommendations**: Reach out to friends or family in the area who might have experience with swim lessons for young children.
 
 These options should help you get started on booking swim lessons.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Trace:</p>
 <p>https://smith.langchain.com/public/84768705-be91-43e4-8a6f-f9d3cee93782/r</p>

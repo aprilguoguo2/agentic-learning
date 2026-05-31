@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -139,21 +145,21 @@ Background runs and polling are quite useful when working with long-running agen
       <div class="code-in"><pre><code># Create a thread
 thread = await client.threads.create()
 thread</code></pre></div>
-      <div class="out"><pre>{'thread_id': '7f71c0dd-768b-4e53-8349-42bdd10e7caf',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'thread_id': '7f71c0dd-768b-4e53-8349-42bdd10e7caf',
  'created_at': '2024-11-14T19:36:08.459457+00:00',
  'updated_at': '2024-11-14T19:36:08.459457+00:00',
  'metadata': {},
  'status': 'idle',
  'config': {},
- 'values': None}</pre></div>
+ 'values': None}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Check any existing runs on a thread
 thread = await client.threads.create()
 runs = await client.runs.list(thread[&quot;thread_id&quot;])
 print(runs)</code></pre></div>
-      <div class="out out-stream"><pre>[]
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>[]
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Ensure we've created some ToDos and saved them to my user_id
@@ -175,8 +181,8 @@ run = await client.runs.create(thread[&quot;thread_id&quot;], graph_name, input=
 <div class="code-cell">
       <div class="code-in"><pre><code># Check the run status
 print(await client.runs.get(thread[&quot;thread_id&quot;], run[&quot;run_id&quot;]))</code></pre></div>
-      <div class="out out-stream"><pre>{'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21', 'created_at': '2024-11-14T19:38:29.394777+00:00', 'updated_at': '2024-11-14T19:38:29.394777+00:00', 'metadata': {}, 'status': 'pending', 'kwargs': {'input': {'messages': [{'id': None, 'name': None, 'type': 'human', 'content': 'Give me a summary of all ToDos.', 'example': False, 'additional_kwargs': {}, 'response_metadata': {}}]}, 'config': {'metadata': {'created_by': 'system'}, 'configurable': {'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'user_id': 'Test', 'graph_id': 'task_maistro', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21'}}, 'webhook': None, 'subgraphs': False, 'temporary': False, 'stream_mode': ['values'], 'feedback_keys': None, 'interrupt_after': None, 'interrupt_before': None}, 'multitask_strategy': 'reject'}
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21', 'created_at': '2024-11-14T19:38:29.394777+00:00', 'updated_at': '2024-11-14T19:38:29.394777+00:00', 'metadata': {}, 'status': 'pending', 'kwargs': {'input': {'messages': [{'id': None, 'name': None, 'type': 'human', 'content': 'Give me a summary of all ToDos.', 'example': False, 'additional_kwargs': {}, 'response_metadata': {}}]}, 'config': {'metadata': {'created_by': 'system'}, 'configurable': {'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'user_id': 'Test', 'graph_id': 'task_maistro', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21'}}, 'webhook': None, 'subgraphs': False, 'temporary': False, 'stream_mode': ['values'], 'feedback_keys': None, 'interrupt_after': None, 'interrupt_before': None}, 'multitask_strategy': 'reject'}
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We can see that it has <code class="ic">'status': 'pending'</code> because it is still running.</p>
 <p>What if we want to wait until the run completes, making it a blocking run?</p>
@@ -186,8 +192,8 @@ print(await client.runs.get(thread[&quot;thread_id&quot;], run[&quot;run_id&quot
       <div class="code-in"><pre><code># Wait until the run completes
 await client.runs.join(thread[&quot;thread_id&quot;], run[&quot;run_id&quot;])
 print(await client.runs.get(thread[&quot;thread_id&quot;], run[&quot;run_id&quot;]))</code></pre></div>
-      <div class="out out-stream"><pre>{'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21', 'created_at': '2024-11-14T19:38:29.394777+00:00', 'updated_at': '2024-11-14T19:38:29.394777+00:00', 'metadata': {}, 'status': 'success', 'kwargs': {'input': {'messages': [{'id': None, 'name': None, 'type': 'human', 'content': 'Give me a summary of all ToDos.', 'example': False, 'additional_kwargs': {}, 'response_metadata': {}}]}, 'config': {'metadata': {'created_by': 'system'}, 'configurable': {'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'user_id': 'Test', 'graph_id': 'task_maistro', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21'}}, 'webhook': None, 'subgraphs': False, 'temporary': False, 'stream_mode': ['values'], 'feedback_keys': None, 'interrupt_after': None, 'interrupt_before': None}, 'multitask_strategy': 'reject'}
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21', 'created_at': '2024-11-14T19:38:29.394777+00:00', 'updated_at': '2024-11-14T19:38:29.394777+00:00', 'metadata': {}, 'status': 'success', 'kwargs': {'input': {'messages': [{'id': None, 'name': None, 'type': 'human', 'content': 'Give me a summary of all ToDos.', 'example': False, 'additional_kwargs': {}, 'response_metadata': {}}]}, 'config': {'metadata': {'created_by': 'system'}, 'configurable': {'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'user_id': 'Test', 'graph_id': 'task_maistro', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21'}}, 'webhook': None, 'subgraphs': False, 'temporary': False, 'stream_mode': ['values'], 'feedback_keys': None, 'interrupt_after': None, 'interrupt_before': None}, 'multitask_strategy': 'reject'}
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Now the run has <code class="ic">'status': 'success'</code> because it has completed.</p></div>
 <div class="md-cell"><h3>Streaming Runs</h3>
@@ -211,7 +217,7 @@ async for chunk in client.runs.stream(thread[&quot;thread_id&quot;],
 
     if chunk.event == &quot;messages&quot;:
         print(&quot;&quot;.join(data_item['content'] for data_item in chunk.data if 'content' in data_item), end=&quot;&quot;, flush=True)</code></pre></div>
-      <div class="out out-stream"><pre>You might want to focus on &quot;Call parents back about Thanksgiving plans&quot; first. It has a shorter estimated time to complete (15 minutes) and doesn't have a specific deadline, so it could be a quick task to check off your list. Once that's done, you can dedicate more time to &quot;Finish booking travel to Hong Kong,&quot; which is more time-consuming and has a deadline.</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>You might want to focus on &quot;Call parents back about Thanksgiving plans&quot; first. It has a shorter estimated time to complete (15 minutes) and doesn't have a specific deadline, so it could be a quick task to check off your list. Once that's done, you can dedicate more time to &quot;Finish booking travel to Hong Kong,&quot; which is more time-consuming and has a deadline.</pre></div></div>
     </div>
 <div class="md-cell"><h2>Threads</h2>
 <p>Whereas a run is only a single execution of the graph, a thread supports <em>multi-turn</em> interactions.</p>
@@ -223,7 +229,7 @@ async for chunk in client.runs.stream(thread[&quot;thread_id&quot;],
       <div class="code-in"><pre><code>thread_state = await client.threads.get_state(thread['thread_id'])
 for m in convert_to_messages(thread_state['values']['messages']):
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Give me a summary of all ToDos.
 ================================== Ai Message ==================================
@@ -255,7 +261,7 @@ What ToDo should I focus on first.
 ================================== Ai Message ==================================
 
 You might want to focus on &quot;Call parents back about Thanksgiving plans&quot; first. It has a shorter estimated time to complete (15 minutes) and doesn't have a specific deadline, so it could be a quick task to check off your list. Once that's done, you can dedicate more time to &quot;Finish booking travel to Hong Kong,&quot; which is more time-consuming and has a deadline.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h3>Copy threads</h3>
 <p>We can also <a href="https://docs.langchain.com/langsmith/use-threads#copy-thread" target="_blank">copy</a> (i.e. "fork") an existing thread.</p>
@@ -270,7 +276,7 @@ copied_thread = await client.threads.copy(thread['thread_id'])</code></pre></div
 copied_thread_state = await client.threads.get_state(copied_thread['thread_id'])
 for m in convert_to_messages(copied_thread_state['values']['messages']):
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Give me a summary of all ToDos.
 ================================== Ai Message ==================================
@@ -302,7 +308,7 @@ What ToDo should I focus on first.
 ================================== Ai Message ==================================
 
 You might want to focus on &quot;Call parents back about Thanksgiving plans&quot; first. It has a shorter estimated time to complete (15 minutes) and doesn't have a specific deadline, so it could be a quick task to check off your list. Once that's done, you can dedicate more time to &quot;Finish booking travel to Hong Kong,&quot; which is more time-consuming and has a deadline.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h3>Human in the loop</h3>
 <p>We covered <a href="https://docs.langchain.com/langsmith/add-human-in-the-loop" target="_blank">Human in the loop</a> in Module 3, and the server supports all Human in the loop features that we discussed.</p>
@@ -314,7 +320,7 @@ states = await client.threads.get_history(thread['thread_id'])
 # Pick a state update to fork
 to_fork = states[-2]
 to_fork['values']</code></pre></div>
-      <div class="out"><pre>{'messages': [{'content': 'Give me a summary of all ToDos.',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'messages': [{'content': 'Give me a summary of all ToDos.',
    'additional_kwargs': {'example': False,
     'additional_kwargs': {},
     'response_metadata': {}},
@@ -322,19 +328,19 @@ to_fork['values']</code></pre></div>
    'type': 'human',
    'name': None,
    'id': '3680da45-e3a5-4a47-b5b1-4fd4d3e8baf9',
-   'example': False}]}</pre></div>
+   'example': False}]}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>to_fork['values']['messages'][0]['id']</code></pre></div>
-      <div class="out"><pre>'3680da45-e3a5-4a47-b5b1-4fd4d3e8baf9'</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>'3680da45-e3a5-4a47-b5b1-4fd4d3e8baf9'</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>to_fork['next']</code></pre></div>
-      <div class="out"><pre>['task_mAIstro']</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>['task_mAIstro']</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>to_fork['checkpoint_id']</code></pre></div>
-      <div class="out"><pre>'1efa2c00-6609-67ff-8000-491b1dcf8129'</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>'1efa2c00-6609-67ff-8000-491b1dcf8129'</pre></div></div>
     </div>
 <div class="md-cell"><p>Let's edit the state. Remember how our reducer on <code class="ic">messages</code> works:</p>
 <ul><li>It will append, unless we supply a message ID.</li>
@@ -362,7 +368,7 @@ async for chunk in client.runs.stream(thread[&quot;thread_id&quot;],
 
     if chunk.event == &quot;messages&quot;:
         print(&quot;&quot;.join(data_item['content'] for data_item in chunk.data if 'content' in data_item), end=&quot;&quot;, flush=True)</code></pre></div>
-      <div class="out out-stream"><pre>Here's a summary of your ToDos that need to be done in the next week:
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Here's a summary of your ToDos that need to be done in the next week:
 
 1. **Finish booking travel to Hong Kong**
    - **Status:** Not started
@@ -373,7 +379,7 @@ async for chunk in client.runs.stream(thread[&quot;thread_id&quot;],
      - Arrange airport transfer
    - **Estimated Time to Complete:** 120 minutes
 
-It looks like this task is due soon, so you might want to prioritize it. Let me know if there's anything else you need help with!</pre></div>
+It looks like this task is due soon, so you might want to prioritize it. Let me know if there's anything else you need help with!</pre></div></div>
     </div>
 <div class="md-cell"><h2>Across-thread memory</h2>
 <p>In module 5, we covered how the <a href="https://docs.langchain.com/oss/python/langgraph/persistence#memory-store" target="_blank">LangGraph memory <code class="ic">store</code></a> can be used to save information across threads.</p>
@@ -391,7 +397,7 @@ It looks like this task is due soon, so you might want to prioritize it. Let me 
     offset=0
 )
 items['items']</code></pre></div>
-      <div class="out"><pre>[{'value': {'task': 'Finish booking travel to Hong Kong',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[{'value': {'task': 'Finish booking travel to Hong Kong',
    'status': 'not started',
    'deadline': '2024-11-22T23:59:59',
    'solutions': ['Check flight prices on Skyscanner',
@@ -412,7 +418,7 @@ items['items']</code></pre></div>
   'key': '375d9596-edf8-4de2-985b-bacdc623d6ef',
   'namespace': ['todo', 'general', 'Test'],
   'created_at': '2024-11-14T19:37:41.664827+00:00',
-  'updated_at': '2024-11-14T19:37:41.664827+00:00'}]</pre></div>
+  'updated_at': '2024-11-14T19:37:41.664827+00:00'}]</pre></div></div>
     </div>
 <div class="md-cell"><h3>Add items</h3>
 <p>In our graph, we call <code class="ic">put</code> to add items to the store.</p>
@@ -433,7 +439,7 @@ await client.store.put_item(
     offset=0
 )
 items['items']</code></pre></div>
-      <div class="out"><pre>[{'value': {'todo': 'Test SDK put_item'},
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[{'value': {'todo': 'Test SDK put_item'},
   'key': '3de441ba-8c79-4beb-8f52-00e4dcba68d4',
   'namespace': ['testing', 'Test'],
   'created_at': '2024-11-14T19:56:30.452808+00:00',
@@ -442,14 +448,14 @@ items['items']</code></pre></div>
   'key': '09b9a869-4406-47c5-a635-4716bd79a8b3',
   'namespace': ['testing', 'Test'],
   'created_at': '2024-11-14T19:53:24.812558+00:00',
-  'updated_at': '2024-11-14T19:53:24.812558+00:00'}]</pre></div>
+  'updated_at': '2024-11-14T19:53:24.812558+00:00'}]</pre></div></div>
     </div>
 <div class="md-cell"><h3>Delete items</h3>
 <p>We can use the SDK to <a href="https://reference.langchain.com/python/langsmith/deployment/sdk/#langgraph_sdk.client.StoreClient.delete_item" target="_blank">delete items</a> from the store by key.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>[item['key'] for item in items['items']]</code></pre></div>
-      <div class="out"><pre>['3de441ba-8c79-4beb-8f52-00e4dcba68d4',
- '09b9a869-4406-47c5-a635-4716bd79a8b3']</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>['3de441ba-8c79-4beb-8f52-00e4dcba68d4',
+ '09b9a869-4406-47c5-a635-4716bd79a8b3']</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>await client.store.delete_item(
@@ -465,11 +471,11 @@ items['items']</code></pre></div>
     offset=0
 )
 items['items']</code></pre></div>
-      <div class="out"><pre>[{'value': {'todo': 'Test SDK put_item'},
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[{'value': {'todo': 'Test SDK put_item'},
   'key': '09b9a869-4406-47c5-a635-4716bd79a8b3',
   'namespace': ['testing', 'Test'],
   'created_at': '2024-11-14T19:53:24.812558+00:00',
-  'updated_at': '2024-11-14T19:53:24.812558+00:00'}]</pre></div>
+  'updated_at': '2024-11-14T19:53:24.812558+00:00'}]</pre></div></div>
     </div>
 <div class="md-cell"></div>
 </div>

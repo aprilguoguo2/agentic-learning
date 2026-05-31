@@ -112,6 +112,11 @@ footer{
   color:var(--muted);
 }
 </style>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/agentic-learning/sw.js'));
+}
+</script>
 </head>
 <body>
 

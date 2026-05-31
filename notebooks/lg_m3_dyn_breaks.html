@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -130,7 +136,7 @@ graph = builder.compile(checkpointer=memory)
 
 # View
 display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="md-cell"><p>Let's run the graph with an input that's longer than 5 characters.</p></div>
 <div class="code-cell">
@@ -140,23 +146,23 @@ thread_config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;
 # Run the graph until the first interruption
 for event in graph.stream(initial_input, thread_config, stream_mode=&quot;values&quot;):
     print(event)</code></pre></div>
-      <div class="out out-stream"><pre>{'input': 'hello world'}
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'input': 'hello world'}
 ---Step 1---
 {'input': 'hello world'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>If we inspect the graph state at this point, we the node set to execute next (<code class="ic">step_2</code>).</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>state = graph.get_state(thread_config)
 print(state.next)</code></pre></div>
-      <div class="out out-stream"><pre>('step_2',)
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>('step_2',)
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We can see that the <code class="ic">Interrupt</code> is logged to state.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>print(state.tasks)</code></pre></div>
-      <div class="out out-stream"><pre>(PregelTask(id='6eb3910d-e231-5ba2-b25e-28ad575690bd', name='step_2', error=None, interrupts=(Interrupt(value='Received input that is longer than 5 characters: hello world', when='during'),), state=None),)
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>(PregelTask(id='6eb3910d-e231-5ba2-b25e-28ad575690bd', name='step_2', error=None, interrupts=(Interrupt(value='Received input that is longer than 5 characters: hello world', when='during'),), state=None),)
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We can try to resume the graph from the breakpoint.</p>
 <p>But, this just re-runs the same node!</p>
@@ -164,14 +170,14 @@ print(state.next)</code></pre></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>for event in graph.stream(None, thread_config, stream_mode=&quot;values&quot;):
     print(event)</code></pre></div>
-      <div class="out out-stream"><pre>{'input': 'hello world'}
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'input': 'hello world'}
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>state = graph.get_state(thread_config)
 print(state.next)</code></pre></div>
-      <div class="out out-stream"><pre>('step_2',)
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>('step_2',)
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Now, we can update state.</p></div>
 <div class="code-cell">
@@ -179,19 +185,19 @@ print(state.next)</code></pre></div>
     thread_config,
     {&quot;input&quot;: &quot;hi&quot;},
 )</code></pre></div>
-      <div class="out"><pre>{'configurable': {'thread_id': '1',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'configurable': {'thread_id': '1',
   'checkpoint_ns': '',
-  'checkpoint_id': '1ef6a434-06cf-6f1e-8002-0ea6dc69e075'}}</pre></div>
+  'checkpoint_id': '1ef6a434-06cf-6f1e-8002-0ea6dc69e075'}}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>for event in graph.stream(None, thread_config, stream_mode=&quot;values&quot;):
     print(event)</code></pre></div>
-      <div class="out out-stream"><pre>{'input': 'hi'}
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'input': 'hi'}
 ---Step 2---
 {'input': 'hi'}
 ---Step 3---
 {'input': 'hi'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h3>Usage with LangGraph API</h3>
 <p><strong>⚠️ Notice</strong></p>
@@ -228,7 +234,7 @@ async for chunk in client.runs.stream(
     print(f&quot;Receiving new event of type: {chunk.event}...&quot;)
     print(chunk.data)
     print(&quot;\n\n&quot;)</code></pre></div>
-      <div class="out out-stream"><pre>Receiving new event of type: metadata...
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Receiving new event of type: metadata...
 {'run_id': '1ef6a43a-1b04-64d0-9a79-1caff72c8a89'}
 
 
@@ -243,7 +249,7 @@ Receiving new event of type: values...
 
 
 
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>current_state = await client.threads.get_state(thread['thread_id'])</code></pre></div>
@@ -251,14 +257,14 @@ Receiving new event of type: values...
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>current_state['next']</code></pre></div>
-      <div class="out"><pre>['step_2']</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>['step_2']</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>await client.threads.update_state(thread['thread_id'], {&quot;input&quot;: &quot;hi!&quot;})</code></pre></div>
-      <div class="out"><pre>{'configurable': {'thread_id': 'ea8c2912-987e-49d9-b890-6e81d46065f9',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'configurable': {'thread_id': 'ea8c2912-987e-49d9-b890-6e81d46065f9',
   'checkpoint_ns': '',
   'checkpoint_id': '1ef6a43a-64b2-6e85-8002-3cf4f2873968'},
- 'checkpoint_id': '1ef6a43a-64b2-6e85-8002-3cf4f2873968'}</pre></div>
+ 'checkpoint_id': '1ef6a43a-64b2-6e85-8002-3cf4f2873968'}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>async for chunk in client.runs.stream(
@@ -270,7 +276,7 @@ Receiving new event of type: values...
     print(f&quot;Receiving new event of type: {chunk.event}...&quot;)
     print(chunk.data)
     print(&quot;\n\n&quot;)</code></pre></div>
-      <div class="out out-stream"><pre>Receiving new event of type: metadata...
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Receiving new event of type: metadata...
 {'run_id': '1ef64c33-fb34-6eaf-8b59-1d85c5b8acc9'}
 
 
@@ -285,12 +291,12 @@ Receiving new event of type: values...
 
 
 
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>current_state = await client.threads.get_state(thread['thread_id'])
 current_state</code></pre></div>
-      <div class="out"><pre>{'values': {'input': 'hi!'},
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'values': {'input': 'hi!'},
  'next': ['step_2'],
  'tasks': [{'id': '858e41b2-6501-585c-9bca-55c1e729ef91',
    'name': 'step_2',
@@ -304,7 +310,7 @@ current_state</code></pre></div>
   'graph_id': 'dynamic_breakpoints'},
  'created_at': '2024-09-03T22:27:05.707260+00:00',
  'checkpoint_id': '1ef6a43a-64b2-6e85-8002-3cf4f2873968',
- 'parent_checkpoint_id': '1ef6a43a-1cb8-6c3d-8001-7b11d0d34f00'}</pre></div>
+ 'parent_checkpoint_id': '1ef6a43a-1cb8-6c3d-8001-7b11d0d34f00'}</pre></div></div>
     </div>
 
 </div>

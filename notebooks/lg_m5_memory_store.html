@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -128,33 +134,33 @@ in_memory_store.put(namespace_for_memory, key, value)</code></pre></div>
       <div class="code-in"><pre><code># Search 
 memories = in_memory_store.search(namespace_for_memory)
 type(memories)</code></pre></div>
-      <div class="out"><pre>list</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>list</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Metatdata 
 memories[0].dict()</code></pre></div>
-      <div class="out"><pre>{'value': {'food_preference': 'I like pizza'},
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'value': {'food_preference': 'I like pizza'},
  'key': 'a754b8c5-e8b7-40ec-834b-c426a9a7c7cc',
  'namespace': ['1', 'memories'],
  'created_at': '2024-11-04T22:48:16.727572+00:00',
- 'updated_at': '2024-11-04T22:48:16.727574+00:00'}</pre></div>
+ 'updated_at': '2024-11-04T22:48:16.727574+00:00'}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># The key, value
 print(memories[0].key, memories[0].value)</code></pre></div>
-      <div class="out out-stream"><pre>a754b8c5-e8b7-40ec-834b-c426a9a7c7cc {'food_preference': 'I like pizza'}
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>a754b8c5-e8b7-40ec-834b-c426a9a7c7cc {'food_preference': 'I like pizza'}
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We can also use <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore.get" target="_blank">get</a> to retrieve an object by <code class="ic">namespace</code> and <code class="ic">key</code>.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Get the memory by namespace and key
 memory = in_memory_store.get(namespace_for_memory, key)
 memory.dict()</code></pre></div>
-      <div class="out"><pre>{'value': {'food_preference': 'I like pizza'},
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'value': {'food_preference': 'I like pizza'},
  'key': 'a754b8c5-e8b7-40ec-834b-c426a9a7c7cc',
  'namespace': ['1', 'memories'],
  'created_at': '2024-11-04T22:48:16.727572+00:00',
- 'updated_at': '2024-11-04T22:48:16.727574+00:00'}</pre></div>
+ 'updated_at': '2024-11-04T22:48:16.727574+00:00'}</pre></div></div>
     </div>
 <div class="md-cell"><h2>Chatbot with long-term memory</h2>
 <p>We want a chatbot that <a href="https://docs.google.com/presentation/d/181mvjlgsnxudQI6S3ritg9sooNyu4AcLLFH1UK0kIuk/edit#slide=id.g30eb3c8cf10_0_156" target="_blank">has two types of memory</a>:</p>
@@ -293,7 +299,7 @@ graph = builder.compile(checkpointer=within_thread_memory, store=across_thread_m
 
 # View
 display(Image(graph.get_graph(xray=1).draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="md-cell"><p>When we interact with the chatbot, we supply two things:</p>
 <ul><li><code class="ic">Short-term (within-thread) memory</code>: A <code class="ic">thread ID</code> for persisting the chat history.</li>
@@ -311,13 +317,13 @@ input_messages = [HumanMessage(content=&quot;Hi, my name is Lance&quot;)]
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Hi, my name is Lance
 ================================== Ai Message ==================================
 
 Hello, Lance! It's nice to meet you. How can I assist you today?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input 
@@ -326,13 +332,13 @@ input_messages = [HumanMessage(content=&quot;I like to bike around San Francisco
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 I like to bike around San Francisco
 ================================== Ai Message ==================================
 
 That sounds like a great way to explore the city, Lance! San Francisco has some beautiful routes and views. Do you have a favorite trail or area you like to bike in?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We're using the <code class="ic">MemorySaver</code> checkpointer for within-thread memory.</p>
 <p>This saves the chat history to the thread.</p>
@@ -342,7 +348,7 @@ That sounds like a great way to explore the city, Lance! San Francisco has some 
 state = graph.get_state(thread).values
 for m in state[&quot;messages&quot;]: 
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Hi, my name is Lance
 ================================== Ai Message ==================================
@@ -354,7 +360,7 @@ I like to bike around San Francisco
 ================================== Ai Message ==================================
 
 That sounds like a great way to explore the city, Lance! San Francisco has some beautiful routes and views. Do you have a favorite trail or area you like to bike in?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Recall that we compiled the graph with our the store:</p>
 <pre class="md-code"><code>across_thread_memory = InMemoryStore()</code></pre>
@@ -366,11 +372,11 @@ user_id = &quot;1&quot;
 namespace = (&quot;memory&quot;, user_id)
 existing_memory = across_thread_memory.get(namespace, &quot;user_memory&quot;)
 existing_memory.dict()</code></pre></div>
-      <div class="out"><pre>{'value': {'memory': &quot;**Updated User Information:**\n- User's name is Lance.\n- Likes to bike around San Francisco.&quot;},
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'value': {'memory': &quot;**Updated User Information:**\n- User's name is Lance.\n- Likes to bike around San Francisco.&quot;},
  'key': 'user_memory',
  'namespace': ['memory', '1'],
  'created_at': '2024-11-05T00:12:17.383918+00:00',
- 'updated_at': '2024-11-05T00:12:25.469528+00:00'}</pre></div>
+ 'updated_at': '2024-11-05T00:12:25.469528+00:00'}</pre></div></div>
     </div>
 <div class="md-cell"><p>Now, let's kick off a <em>new thread</em> with the <em>same user ID</em>.</p>
 <p>We should see that the chatbot remembered the user's profile and used it to personalize the response.</p></div>
@@ -384,7 +390,7 @@ input_messages = [HumanMessage(content=&quot;Hi! Where would you recommend that 
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Hi! Where would you recommend that I go biking?
 ================================== Ai Message ==================================
@@ -402,7 +408,7 @@ Hi Lance! Since you enjoy biking around San Francisco, there are some fantastic 
 5. **Twin Peaks**: For a more challenging ride, head up to Twin Peaks. The climb is worth it for the panoramic views of the city.
 
 Let me know if you want more details on any of these routes!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># User input 
@@ -411,7 +417,7 @@ input_messages = [HumanMessage(content=&quot;Great, are there any bakeries nearb
 # Run the graph
 for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
     chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Great, are there any bakeries nearby that I can check out? I like a croissant after biking.
 ================================== Ai Message ==================================
@@ -429,7 +435,7 @@ Absolutely, Lance! Here are a few bakeries in San Francisco where you can enjoy 
 5. **Neighbor Bakehouse**: Located in the Dogpatch, this bakery is known for its creative pastries, including some fantastic croissants.
 
 These spots should provide a delightful treat after your biking adventures. Enjoy your ride and your croissant!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Viewing traces in LangSmith</h2>
 <p>We can see that the memories are retrieved from the store and supplied as part of the system prompt, as expected:</p>

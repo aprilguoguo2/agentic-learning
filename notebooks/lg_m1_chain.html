@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -101,7 +107,7 @@ messages.append(HumanMessage(content=f&quot;I want to learn about the best place
 
 for m in messages:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Name: Model
 
 So you said you were researching ocean mammals?
@@ -117,7 +123,7 @@ Great, what would you like to learn about.
 Name: Lance
 
 I want to learn about the best place to see Orcas in the US.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Chat Models</h2>
 <p>Chat models use a sequence of messages as input and support message types, as discussed above.</p>
@@ -140,15 +146,15 @@ _set_env(&quot;OPENAI_API_KEY&quot;)</code></pre></div>
 llm = ChatOpenAI(model=&quot;gpt-4o&quot;)
 result = llm.invoke(messages)
 type(result)</code></pre></div>
-      <div class="out"><pre>langchain_core.messages.ai.AIMessage</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>langchain_core.messages.ai.AIMessage</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>result</code></pre></div>
-      <div class="out"><pre>AIMessage(content='One of the best places to see orcas in the United States is the Pacific Northwest, particularly around the San Juan Islands in Washington State. Here are some details:\n\n1. **San Juan Islands, Washington**: These islands are a renowned spot for whale watching, with orcas frequently spotted between late spring and early fall. The waters around the San Juan Islands are home to both resident and transient orca pods, making it an excellent location for sightings.\n\n2. **Puget Sound, Washington**: This area, including places like Seattle and the surrounding waters, offers additional opportunities to see orcas, particularly the Southern Resident killer whale population.\n\n3. **Olympic National Park, Washington**: The coastal areas of the park provide a stunning backdrop for spotting orcas, especially during their migration periods.\n\nWhen planning a trip for whale watching, consider peak seasons for orca activity and book tours with reputable operators who adhere to responsible wildlife viewing practices. Additionally, land-based spots like Lime Kiln Point State Park, also known as “Whale Watch Park,” on San Juan Island, offer great opportunities for orca watching from shore.', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 228, 'prompt_tokens': 67, 'total_tokens': 295, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_50cad350e4', 'finish_reason': 'stop', 'logprobs': None}, id='run-57ed2891-c426-4452-b44b-15d0a5c3f225-0', usage_metadata={'input_tokens': 67, 'output_tokens': 228, 'total_tokens': 295, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}})</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>AIMessage(content='One of the best places to see orcas in the United States is the Pacific Northwest, particularly around the San Juan Islands in Washington State. Here are some details:\n\n1. **San Juan Islands, Washington**: These islands are a renowned spot for whale watching, with orcas frequently spotted between late spring and early fall. The waters around the San Juan Islands are home to both resident and transient orca pods, making it an excellent location for sightings.\n\n2. **Puget Sound, Washington**: This area, including places like Seattle and the surrounding waters, offers additional opportunities to see orcas, particularly the Southern Resident killer whale population.\n\n3. **Olympic National Park, Washington**: The coastal areas of the park provide a stunning backdrop for spotting orcas, especially during their migration periods.\n\nWhen planning a trip for whale watching, consider peak seasons for orca activity and book tours with reputable operators who adhere to responsible wildlife viewing practices. Additionally, land-based spots like Lime Kiln Point State Park, also known as “Whale Watch Park,” on San Juan Island, offer great opportunities for orca watching from shore.', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 228, 'prompt_tokens': 67, 'total_tokens': 295, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_50cad350e4', 'finish_reason': 'stop', 'logprobs': None}, id='run-57ed2891-c426-4452-b44b-15d0a5c3f225-0', usage_metadata={'input_tokens': 67, 'output_tokens': 228, 'total_tokens': 295, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}})</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>result.response_metadata</code></pre></div>
-      <div class="out"><pre>{'token_usage': {'completion_tokens': 228,
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'token_usage': {'completion_tokens': 228,
   'prompt_tokens': 67,
   'total_tokens': 295,
   'completion_tokens_details': {'accepted_prediction_tokens': 0,
@@ -159,7 +165,7 @@ type(result)</code></pre></div>
  'model_name': 'gpt-4o-2024-08-06',
  'system_fingerprint': 'fp_50cad350e4',
  'finish_reason': 'stop',
- 'logprobs': None}</pre></div>
+ 'logprobs': None}</pre></div></div>
     </div>
 <div class="md-cell"><h2>Tools</h2>
 <p>Tools are useful whenever you want a model to interact with external systems.</p>
@@ -192,10 +198,10 @@ llm_with_tools = llm.bind_tools([multiply])</code></pre></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>tool_call.tool_calls</code></pre></div>
-      <div class="out"><pre>[{'name': 'multiply',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[{'name': 'multiply',
   'args': {'a': 2, 'b': 3},
   'id': 'call_lBBBNo5oYpHGRqwxNaNRbsiT',
-  'type': 'tool_call'}]</pre></div>
+  'type': 'tool_call'}]</pre></div></div>
     </div>
 <div class="md-cell"><h2>Using messages as state</h2>
 <p>With these foundations in place, we can now use  <a href="https://docs.langchain.com/oss/python/langchain/overview#messages" target="_blank">messages</a> in our graph state.</p>
@@ -252,9 +258,9 @@ new_message = AIMessage(content=&quot;Sure, I can help with that. What specifica
 
 # Test
 add_messages(initial_messages , new_message)</code></pre></div>
-      <div class="out"><pre>[AIMessage(content='Hello! How can I assist you?', name='Model', id='cd566566-0f42-46a4-b374-fe4d4770ffa7'),
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[AIMessage(content='Hello! How can I assist you?', name='Model', id='cd566566-0f42-46a4-b374-fe4d4770ffa7'),
  HumanMessage(content=&quot;I'm looking for information on marine biology.&quot;, name='Lance', id='9b6c4ddb-9de3-4089-8d22-077f53e7e915'),
- AIMessage(content='Sure, I can help with that. What specifically are you interested in?', name='Model', id='74a549aa-8b8b-48d4-bdf1-12e98404e44e')]</pre></div>
+ AIMessage(content='Sure, I can help with that. What specifically are you interested in?', name='Model', id='74a549aa-8b8b-48d4-bdf1-12e98404e44e')]</pre></div></div>
     </div>
 <div class="md-cell"><h2>Our graph</h2>
 <p>Now, lets use <code class="ic">MessagesState</code> with a graph.</p></div>
@@ -275,27 +281,27 @@ graph = builder.compile()
 
 # View
 display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="md-cell"><p>If we pass in <code class="ic">Hello!</code>, the LLM responds without any tool calls.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>messages = graph.invoke({&quot;messages&quot;: HumanMessage(content=&quot;Hello!&quot;)})
 for m in messages['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Hello!
 ================================== Ai Message ==================================
 
 Hi there! How can I assist you today?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>The LLM chooses to use a tool when it determines that the input or task requires the functionality provided by that tool.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>messages = graph.invoke({&quot;messages&quot;: HumanMessage(content=&quot;Multiply 2 and 3&quot;)})
 for m in messages['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Multiply 2 and 3!
 ================================== Ai Message ==================================
@@ -305,7 +311,7 @@ Tool Calls:
   Args:
     a: 2
     b: 3
-</pre></div>
+</pre></div></div>
     </div>
 
 </div>

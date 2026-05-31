@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -69,7 +75,7 @@ a{color:var(--accent)}
 
 load_dotenv()
 </code></pre></div>
-      <div class="out"><pre>True</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>True</pre></div></div>
     </div>
 <div class="md-cell"><h1>2.4 Wedding Planner</h1>
 In this lab you will build a multi-agent wedding planner.
@@ -323,7 +329,7 @@ response = await coordinator.ainvoke(
       <div class="code-in"><pre><code>from pprint import pprint
 
 pprint(response)</code></pre></div>
-      <div class="out out-stream"><pre>{'destination': 'Paris',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>{'destination': 'Paris',
  'genre': 'jazz',
  'guest_count': '100',
  'messages': [HumanMessage(content=&quot;I'm from London and I'd like a wedding in Paris for 100 guests, jazz-genre&quot;, additional_kwargs={}, response_metadata={}, id='4ad4ec40-39db-4b6f-ad9f-d9fc7ac7dec9'),
@@ -335,11 +341,11 @@ pprint(response)</code></pre></div>
               ToolMessage(content='Here’s a Jazz-focused wedding playlist pulled from the Jazz results in your database. It’s 20 tracks with a relaxed, classic-to-fusion vibe that works well for a wedding reception.\n\n1) Desafinado — Antônio Carlos Jobim — 3:05 — $0.99\n2) Garota De Ipanema — Antônio Carlos Jobim — 4:45 — $0.99\n3) Samba De Uma Nota Só (One Note Samba) — Antônio Carlos Jobim — 2:17 — $0.99\n4) Por Causa De Você — Antônio Carlos Jobim — 2:50 — $0.99\n5) Ligia — Antônio Carlos Jobim — 4:12 — $0.99\n6) Fotografia — Antônio Carlos Jobim — 2:09 — $0.99\n7) Dindi (Dindi) — Antônio Carlos Jobim — 4:13 — $0.99\n8) Se Todos Fossem Iguais A Você (Instrumental) — Antônio Carlos Jobim — 2:15 — $0.99\n9) Falando De Amor — Antônio Carlos Jobim — 3:40 — $0.99\n10) Angela — Antônio Carlos Jobim — 2:50 — $0.99\n11) Corcovado (Quiet Nights Of Quiet Stars) — Antônio Carlos Jobim — 3:26 — $0.99\n12) Outra Vez — Antônio Carlos Jobim — 2:07 — $0.99\n13) O Boto (Bôto) — Antônio Carlos Jobim — 6:07 — $0.99\n14) Canta, Canta Mais — Antônio Carlos Jobim — 4:32 — $0.99\n15) Quadrant — Billy Cobham — 4:22 — $0.99\n16) Snoopy\'s search-Red baron — Billy Cobham — 7:36 — $0.99\n17) Spanish moss-&quot;A sound portrait&quot;-Spanish moss — Billy Cobham — 4:08 — $0.99\n18) Moon germs — Billy Cobham — 4:54 — $0.99\n19) Stratus — Billy Cobham — 9:42 — $0.99\n20) The pleasant pheasant — Billy Cobham — 5:18 — $0.99\n\nTotals\n- Total duration: 5067 seconds ≈ 84 minutes 27 seconds (about 1 hour 24 minutes 27 seconds)\n- Total cost: 20 tracks × $0.99 = $19.80\n\nNotes\n- The mix includes smooth bossa nova/jazz standards (Jobim) and longer fusion pieces (Billy Cobham) for varied energy throughout the event.\n- If you’d like, I can tailor this further: adjust tempo for first dance or cake-cutting, swap in more vocal tracks, or tighten the total duration to fit a specific time window.\n\nWould you like me to adjust the playlist for a preferred mood, tempo, or total length?', name='suggest_playlist', id='224d6999-b561-4a9f-a89c-50c8bc0ae3d1', tool_call_id='call_Uo7SFzzHTqrRByHkNnaGorr5'),
               AIMessage(content='Amazing—we’ve got solid options to move forward. Here’s a clear, coordinated plan based on your Paris wedding for 100 guests with a jazz vibe. I’ve kept the options concise and ready for next steps.\n\n1) Flights for your guests (planning approach)\n- How we’ll handle: group-book a few flight blocks from London to Paris (CDG/ORY) on your wedding week, with coordinated arrivals and a dedicated transfer plan to the venue.\n- Suggested airports to work with: London Heathrow (LHR), London Gatwick (LGW), London Stansted (STN), London Luton (LTN) feeding to Paris CDG/ORY.\n- Timeline and timing strategy (discussion needed): \n  - Arrival window: 2–3 days before the wedding for guests, with a common welcome event the day before.\n  - Departure window: the day after the reception or the next morning, depending on guest plans.\n- What I’ll do next (once you confirm date): secure 2–3 group flight blocks with parallel options (best value and shortest duration) and arrange airport transfers to Paris accommodations.\n\n2) Venues (100 guests, jazz-infused wedding)\nOptions you already have:\n\nA) Hôtel Rochechouart, Paris (central 9th arrondissement)\n- Vibe: chic, city-center with classic/modern charm.\n- Capacity: around 100 guests (fits exactly).\n- Pros: superb central location, elegant spaces, strong recognition for city weddings.\n- Cons: typically premium pricing; logistics/music flow should be planned to avoid noise restrictions.\n- Inclusions: quotes usually require separate catering/bars; I’ll pull exact package details and inclusions.\n\nB) Manoir de l’Île aux Loups, Nogent-sur-Marne (Île-de-France, estate setting)\n- Vibe: private estate feel, exclusive-use options, more secluded.\n- Capacity: 100 guests (in packages).\n- Pros: intimate, picturesque grounds, potential for on-site planning support.\n- Cons: transport for guests to central Paris can add complexity; if you want a more “city” backdrop, this is a contrast.\n- Inclusions: package price starting around €15,000 (as a reference). I’ll get exact inclusions (catering, decor, staff, rentals) in quotes.\n\nWhat I recommend to help you decide:\n- If you want a central Paris vibe with easy guest flow and iconic city ambience, Rochechouart is ideal.\n- If you prefer privacy, estate charm with potential for expansive outdoor spaces and a more intimate feel, Manoir de l’Île aux Loups is excellent.\n- I can request formal quotes that detail catering, bar packages, decor allowances, AV, and coordination services for both venues.\n\n3) Jazz playlist for the reception (curated, adaptable)\nCurrent baseline (20 tracks, mellow to upbeat), designed for a smooth flow:\n- Ceremony ambience and cocktail hour: Desafinado, Garota de Ipanema, Samba De Uma Nota Só, Dindi, Corcovado, Another bossa-nova lean\n- Dinner: soft vocal/jazz-instrumental mix (Chet Baker, Ella, Stan Getz, Jobim)\n- Dancing: a blend of classic jazz standards and tasteful fusion for energy (e.g., Stratus/Billy Cobham as a bridge into more upbeat, if you like)\n\nTwo practical structures you can choose from:\n- Option A: Elegant lounge jazz throughout (low-to-mid tempo for background during cocktails and dinner, with a gentle lift for dancing after dessert)\n  - Pros: refined, less body-shaking, great for conversations\n  - Cons: less instant dance-floor energy\n- Option B: Classic vocal jazz + refined instrumentals (more built-in dance hits while keeping a sophisticated feel)\n  - Pros: stronger dance-floor appeal while staying classy\n  - Cons: occasional vocals may be more present on the mic\n\nI can tailor this to your timing:\n- Pre-ceremony/arrival music (soft instrumental)\n- Cocktail hour (slightly livelier but still relaxed)\n- Dinner music (balanced tempo, mix of instrumental and light vocal)\n- Dancing (dance-friendly jazz and jazz-infused pop; tempo ramp-up)\n\nWould you like me to:\n- Expand this into a finalized 2-hour dinner playlist and a 3-hour dancing set, with exact track order?\n- Or include more vocal jazz (Ella, Louis, Billie Holiday, Chet Baker) and fewer fusion tracks?\n\nNext steps and quick questions\n- What date window are you considering in Paris? Any preferred month or exact date?\n- Budget ranges for venue and catering (high/medium/low) so I can target quotes precisely?\n- Do you want central Paris (Rochechouart) or estate outside central Paris (Manoir de l’Île aux Loups) as the primary option?\n- Do you want live jazz (band) as an add-on or strictly a curated DJ/playlist approach?\n- Any must-haves or deal-breakers (catering style, bar service, décor theme, or sensory requirements like acoustics or outdoor space usage)?\n- Do you want me to start contacting the two venues for formal proposals and request group-flight quotes now?\n\nIf you’re happy, I’ll:\n- Request formal venue proposals for Rochechouart and Manoir de l’Île aux Loups with detailed inclusions and group-guest pricing.\n- Source group flight options with preferred transfer plans and a suggested guest-itinerary.\n- Deliver a finalized, timeline-optimized jazz playlist (with two mood options) and music-rights planning notes for France (SACEM and venue-specific requirements).\n\nTell me your date window and any preferences above, and I’ll move these parts into concrete bookings and timelines.', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 2726, 'prompt_tokens': 3009, 'total_tokens': 5735, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 1536, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DGpZToRQjMBPDc1IezI7HfrPfmsv8', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None}, id='lc_run--019cc94e-05e2-7141-8b12-ab5f3de47396-0', tool_calls=[], invalid_tool_calls=[], usage_metadata={'input_tokens': 3009, 'output_tokens': 2726, 'total_tokens': 5735, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 1536}})],
  'origin': 'London'}
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>print(response[&quot;messages&quot;][-1].content)</code></pre></div>
-      <div class="out out-stream"><pre>Amazing—we’ve got solid options to move forward. Here’s a clear, coordinated plan based on your Paris wedding for 100 guests with a jazz vibe. I’ve kept the options concise and ready for next steps.
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Amazing—we’ve got solid options to move forward. Here’s a clear, coordinated plan based on your Paris wedding for 100 guests with a jazz vibe. I’ve kept the options concise and ready for next steps.
 
 1) Flights for your guests (planning approach)
 - How we’ll handle: group-book a few flight blocks from London to Paris (CDG/ORY) on your wedding week, with coordinated arrivals and a dedicated transfer plan to the venue.
@@ -409,7 +415,7 @@ If you’re happy, I’ll:
 - Deliver a finalized, timeline-optimized jazz playlist (with two mood options) and music-rights planning notes for France (SACEM and venue-specific requirements).
 
 Tell me your date window and any preferences above, and I’ll move these parts into concrete bookings and timelines.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>link to trace: https://smith.langchain.com/public/7b5fe668-d3e3-4af4-b513-a8cacc0c9e84/r</p></div>
 </div>

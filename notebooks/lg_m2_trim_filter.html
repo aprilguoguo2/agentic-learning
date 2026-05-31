@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -108,7 +114,7 @@ messages.append(HumanMessage(f&quot;Yes, I know about whales. But what others sh
 
 for m in messages:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Name: Bot
 
 So you said you were researching ocean mammals?
@@ -116,14 +122,14 @@ So you said you were researching ocean mammals?
 Name: Lance
 
 Yes, I know about whales. But what others should I learn about?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Recall we can pass them to a chat model.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>from langchain_openai import ChatOpenAI
 llm = ChatOpenAI(model=&quot;gpt-4o&quot;)
 llm.invoke(messages)</code></pre></div>
-      <div class="out"><pre>AIMessage(content='Great question, Lance! Ocean mammals are a fascinating group of animals. Here are a few more ocean mammals you might want to learn about:\n\n1. **Dolphins**: These intelligent and social creatures are known for their playful behavior and complex communication skills. There are several species of dolphins, including the bottlenose dolphin and the common dolphin.\n\n2. **Porpoises**: Similar to dolphins but typically smaller and stouter, porpoises are less well-known but equally interesting. The harbor porpoise is one example.\n\n3. **Seals**: These include both true seals (like the harbor seal) and eared seals (which include sea lions and fur seals). They are known for their ability to live both in the water and on land.\n\n4. **Sea Lions**: These are a type of eared seal, easily recognized by their external ear flaps and their ability to &quot;walk&quot; on land using their large flippers.\n\n5. **Walruses**: Known for their distinctive long tusks and whiskers, walruses are social animals that live in Arctic regions.\n\n6. **Manatees and Dugongs**: Often called &quot;sea cows,&quot; these gentle herbivores are found in warm coastal waters and rivers. Manatees are found in the Americas and Africa, while dugongs are found in the Indo-Pacific region.\n\n7. **Sea Otters**: Although not exclusively marine, sea otters spend much of their time in the water. They are known for their use of tools to open shellfish.\n\n8. **Polar Bears**: While primarily land animals, polar bears are excellent swimmers and spend a significant amount of time hunting on sea ice.\n\n9. **Sperm Whales**: Known for their large heads and deep diving abilities, sperm whales are the largest of the toothed whales.\n\n10. **Narwhals**: Often called the &quot;unicorns of the sea,&quot; these Arctic whales are known for their long, spiral tusk, which is actually an elongated tooth.\n\nEach of these animals has unique adaptations and behaviors that make them fascinating subjects of study. Happy researching!', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 434, 'prompt_tokens': 39, 'total_tokens': 473}, 'model_name': 'gpt-4o-2024-05-13', 'system_fingerprint': 'fp_25624ae3a5', 'finish_reason': 'stop', 'logprobs': None}, id='run-513c189f-66e0-4c3c-bdb8-5d59934d10f9-0', usage_metadata={'input_tokens': 39, 'output_tokens': 434, 'total_tokens': 473})</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>AIMessage(content='Great question, Lance! Ocean mammals are a fascinating group of animals. Here are a few more ocean mammals you might want to learn about:\n\n1. **Dolphins**: These intelligent and social creatures are known for their playful behavior and complex communication skills. There are several species of dolphins, including the bottlenose dolphin and the common dolphin.\n\n2. **Porpoises**: Similar to dolphins but typically smaller and stouter, porpoises are less well-known but equally interesting. The harbor porpoise is one example.\n\n3. **Seals**: These include both true seals (like the harbor seal) and eared seals (which include sea lions and fur seals). They are known for their ability to live both in the water and on land.\n\n4. **Sea Lions**: These are a type of eared seal, easily recognized by their external ear flaps and their ability to &quot;walk&quot; on land using their large flippers.\n\n5. **Walruses**: Known for their distinctive long tusks and whiskers, walruses are social animals that live in Arctic regions.\n\n6. **Manatees and Dugongs**: Often called &quot;sea cows,&quot; these gentle herbivores are found in warm coastal waters and rivers. Manatees are found in the Americas and Africa, while dugongs are found in the Indo-Pacific region.\n\n7. **Sea Otters**: Although not exclusively marine, sea otters spend much of their time in the water. They are known for their use of tools to open shellfish.\n\n8. **Polar Bears**: While primarily land animals, polar bears are excellent swimmers and spend a significant amount of time hunting on sea ice.\n\n9. **Sperm Whales**: Known for their large heads and deep diving abilities, sperm whales are the largest of the toothed whales.\n\n10. **Narwhals**: Often called the &quot;unicorns of the sea,&quot; these Arctic whales are known for their long, spiral tusk, which is actually an elongated tooth.\n\nEach of these animals has unique adaptations and behaviors that make them fascinating subjects of study. Happy researching!', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 434, 'prompt_tokens': 39, 'total_tokens': 473}, 'model_name': 'gpt-4o-2024-05-13', 'system_fingerprint': 'fp_25624ae3a5', 'finish_reason': 'stop', 'logprobs': None}, id='run-513c189f-66e0-4c3c-bdb8-5d59934d10f9-0', usage_metadata={'input_tokens': 39, 'output_tokens': 434, 'total_tokens': 473})</pre></div></div>
     </div>
 <div class="md-cell"><p>We can run our chat model in a simple graph with <code class="ic">MessagesState</code>.</p></div>
 <div class="code-cell">
@@ -144,13 +150,13 @@ graph = builder.compile()
 
 # View
 display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>output = graph.invoke({'messages': messages})
 for m in output['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Name: Bot
 
 So you said you were researching ocean mammals?
@@ -179,7 +185,7 @@ Absolutely, whales are fascinating! But there are many other ocean mammals worth
 8. **Polar Bears**: Though they spend a lot of time on ice, polar bears are excellent swimmers and are considered marine mammals because they depend on the ocean for their primary food source, seals.
 
 Each of these ocean mammals has unique adaptations and behaviors that make them interesting subjects of study. If you're into marine biology, you might find their various ecosystems, social structures, and survival strategies particularly compelling.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Reducer</h2>
 <p>A practical challenge when working with messages is managing long-running conversations.</p>
@@ -209,7 +215,7 @@ graph = builder.compile()
 
 # View
 display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Message list with a preamble
@@ -222,7 +228,7 @@ messages.append(HumanMessage(&quot;Yes, I know about whales. But what others sho
 output = graph.invoke({'messages': messages})
 for m in output['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Name: Bot
 
 So you said you were researching ocean mammals?
@@ -249,7 +255,7 @@ That's great that you know about whales! There are a variety of other fascinatin
 7. **Polar Bears**: While not exclusively marine, polar bears depend heavily on the ocean for hunting seals and are excellent swimmers.
 
 Each of these groups has unique adaptations and behaviors that make them fascinating subjects of study. Happy researching!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Filtering messages</h2>
 <p>If you don't need or want to modify the graph state, you can just filter the messages you pass to the chat model.</p>
@@ -268,7 +274,7 @@ graph = builder.compile()
 
 # View
 display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="md-cell"><p>Let's take our existing list of messages, append the above LLM response, and append a follow-up question.</p></div>
 <div class="code-cell">
@@ -279,7 +285,7 @@ messages.append(HumanMessage(f&quot;Tell me more about Narwhals!&quot;, name=&qu
 <div class="code-cell">
       <div class="code-in"><pre><code>for m in messages:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Name: Bot
 
 Hi.
@@ -324,14 +330,14 @@ Each of these ocean mammals has unique behaviors, adaptations, and ecological ro
 Name: Lance
 
 Tell me more about Narwhals!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Invoke, using message filtering
 output = graph.invoke({'messages': messages})
 for m in output['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================== Ai Message ==================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================== Ai Message ==================================
 Name: Bot
 
 Hi.
@@ -410,7 +416,7 @@ Here are some key facts about narwhals:
 - Narwhals hold significant cultural and economic value for indigenous Arctic communities.
 
 Overall, narwhals are remarkable creatures with unique adaptations that allow them to thrive in some of the planet's harshest environments.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>The state has all of the mesages.</p>
 <p>But, let's look at the LangSmith trace to see that the model invocation only uses the last message:</p>
@@ -443,7 +449,7 @@ graph = builder.compile()
 
 # View
 display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>messages.append(output['messages'][-1])
@@ -459,7 +465,7 @@ trim_messages(
             token_counter=ChatOpenAI(model=&quot;gpt-4o&quot;),
             allow_partial=False
         )</code></pre></div>
-      <div class="out"><pre>[HumanMessage(content='Tell me where Orcas live!', name='Lance')]</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>[HumanMessage(content='Tell me where Orcas live!', name='Lance')]</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Invoke, using message trimming in the chat_model_node 

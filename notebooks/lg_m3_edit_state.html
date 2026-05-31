@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -169,7 +175,7 @@ graph = builder.compile(interrupt_before=[&quot;assistant&quot;], checkpointer=m
 
 # Show
 display(Image(graph.get_graph(xray=True).draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="md-cell"><p>Let's run!</p>
 <p>We can see the graph is interrupted before the chat model responds.</p></div>
@@ -183,15 +189,15 @@ thread = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;}}
 # Run the graph until the first interruption
 for event in graph.stream(initial_input, thread, stream_mode=&quot;values&quot;):
     event['messages'][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Multiply 2 and 3
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>state = graph.get_state(thread)
 state</code></pre></div>
-      <div class="out"><pre>StateSnapshot(values={'messages': [HumanMessage(content='Multiply 2 and 3', id='e7edcaba-bfed-4113-a85b-25cc39d6b5a7')]}, next=('assistant',), config={'configurable': {'thread_id': '1', 'checkpoint_ns': '', 'checkpoint_id': '1ef6a412-5b2d-601a-8000-4af760ea1d0d'}}, metadata={'source': 'loop', 'writes': None, 'step': 0, 'parents': {}}, created_at='2024-09-03T22:09:10.966883+00:00', parent_config={'configurable': {'thread_id': '1', 'checkpoint_ns': '', 'checkpoint_id': '1ef6a412-5b28-6ace-bfff-55d7a2c719ae'}}, tasks=(PregelTask(id='dbee122a-db69-51a7-b05b-a21fab160696', name='assistant', error=None, interrupts=(), state=None),))</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>StateSnapshot(values={'messages': [HumanMessage(content='Multiply 2 and 3', id='e7edcaba-bfed-4113-a85b-25cc39d6b5a7')]}, next=('assistant',), config={'configurable': {'thread_id': '1', 'checkpoint_ns': '', 'checkpoint_id': '1ef6a412-5b2d-601a-8000-4af760ea1d0d'}}, metadata={'source': 'loop', 'writes': None, 'step': 0, 'parents': {}}, created_at='2024-09-03T22:09:10.966883+00:00', parent_config={'configurable': {'thread_id': '1', 'checkpoint_ns': '', 'checkpoint_id': '1ef6a412-5b28-6ace-bfff-55d7a2c719ae'}}, tasks=(PregelTask(id='dbee122a-db69-51a7-b05b-a21fab160696', name='assistant', error=None, interrupts=(), state=None),))</pre></div></div>
     </div>
 <div class="md-cell"><p>Now, we can directly apply a state update.</p>
 <p>Remember, updates to the <code class="ic">messages</code> key will use the <code class="ic">add_messages</code> reducer:<br> <br><ul><li>If we want to over-write the existing message, we can supply the message <code class="ic">id</code>.</li><br><li>If we simply want to append to our list of messages, then we can pass a message without an <code class="ic">id</code> specified, as shown below.</li></ul></p></div>
@@ -200,9 +206,9 @@ state</code></pre></div>
     thread,
     {&quot;messages&quot;: [HumanMessage(content=&quot;No, actually multiply 3 and 3!&quot;)]},
 )</code></pre></div>
-      <div class="out"><pre>{'configurable': {'thread_id': '1',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'configurable': {'thread_id': '1',
   'checkpoint_ns': '',
-  'checkpoint_id': '1ef6a414-f419-6182-8001-b9e899eca7e5'}}</pre></div>
+  'checkpoint_id': '1ef6a414-f419-6182-8001-b9e899eca7e5'}}</pre></div></div>
     </div>
 <div class="md-cell"><p>Let's have a look.</p>
 <p>We called <code class="ic">update_state</code> with a new message.</p>
@@ -211,20 +217,20 @@ state</code></pre></div>
       <div class="code-in"><pre><code>new_state = graph.get_state(thread).values
 for m in new_state['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Multiply 2 and 3
 ================================ Human Message =================================
 
 No, actually multiply 3 and 3!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Now, let's proceed with our agent, simply by passing <code class="ic">None</code> and allowing it proceed from the current state.</p>
 <p>We emit the current and then proceed to execute the remaining nodes.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>for event in graph.stream(None, thread, stream_mode=&quot;values&quot;):
     event['messages'][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 No, actually multiply 3 and 3!
 ================================== Ai Message ==================================
@@ -238,21 +244,21 @@ Tool Calls:
 Name: multiply
 
 9
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Now, we're back at the <code class="ic">assistant</code>, which has our <code class="ic">breakpoint</code>.</p>
 <p>We can again pass <code class="ic">None</code> to proceed.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>for event in graph.stream(None, thread, stream_mode=&quot;values&quot;):
     event['messages'][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================= Tool Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================= Tool Message =================================
 Name: multiply
 
 9
 ================================== Ai Message ==================================
 
 3 multiplied by 3 equals 9.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h3>Editing graph state in Studio</h3>
 <p><strong>⚠️ Notice</strong></p>
@@ -289,18 +295,18 @@ async for chunk in client.runs.stream(
     if messages:
         print(messages[-1])
     print(&quot;-&quot; * 50)</code></pre></div>
-      <div class="out out-stream"><pre>Receiving new event of type: metadata...
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Receiving new event of type: metadata...
 --------------------------------------------------
 Receiving new event of type: values...
 {'content': 'Multiply 2 and 3', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'human', 'name': None, 'id': '882dabe4-b877-4d71-bd09-c34cb97c4f46', 'example': False}
 --------------------------------------------------
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We can get the current state</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>current_state = await client.threads.get_state(thread['thread_id'])
 current_state</code></pre></div>
-      <div class="out"><pre>{'values': {'messages': [{'content': 'Multiply 2 and 3',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'values': {'messages': [{'content': 'Multiply 2 and 3',
     'additional_kwargs': {},
     'response_metadata': {},
     'type': 'human',
@@ -325,51 +331,51 @@ current_state</code></pre></div>
   'assistant_id': 'fe096781-5601-53d2-b2f6-0d3403f7e9ca'},
  'created_at': '2024-09-03T22:13:54.466695+00:00',
  'checkpoint_id': '1ef6a41c-ead7-637b-8000-8c6a7b98379e',
- 'parent_checkpoint_id': '1ef6a41c-ead3-637d-bfff-397ebdb4f2ea'}</pre></div>
+ 'parent_checkpoint_id': '1ef6a41c-ead3-637d-bfff-397ebdb4f2ea'}</pre></div></div>
     </div>
 <div class="md-cell"><p>We can look at the last message in state.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>last_message = current_state['values']['messages'][-1]
 last_message</code></pre></div>
-      <div class="out"><pre>{'content': 'Multiply 2 and 3',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'content': 'Multiply 2 and 3',
  'additional_kwargs': {},
  'response_metadata': {},
  'type': 'human',
  'name': None,
  'id': '882dabe4-b877-4d71-bd09-c34cb97c4f46',
- 'example': False}</pre></div>
+ 'example': False}</pre></div></div>
     </div>
 <div class="md-cell"><p>We can edit it!</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>last_message['content'] = &quot;No, actually multiply 3 and 3!&quot;
 last_message</code></pre></div>
-      <div class="out"><pre>{'content': 'No, actually multiply 3 and 3!',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'content': 'No, actually multiply 3 and 3!',
  'additional_kwargs': {},
  'response_metadata': {},
  'type': 'human',
  'name': None,
  'id': '882dabe4-b877-4d71-bd09-c34cb97c4f46',
- 'example': False}</pre></div>
+ 'example': False}</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>last_message</code></pre></div>
-      <div class="out"><pre>{'content': 'No, actually multiply 3 and 3!',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'content': 'No, actually multiply 3 and 3!',
  'additional_kwargs': {},
  'response_metadata': {},
  'type': 'human',
  'name': None,
  'id': '882dabe4-b877-4d71-bd09-c34cb97c4f46',
- 'example': False}</pre></div>
+ 'example': False}</pre></div></div>
     </div>
 <div class="md-cell"><p>Remember, as we said before, updates to the <code class="ic">messages</code> key will use the same <code class="ic">add_messages</code> reducer.</p>
 <p>If we want to over-write the existing message, then we can supply the message <code class="ic">id</code>.</p>
 <p>Here, we did that. We only modified the message <code class="ic">content</code>, as shown above.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code>await client.threads.update_state(thread['thread_id'], {&quot;messages&quot;: last_message})</code></pre></div>
-      <div class="out"><pre>{'configurable': {'thread_id': 'a95ffa54-2435-4a47-a9da-e886369ca8ee',
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>{'configurable': {'thread_id': 'a95ffa54-2435-4a47-a9da-e886369ca8ee',
   'checkpoint_ns': '',
   'checkpoint_id': '1ef6a41d-cc8e-6979-8001-8c7c283b636c'},
- 'checkpoint_id': '1ef6a41d-cc8e-6979-8001-8c7c283b636c'}</pre></div>
+ 'checkpoint_id': '1ef6a41d-cc8e-6979-8001-8c7c283b636c'}</pre></div></div>
     </div>
 <div class="md-cell"><p>Now, we resume by passing <code class="ic">None</code>.</p></div>
 <div class="code-cell">
@@ -385,7 +391,7 @@ last_message</code></pre></div>
     if messages:
         print(messages[-1])
     print(&quot;-&quot; * 50)</code></pre></div>
-      <div class="out out-stream"><pre>Receiving new event of type: metadata...
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Receiving new event of type: metadata...
 --------------------------------------------------
 Receiving new event of type: values...
 {'content': 'No, actually multiply 3 and 3!', 'additional_kwargs': {'additional_kwargs': {}, 'response_metadata': {}, 'example': False}, 'response_metadata': {}, 'type': 'human', 'name': None, 'id': '882dabe4-b877-4d71-bd09-c34cb97c4f46', 'example': False}
@@ -396,7 +402,7 @@ Receiving new event of type: values...
 Receiving new event of type: values...
 {'content': '9', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'tool', 'name': 'multiply', 'id': '226bfbad-0cea-4900-80c5-761a62bd4bc1', 'tool_call_id': 'call_vi16je2EIikHuT7Aue2sd1qd', 'artifact': None, 'status': 'success'}
 --------------------------------------------------
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We get the result of the tool call as <code class="ic">9</code>, as expected.</p></div>
 <div class="code-cell">
@@ -412,7 +418,7 @@ Receiving new event of type: values...
     if messages:
         print(messages[-1])
     print(&quot;-&quot; * 50)</code></pre></div>
-      <div class="out out-stream"><pre>Receiving new event of type: metadata...
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Receiving new event of type: metadata...
 --------------------------------------------------
 Receiving new event of type: values...
 {'content': '9', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'tool', 'name': 'multiply', 'id': '226bfbad-0cea-4900-80c5-761a62bd4bc1', 'tool_call_id': 'call_vi16je2EIikHuT7Aue2sd1qd', 'artifact': None, 'status': 'success'}
@@ -420,7 +426,7 @@ Receiving new event of type: values...
 Receiving new event of type: values...
 {'content': 'The result of multiplying 3 by 3 is 9.', 'additional_kwargs': {}, 'response_metadata': {'finish_reason': 'stop', 'model_name': 'gpt-4o-2024-05-13', 'system_fingerprint': 'fp_157b3831f5'}, 'type': 'ai', 'name': None, 'id': 'run-859bbf47-9f35-4e71-ae98-9d93ee49d16c', 'example': False, 'tool_calls': [], 'invalid_tool_calls': [], 'usage_metadata': None}
 --------------------------------------------------
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Awaiting user input</h2>
 <p>So, it's clear that we can edit our agent state after a breakpoint.</p>
@@ -462,7 +468,7 @@ builder.add_edge(&quot;tools&quot;, &quot;human_feedback&quot;)
 memory = MemorySaver()
 graph = builder.compile(interrupt_before=[&quot;human_feedback&quot;], checkpointer=memory)
 display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="md-cell"><p>We will get feedback from the user.</p>
 <p>We use <code class="ic">.update_state</code> to update the state of the graph with the human response we get, as before.</p>
@@ -487,7 +493,7 @@ graph.update_state(thread, {&quot;messages&quot;: user_input}, as_node=&quot;hum
 # Continue the graph execution
 for event in graph.stream(None, thread, stream_mode=&quot;values&quot;):
     event[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Multiply 2 and 3
 ================================ Human Message =================================
@@ -504,20 +510,20 @@ Tool Calls:
 Name: multiply
 
 9
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Continue the graph execution
 for event in graph.stream(None, thread, stream_mode=&quot;values&quot;):
     event[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================= Tool Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================= Tool Message =================================
 Name: multiply
 
 9
 ================================== Ai Message ==================================
 
 The result of multiplying 3 and 3 is 9.
-</pre></div>
+</pre></div></div>
     </div>
 </div>
 </body>

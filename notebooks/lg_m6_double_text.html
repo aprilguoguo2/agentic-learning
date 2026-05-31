@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -109,9 +115,9 @@ try:
     )
 except httpx.HTTPStatusError as e:
     print(&quot;Failed to start concurrent run&quot;, e)</code></pre></div>
-      <div class="out out-stream"><pre>Failed to start concurrent run Client error '409 Conflict' for url 'http://localhost:8123/threads/2b58630e-00fd-4c35-afad-a6b59e9b9104/runs'
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Failed to start concurrent run Client error '409 Conflict' for url 'http://localhost:8123/threads/2b58630e-00fd-4c35-afad-a6b59e9b9104/runs'
 For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409
-</pre></div>
+</pre></div></div>
     </div>
 <div class="code-cell">
       <div class="code-in"><pre><code>from langchain_core.messages import convert_to_messages
@@ -123,7 +129,7 @@ await client.runs.join(thread[&quot;thread_id&quot;], run[&quot;run_id&quot;])
 state = await client.threads.get_state(thread[&quot;thread_id&quot;])
 for m in convert_to_messages(state[&quot;values&quot;][&quot;messages&quot;]):
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Add a ToDo to follow-up with DI Repairs.
 ================================== Ai Message ==================================
@@ -139,7 +145,7 @@ Content: {'task': 'Follow-up with DI Repairs', 'time_to_complete': 30, 'deadline
 ================================== Ai Message ==================================
 
 I've added a task to follow-up with DI Repairs to your ToDo list. If there's anything else you need, feel free to let me know!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Enqueue</h2>
 <p>We can use <a href="https://docs.langchain.com/langsmith/enqueue-concurrent" target="_blank">enqueue</a> any new runs until the current run completes.</p></div>
@@ -175,7 +181,7 @@ await client.runs.join(thread[&quot;thread_id&quot;], second_run[&quot;run_id&qu
 state = await client.threads.get_state(thread[&quot;thread_id&quot;])
 for m in convert_to_messages(state[&quot;values&quot;][&quot;messages&quot;]):
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Send Erik his t-shirt gift this weekend.
 ================================== Ai Message ==================================
@@ -211,7 +217,7 @@ Added content: 2024-11-17T23:59:00
 ================================== Ai Message ==================================
 
 I've updated your ToDo list to ensure you get cash and pay the nanny for 2 weeks by Friday. Let me know if there's anything else you need!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Interrupt</h2>
 <p>We can use <a href="https://docs.langchain.com/langsmith/interrupt-concurrent" target="_blank">interrupt</a> to interrupt the current run, but save all the work that has been done so far up to that point.</p></div>
@@ -252,7 +258,7 @@ await client.runs.join(thread[&quot;thread_id&quot;], second_run[&quot;run_id&qu
 state = await client.threads.get_state(thread[&quot;thread_id&quot;])
 for m in convert_to_messages(state[&quot;values&quot;][&quot;messages&quot;]):
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Give me a summary of my ToDos due tomrrow.
 ================================ Human Message =================================
@@ -271,14 +277,14 @@ Content: {'task': 'Order Ham for Thanksgiving', 'time_to_complete': 30, 'deadlin
 ================================== Ai Message ==================================
 
 I've added the task &quot;Order Ham for Thanksgiving&quot; to your ToDo list with a deadline of next Friday. If you need any more help, feel free to ask!
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We can see the initial run is saved, and has status <code class="ic">interrupted</code>.</p></div>
 <div class="code-cell">
       <div class="code-in"><pre><code># Confirm that the first run was interrupted
 print((await client.runs.get(thread[&quot;thread_id&quot;], interrupted_run[&quot;run_id&quot;]))[&quot;status&quot;])</code></pre></div>
-      <div class="out out-stream"><pre>interrupted
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>interrupted
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Rollback</h2>
 <p>We can use <a href="https://docs.langchain.com/langsmith/rollback-concurrent" target="_blank">rollback</a> to interrupt the prior run of the graph, delete it, and start a new run with the double-texted input.</p></div>
@@ -314,13 +320,13 @@ await client.runs.join(thread[&quot;thread_id&quot;], second_run[&quot;run_id&qu
 state = await client.threads.get_state(thread[&quot;thread_id&quot;])
 for m in convert_to_messages(state[&quot;values&quot;][&quot;messages&quot;]):
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Actually, add a ToDo to drop by Yoga in person on Sunday.
 ================================== Ai Message ==================================
 
 It looks like the task &quot;Drop by Yoga in person&quot; is already on your ToDo list with a deadline of November 19, 2024. Would you like me to update the deadline to the upcoming Sunday instead?
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>The initial run was deleted.</p></div>
 <div class="code-cell">
@@ -329,8 +335,8 @@ try:
     await client.runs.get(thread[&quot;thread_id&quot;], rolled_back_run[&quot;run_id&quot;])
 except httpx.HTTPStatusError as _:
     print(&quot;Original run was correctly deleted&quot;)</code></pre></div>
-      <div class="out out-stream"><pre>Original run was correctly deleted
-</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>Original run was correctly deleted
+</pre></div></div>
     </div>
 <div class="md-cell"><h3>Summary </h3>
 <p>We can see <a href="https://docs.langchain.com/langsmith/double-texting" target="_blank">all the methods summarized</a>:</p>

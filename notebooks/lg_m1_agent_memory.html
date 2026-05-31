@@ -38,24 +38,30 @@ a{color:var(--accent)}
 .md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
 
 /* code cells */
-.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
-.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.out img{max-width:100%;border-radius:6px}
-.out-stream{background:#fafafa}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+
+/* output area */
+.out-wrap{border-top:2px solid var(--accent-light)}
+.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out{background:#fff;padding:14px 16px;overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
+.out img{max-width:100%;border-radius:6px;margin:4px 0}
+.out-stream{background:#fefefe}
 .out-error{background:#fff5f5}
 .out-error pre{color:#b00020}
 .out-html{overflow-x:auto}
 .out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
-.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
+.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
 .out-html tr:hover td{background:#f9f5ff}
 
 .raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
 .raw-cell pre{font-size:.84em;white-space:pre-wrap}
+.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
 </style>
 </head>
 <body>
@@ -171,7 +177,7 @@ react_graph = builder.compile()
 
 # Show
 display(Image(react_graph.get_graph(xray=True).draw_mermaid_png()))</code></pre></div>
-      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div></div>
     </div>
 <div class="md-cell"><h2>Memory</h2>
 <p>Let's run our agent, as before.</p></div>
@@ -180,7 +186,7 @@ display(Image(react_graph.get_graph(xray=True).draw_mermaid_png()))</code></pre>
 messages = react_graph.invoke({&quot;messages&quot;: messages})
 for m in messages['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Add 3 and 4.
 ================================== Ai Message ==================================
@@ -197,7 +203,7 @@ Name: add
 ================================== Ai Message ==================================
 
 The sum of 3 and 4 is 7.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>Now, let's multiply by 2!</p></div>
 <div class="code-cell">
@@ -205,7 +211,7 @@ The sum of 3 and 4 is 7.
 messages = react_graph.invoke({&quot;messages&quot;: messages})
 for m in messages['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Multiply that by 2.
 ================================== Ai Message ==================================
@@ -222,7 +228,7 @@ Name: multiply
 ================================== Ai Message ==================================
 
 The result of multiplying 2 by 2 is 4.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>We don't retain memory of 7 from our initial chat!</p>
 <p>This is because <a href="https://github.com/langchain-ai/langgraph/discussions/352#discussioncomment-9291220" target="_blank">state is transient</a> to a single graph execution.</p>
@@ -257,7 +263,7 @@ messages = [HumanMessage(content=&quot;Add 3 and 4.&quot;)]
 messages = react_graph_memory.invoke({&quot;messages&quot;: messages},config)
 for m in messages['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Add 3 and 4.
 ================================== Ai Message ==================================
@@ -274,7 +280,7 @@ Name: add
 ================================== Ai Message ==================================
 
 The sum of 3 and 4 is 7.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><p>If we pass the same <code class="ic">thread_id</code>, then we can proceed from from the previously logged state checkpoint!</p>
 <p>In this case, the above conversation is captured in the thread.</p>
@@ -285,7 +291,7 @@ The sum of 3 and 4 is 7.
 messages = react_graph_memory.invoke({&quot;messages&quot;: messages}, config)
 for m in messages['messages']:
     m.pretty_print()</code></pre></div>
-      <div class="out out-stream"><pre>================================ Human Message =================================
+      <div class="out-wrap"><div class="out-label">Output</div><div class="out out-stream"><pre>================================ Human Message =================================
 
 Add 3 and 4.
 ================================== Ai Message ==================================
@@ -319,7 +325,7 @@ Name: multiply
 ================================== Ai Message ==================================
 
 The result of multiplying 7 by 2 is 14.
-</pre></div>
+</pre></div></div>
     </div>
 <div class="md-cell"><h2>Studio</h2>
 <p><strong>⚠️ Notice</strong></p>
