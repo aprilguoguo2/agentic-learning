@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project — Deep Agent with Research — April's Agentic Learning</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F0FF;--card:#FDF5FF;--accent:#C084A8;--accent2:#9B6FA8;
+  --accent-light:#F0E6F6;--text:#2D1B3D;--muted:#8B7A9A;
+  --border:#E8D5F0;--radius:16px;--shadow:0 2px 16px rgba(160,100,180,.11);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px}
+
+/* top bar */
+.topbar{background:linear-gradient(135deg,#C084A8,#9B6FA8);padding:16px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(120,60,140,.2)}
+.back{color:#fff;text-decoration:none;font-size:13px;background:rgba(255,255,255,.22);padding:7px 16px;border-radius:20px;white-space:nowrap;flex-shrink:0;font-weight:600;letter-spacing:.2px}
+.topbar h1{color:#fff;font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* page subtitle */
+.page-sub{max-width:720px;margin:28px auto 8px;padding:0 20px;font-size:13px;color:var(--muted);font-weight:500;letter-spacing:.4px;text-transform:uppercase}
+
+/* modules */
+.modules{max-width:720px;margin:0 auto;padding:0 16px}
+.module{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+
+/* module header / accordion */
+.mod-hdr{
+  width:100%;background:none;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px;text-align:left;gap:12px;
+  -webkit-tap-highlight-color:transparent;
+}
+.mod-hdr:hover{background:var(--accent-light)}
+.mod-hdr-left{display:flex;align-items:center;gap:12px}
+.mod-num{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--accent-light);color:var(--accent2);
+  font-size:13px;font-weight:700;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.mod-title{font-size:15px;font-weight:700;color:var(--text)}
+.mod-count{font-size:12px;color:var(--muted);margin-top:2px}
+.chevron{font-size:18px;color:var(--accent);transition:transform .25s ease;flex-shrink:0}
+.chevron.open{transform:rotate(180deg)}
+
+/* module body */
+.mod-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.mod-body.open{max-height:9999px}
+.mod-inner{padding:0 16px 16px}
+
+/* lesson */
+.lesson{
+  border:1px solid var(--border);border-radius:12px;
+  margin-bottom:14px;overflow:hidden;background:#fff;
+}
+.lesson-title{
+  font-size:14px;font-weight:700;color:var(--text);
+  padding:14px 16px 10px;
+  display:flex;align-items:center;gap:8px;
+}
+.lesson-title::before{content:'▶';font-size:10px;color:var(--accent);flex-shrink:0}
+
+/* video */
+.video-wrap{
+  position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
+  background:#1e1e2e;
+}
+.video-wrap iframe{
+  position:absolute;top:0;left:0;width:100%;height:100%;border:none;
+}
+.video-placeholder{
+  background:linear-gradient(135deg,#f3e8ff,#fde8f5);
+  padding:28px 20px;text-align:center;
+  font-size:13px;color:var(--muted);
+  border-top:1px solid var(--border);
+}
+.video-placeholder span{font-size:22px;display:block;margin-bottom:6px}
+
+/* notebooks */
+.nb-links{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--border);background:var(--accent-light)}
+.nb-link{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#fff;color:var(--accent2);
+  border:1px solid var(--border);border-radius:20px;
+  padding:6px 14px;font-size:13px;font-weight:600;
+  text-decoration:none;transition:background .15s,transform .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.nb-link:hover,.nb-link:focus{background:var(--accent-light);transform:translateY(-1px);outline:none}
+.nb-link::before{content:'📓';font-size:14px}
+
+/* notebook-only row (no video) */
+.nb-only{padding:14px 16px;border-top:1px solid var(--border)}
+</style>
+<script src="video-ids.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="index.html">← Home</a>
+  <h1>🔬 Project — Deep Agent with Research</h1>
+</div>
+
+<div class="page-sub">Modules</div>
+<div class="modules">
+
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">1</div>
+          <div>
+            <div class="mod-title">Module 1 — Course Overview</div>
+            <div class="mod-count">1 lesson</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Course Overview</div>
+        <div id="v_dar_m1"></div>
+      </div>
+<script>document.getElementById('v_dar_m1').outerHTML=vid('dar_m1');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">2</div>
+          <div>
+            <div class="mod-title">Module 2 — Scope</div>
+            <div class="mod-count">1 lesson</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Scoping</div>
+        <div id="v_dar_m2"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/dar_m2_scoping.html" target="_blank">Scoping</a></div>
+      </div>
+<script>document.getElementById('v_dar_m2').outerHTML=vid('dar_m2');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">3</div>
+          <div>
+            <div class="mod-title">Module 3 — Research Agent</div>
+            <div class="mod-count">1 lesson</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Research Agent</div>
+        <div id="v_dar_m3"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/dar_m3_research.html" target="_blank">Research Agent</a></div>
+      </div>
+<script>document.getElementById('v_dar_m3').outerHTML=vid('dar_m3');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">4</div>
+          <div>
+            <div class="mod-title">Module 4 — Research Agent with MCP</div>
+            <div class="mod-count">1 lesson</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Research Agent with MCP</div>
+        <div id="v_dar_m4"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/dar_m4_mcp.html" target="_blank">Research Agent + MCP</a></div>
+      </div>
+<script>document.getElementById('v_dar_m4').outerHTML=vid('dar_m4');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">5</div>
+          <div>
+            <div class="mod-title">Module 5 — Research Supervisor</div>
+            <div class="mod-count">1 lesson</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Research Supervisor</div>
+        <div id="v_dar_m5"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/dar_m5_supervisor.html" target="_blank">Research Supervisor</a></div>
+      </div>
+<script>document.getElementById('v_dar_m5').outerHTML=vid('dar_m5');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">6</div>
+          <div>
+            <div class="mod-title">Module 6 — Multi-Agent Research System</div>
+            <div class="mod-count">1 lesson</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Multi-Agent Research System</div>
+        <div id="v_dar_m6"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/dar_m6_full_system.html" target="_blank">Full Multi-Agent System</a></div>
+      </div>
+<script>document.getElementById('v_dar_m6').outerHTML=vid('dar_m6');</script>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script>
+
+function initModules() {
+  document.querySelectorAll('.mod-hdr').forEach((btn, i) => {
+    const body = btn.nextElementSibling;
+    const chev = btn.querySelector('.chevron');
+    if (i === 0) { body.classList.add('open'); chev.classList.add('open'); }
+    btn.addEventListener('click', () => {
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      chev.classList.toggle('open', !isOpen);
+    });
+  });
+}
+
+function vid(key) {
+  const id = (window.VIDEO_IDS || {})[key];
+  if (!id) return `<div class="video-placeholder"><span>🎬</span>Add Google Drive ID for this video in video-ids.js</div>`;
+  return `<div class="video-wrap"><iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div>`;
+}
+
+window.addEventListener('DOMContentLoaded', initModules);
+</script>
+</body>
+</html>

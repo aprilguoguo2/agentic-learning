@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3 Subagents</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../deep-agent.html">← Project: Deep Agent</a>
+  <h1>3 Subagents</h1>
+</div>
+<div class="nb">
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os
+
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(&quot;..&quot;, &quot;.env&quot;), override=True)
+
+%load_ext autoreload
+%autoreload 2</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import warnings
+warnings.filterwarnings(
+    &quot;ignore&quot;,
+    message=&quot;LangSmith now uses UUID v7&quot;, 
+    category=UserWarning,
+)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Context Isolation: Sub-agents</h2>
+<img src="./assets/agent_header_subagent.png" width="800" style="display:block; margin-left:0;">
+<p>Agent context can grow quickly as conversations progress, leading to several long context-related problems. A primary issue is context clash or confusion, where mixed objectives within the same context window can lead to suboptimal performance. <a href="https://blog.langchain.com/context-engineering-for-agents/" target="_blank">Context isolation</a> provides an effective solution by delegating tasks to <a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank">specialized sub-agents</a>, each operating within their own isolated context window. This approach prevents context clashes, confusion, poisoning, and dilution while enabling focused, specialized task execution.</p>
+<h3>Sub-agent delegation</h3>
+<img src="./assets/subagents.png" alt="./assets/subagents.png">
+<p>The primary insight is that we can create sub-agents with different tool sets tailored to specific tasks. Each sub-agent is stored in a registry dictionary with <code class="ic">subagent_type</code> as the key, allowing the main agent to delegate work through a <code class="ic">task(description, subagent_type)</code> tool call. The sub-agent operates in complete isolation from the parent's context, and its results are returned as a <code class="ic">ToolMessage</code> to the parent agent, maintaining clean separation of concerns.</p></div>
+<div class="md-cell"><p><div style="background-color: #fff3b0; padding: 10px; border-radius: 4px;"><br><b>Note:</b>  <br>The <code>create_react_agent</code> was moved from the LangGraph library to the LangChain library and renamed to <code>create_agent</code> in the 1.0 code release post-filming. There are slight changes to the imports and code to accommodate this. The video may display the previous configuration.<br></div></p></div>
+<div class="md-cell"><h2>Step 1: Create Sub Agents</h2>
+<p>Let's define how the user will specify sub agents<br><pre class="md-code"><code>from typing_extensions import TypedDict</p>
+<p>class SubAgent(TypedDict):<br>    &quot;&quot;&quot;Configuration for a specialized sub-agent.&quot;&quot;&quot;</p>
+<p>name: str<br>    description: str<br>    prompt: str<br>    tools: NotRequired[list[str]]</code></pre></p>
+<p>We will use a list of these objects to create all the sub agents we have access to</p>
+<pre class="md-code"><code>agents: list[SubAgent] = ...
+subagents = {
+    agent['name']: create_react_agent(
+        model=model,
+        prompt=agent['prompt'],
+        tools = get_tools(agent['tools']),
+        ...
+    )
+}</code></pre>
+<h2>Step 2: Create a tool to use Sub Agents</h2>
+<p>Logically, should look something like:</p>
+<pre class="md-code"><code>def task(
+    description: str  # The task the subagent should do
+    subagent_type: str  # Which subagent to use
+):
+    # Create new messages to pass to subagent - should just be the description
+    # Call sub agent
+    # Update state with both the subagents response AND any changes to file system</code></pre>
+<p>This ends up in full looking like:</p>
+<pre class="md-code"><code>@tool(description=TASK_DESCRIPTION_PREFIX.format(other_agents=other_agents_string))
+def task(
+    description: str,
+    subagent_type: str,
+    state: Annotated[DeepAgentState, InjectedState],
+    tool_call_id: Annotated[str, InjectedToolCallId],
+):
+    &quot;&quot;&quot;Delegate a task to a specialized sub-agent with isolated context.
+<p>This creates a fresh context for the sub-agent containing only the task description,<br>    preventing context pollution from the parent agent's conversation history.<br>    &quot;&quot;&quot;<br>    # Validate requested agent type exists<br>    if subagent_type not in agents:<br>        return f&quot;Error: invoked agent of type {subagent_type}, the only allowed types are {[f'<code class="ic">{k}</code>' for k in agents]}&quot;</p>
+<p># Get the requested sub-agent<br>    sub_agent = agents[subagent_type]</p>
+<p># Create isolated context with only the task description<br>    # This is the key to context isolation - no parent history<br>    state[&quot;messages&quot;] = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: description}]</p>
+<p># Execute the sub-agent in isolation<br>    result = sub_agent.invoke(state)</p>
+<p># Return results to parent agent via Command state update<br>    return Command(<br>        update={<br>            &quot;files&quot;: result.get(&quot;files&quot;, {}),  # Merge any file changes<br>            &quot;messages&quot;: [<br>                # Sub-agent result becomes a ToolMessage in parent context<br>                ToolMessage(<br>                    result[&quot;messages&quot;][-1].content, tool_call_id=tool_call_id<br>                )<br>            ],<br>        }<br>    )</p>
+<p>return task</code></pre></p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%writefile ../src/deep_agents_from_scratch/task_tool.py
+&quot;&quot;&quot;Task delegation tools for context isolation through sub-agents.
+
+This module provides the core infrastructure for creating and managing sub-agents
+with isolated contexts. Sub-agents prevent context clash by operating with clean
+context windows containing only their specific task description.
+&quot;&quot;&quot;
+
+from typing import Annotated, NotRequired
+from typing_extensions import TypedDict
+
+from langchain_core.messages import ToolMessage
+from langchain_core.tools import BaseTool, InjectedToolCallId, tool
+from langgraph.prebuilt import InjectedState  # updated 1.0
+from langchain.agents import create_agent  # updated 1.0
+
+from langgraph.types import Command
+
+from deep_agents_from_scratch.prompts import TASK_DESCRIPTION_PREFIX
+from deep_agents_from_scratch.state import DeepAgentState
+
+
+class SubAgent(TypedDict):
+    &quot;&quot;&quot;Configuration for a specialized sub-agent.&quot;&quot;&quot;
+
+    name: str
+    description: str
+    prompt: str
+    tools: NotRequired[list[str]]
+
+
+def _create_task_tool(tools, subagents: list[SubAgent], model, state_schema):
+    &quot;&quot;&quot;Create a task delegation tool that enables context isolation through sub-agents.
+
+    This function implements the core pattern for spawning specialized sub-agents with
+    isolated contexts, preventing context clash and confusion in complex multi-step tasks.
+
+    Args:
+        tools: List of available tools that can be assigned to sub-agents
+        subagents: List of specialized sub-agent configurations
+        model: The language model to use for all agents
+        state_schema: The state schema (typically DeepAgentState)
+
+    Returns:
+        A 'task' tool that can delegate work to specialized sub-agents
+    &quot;&quot;&quot;
+    # Create agent registry
+    agents = {}
+
+    # Build tool name mapping for selective tool assignment
+    tools_by_name = {}
+    for tool_ in tools:
+        if not isinstance(tool_, BaseTool):
+            tool_ = tool(tool_)
+        tools_by_name[tool_.name] = tool_
+
+    # Create specialized sub-agents based on configurations
+    for _agent in subagents:
+        if &quot;tools&quot; in _agent:
+            # Use specific tools if specified
+            _tools = [tools_by_name[t] for t in _agent[&quot;tools&quot;]]
+        else:
+            # Default to all tools
+            _tools = tools
+        agents[_agent[&quot;name&quot;]] = create_agent(   # updated 1.0
+            model, system_prompt=_agent[&quot;prompt&quot;], tools=_tools, state_schema=state_schema
+        )
+
+    # Generate description of available sub-agents for the tool description
+    other_agents_string = [
+        f&quot;- {_agent['name']}: {_agent['description']}&quot; for _agent in subagents
+    ]
+
+    @tool(description=TASK_DESCRIPTION_PREFIX.format(other_agents=other_agents_string))
+    def task(
+        description: str,
+        subagent_type: str,
+        state: Annotated[DeepAgentState, InjectedState],
+        tool_call_id: Annotated[str, InjectedToolCallId],
+    ):
+        &quot;&quot;&quot;Delegate a task to a specialized sub-agent with isolated context.
+
+        This creates a fresh context for the sub-agent containing only the task description,
+        preventing context pollution from the parent agent's conversation history.
+        &quot;&quot;&quot;
+        # Validate requested agent type exists
+        if subagent_type not in agents:
+            return f&quot;Error: invoked agent of type {subagent_type}, the only allowed types are {[f'`{k}`' for k in agents]}&quot;
+
+        # Get the requested sub-agent
+        sub_agent = agents[subagent_type]
+
+        # Create isolated context with only the task description
+        # This is the key to context isolation - no parent history
+        state[&quot;messages&quot;] = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: description}]
+
+        # Execute the sub-agent in isolation
+        result = sub_agent.invoke(state)
+
+        # Return results to parent agent via Command state update
+        return Command(
+            update={
+                &quot;files&quot;: result.get(&quot;files&quot;, {}),  # Merge any file changes
+                &quot;messages&quot;: [
+                    # Sub-agent result becomes a ToolMessage in parent context
+                    ToolMessage(
+                        result[&quot;messages&quot;][-1].content, tool_call_id=tool_call_id
+                    )
+                ],
+            }
+        )
+
+    return task</code></pre></div>
+      <div class="out out-stream"><pre>Overwriting ../src/deep_agents_from_scratch/task_tool.py
+</pre></div>
+    </div>
+<div class="md-cell"><p>Now, you have a routine that will generate sub-agents as tools. Now, you can define specific sub-agents and allow the system to call them with the <code class="ic">task</code> tool.    <br>Above, the <code class="ic">_create_task_tool</code> receives a list of type <code class="ic">SubAgent</code>. This list contains descriptions of the agents that are to be created.</p>
+<pre class="md-code"><code>class SubAgent(TypedDict):
+    &quot;&quot;&quot;Configuration for a specialized sub-agent.&quot;&quot;&quot;
+<p>name: str<br>    description: str<br>    prompt: str<br>    tools: NotRequired[list[str]]</p>
+<p>def _create_task_tool(tools, subagents: list[SubAgent], model, state_schema):<br>    &quot;&quot;&quot;Create a task delegation tool that enables context isolation through sub-agents.</code></pre><br>The <code class="ic">SubAgent</code> class defines the unique information needed to satisfy the dual role of a sub-agent. Sub-agents act as both tools and agents.</p>
+<ul><li><strong>As tools</strong>, they provide the supervisor agent with information about their capabilities and how they can be called.  </li>
+<li><strong>As agents</strong>, they require a prompt that describes how to carry out their tasks, along with a set of tools targeted for those tasks.  </li>
+</ul>
+Below, you will create a research subagent. Its <code class="ic">description</code> informs the supervisor agent that a single task should be delegated to this sub-agent. The <code class="ic">SIMPLE_RESEARCH_INSTRUCTIONS</code> is a prompt that is used by the sub-agent to direct its research. In this example, it is brief, but for a general-purpose researcher, it could be much more detailed. The sub-agent is also supplied with a <code class="ic">web_search</code> tool to use during its research.
+<pre class="md-code"><code># Create research sub-agent
+research_sub_agent = {
+    &quot;name&quot;: &quot;research-agent&quot;,
+    &quot;description&quot;: &quot;Delegate research to the sub-agent researcher. Only give this researcher one topic at a time.&quot;,
+    &quot;prompt&quot;: SIMPLE_RESEARCH_INSTRUCTIONS,
+    &quot;tools&quot;: [&quot;web_search&quot;],
+}</code></pre>
+<p>Note that the sub-agent receives a specific task, along with the necessary tools to complete it. It operates in its own context, limited to the single task description. This <a href="https://blog.langchain.com/context-engineering-for-agents/" target="_blank">context-engineering</a> approach ensures that the subagent’s working context remains free of context clashes, confusion, poisoning, and dilution.</p>
+<p>The supervisor agent prompt must now include a descripition of how to invoke and use these sub-agents. This is shown below. Note the <em>Available Tools</em> description and the instructions to use parallel research where applicable.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from utils import show_prompt
+
+from deep_agents_from_scratch.prompts import SUBAGENT_USAGE_INSTRUCTIONS
+
+show_prompt(SUBAGENT_USAGE_INSTRUCTIONS)</code></pre></div>
+      <div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">╭──────────────────────────────────────────────────── </span><span style="color: #008000; text-decoration-color: #008000; font-weight: bold">Prompt</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────────╮</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  You can delegate tasks to sub-agents.                                                                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Task&gt;</span>                                                                                                         <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  Your role is to coordinate research by delegating specific research tasks to sub-agents.                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Task&gt;</span>                                                                                                        <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Available Tools&gt;</span>                                                                                              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  1. **task(description, subagent_type)**: Delegate research tasks to specialized sub-agents                     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>     - description: Clear, specific research question or task                                                    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>     - subagent_type: Type of agent to use (e.g., "research-agent")                                              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  2. **think_tool(reflection)**: Reflect on the results of each delegated task and plan next steps.              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>     - reflection: Your detailed reflection on the results of the task and next steps.                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **PARALLEL RESEARCH**: When you identify multiple independent research directions, make multiple **task**      <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  tool calls in a single response to enable parallel execution. Use at most {max_concurrent_research_units}      <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  parallel agents per iteration.                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Available Tools&gt;</span>                                                                                             <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Hard Limits&gt;</span>                                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Task Delegation Budgets** (Prevent excessive delegation):                                                    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - **Bias towards focused research** - Use single agent for simple questions, multiple only when clearly        <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  beneficial or when you have multiple independent research directions based on the user's request.              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - **Stop when adequate** - Don't over-research; stop when you have sufficient information                      <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - **Limit iterations** - Stop after {max_researcher_iterations} task delegations if you haven't found          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  adequate sources                                                                                               <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Hard Limits&gt;</span>                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Scaling Rules&gt;</span>                                                                                                <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Simple fact-finding, lists, and rankings** can use a single sub-agent:                                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - *Example*: "List the top 10 coffee shops in San Francisco" → Use 1 sub-agent, store in                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  `findings_coffee_shops.md`                                                                                     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Comparisons** can use a sub-agent for each element of the comparison:                                        <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - *Example*: "Compare OpenAI vs. Anthropic vs. DeepMind approaches to AI safety" → Use 3 sub-agents            <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Store findings in separate files: `findings_openai_safety.md`, `findings_anthropic_safety.md`,               <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  `findings_deepmind_safety.md`                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Multi-faceted research** can use parallel agents for different aspects:                                      <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - *Example*: "Research renewable energy: costs, environmental impact, and adoption rates" → Use 3 sub-agents   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Organize findings by aspect in separate files                                                                <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Important Reminders:**                                                                                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Each **task** call creates a dedicated research agent with isolated context                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Sub-agents can't see each other's work - provide complete standalone instructions                            <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Use clear, specific language - avoid acronyms or abbreviations in task descriptions                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Scaling Rules&gt;</span>                                                                                               <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div>
+    </div>
+<div class="md-cell"><p>Let's now build a research system with a supervisor and sub-agents. This will just be a mock-up version with pre-defined search results to demonstrate how the pieces go together. In the next lesson, you will build a full-fledged research system.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from datetime import datetime
+
+from IPython.display import Image, display
+from langchain.chat_models import init_chat_model
+from langchain_core.tools import tool
+#from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent # updated in 1.0
+
+from deep_agents_from_scratch.prompts import SUBAGENT_USAGE_INSTRUCTIONS
+from deep_agents_from_scratch.state import DeepAgentState
+from deep_agents_from_scratch.task_tool import _create_task_tool
+
+# Limits
+max_concurrent_research_units = 3
+max_researcher_iterations = 3
+
+# Mock search result
+search_result = &quot;&quot;&quot;The Model Context Protocol (MCP) is an open standard protocol developed 
+by Anthropic to enable seamless integration between AI models and external systems like 
+tools, databases, and other services. It acts as a standardized communication layer, 
+allowing AI models to access and utilize data from various sources in a consistent and 
+efficient manner. Essentially, MCP simplifies the process of connecting AI assistants 
+to external services by providing a unified language for data exchange. &quot;&quot;&quot;
+
+
+# Mock search tool
+@tool(parse_docstring=True)
+def web_search(
+    query: str,
+):
+    &quot;&quot;&quot;Search the web for information on a specific topic.
+
+    This tool performs web searches and returns relevant results
+    for the given query. Use this when you need to gather information from
+    the internet about any topic.
+
+    Args:
+        query: The search query string. Be specific and clear about what
+               information you're looking for.
+
+    Returns:
+        Search results from the search engine.
+
+    Example:
+        web_search(&quot;machine learning applications in healthcare&quot;)
+    &quot;&quot;&quot;
+    return search_result
+
+
+# Add mock research instructions
+SIMPLE_RESEARCH_INSTRUCTIONS = &quot;&quot;&quot;You are a researcher. Research the topic provided to you. IMPORTANT: Just make a single call to the web_search tool and use the result provided by the tool to answer the provided topic.&quot;&quot;&quot;
+
+# Create research sub-agent
+research_sub_agent = {
+    &quot;name&quot;: &quot;research-agent&quot;,
+    &quot;description&quot;: &quot;Delegate research to the sub-agent researcher. Only give this researcher one topic at a time.&quot;,
+    &quot;prompt&quot;: SIMPLE_RESEARCH_INSTRUCTIONS,
+    &quot;tools&quot;: [&quot;web_search&quot;],
+}
+
+# Create agent using create_react_agent directly
+model = init_chat_model(model=&quot;anthropic:claude-sonnet-4-20250514&quot;, temperature=0.0)
+
+# Tools for sub-agent
+sub_agent_tools = [web_search]
+
+# Create task tool to delegate tasks to sub-agents
+task_tool = _create_task_tool(
+    sub_agent_tools, [research_sub_agent], model, DeepAgentState
+)
+
+# Tools
+delegation_tools = [task_tool]
+
+# Create agent with system prompt
+agent = create_agent(
+    model,
+    delegation_tools,
+    system_prompt=SUBAGENT_USAGE_INSTRUCTIONS.format(
+        max_concurrent_research_units=max_concurrent_research_units,
+        max_researcher_iterations=max_researcher_iterations,
+        date=datetime.now().strftime(&quot;%a %b %-d, %Y&quot;),
+    ),
+    state_schema=DeepAgentState,
+)
+
+# Show the agent
+display(Image(agent.get_graph(xray=True).draw_mermaid_png()))</code></pre></div>
+      <div class="out"><img src="data:image/png;base64,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" alt="output"></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from utils import format_messages
+
+result = agent.invoke(
+    {
+        &quot;messages&quot;: [
+            {
+                &quot;role&quot;: &quot;user&quot;,
+                &quot;content&quot;: &quot;Give me an overview of Model Context Protocol (MCP).&quot;,
+            }
+        ],
+    }
+)
+
+format_messages(result[&quot;messages&quot;])</code></pre></div>
+      <div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">╭─────────────────────────────────────────────────── 🧑 Human ────────────────────────────────────────────────────╮</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> Give me an overview of Model Context Protocol (MCP).                                                            <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> I'll research the Model Context Protocol (MCP) for you to provide a comprehensive overview.                     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> 🔧 Tool Call: task                                                                                              <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    Args: {                                                                                                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   "description": "Research the Model Context Protocol (MCP) and provide a comprehensive overview including:     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> what it is, its purpose and goals, key features and capabilities, how it works technically, who developed it,   <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> current adoption status, and any notable implementations or use cases",                                         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   "subagent_type": "research-agent"                                                                             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> }                                                                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    ID: toolu_01DAWrkaLJDaLFUE1cEcMC1d                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000">╭──────────────────────────────────────────────── 🔧 Tool Output ─────────────────────────────────────────────────╮</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Based on my research, here's a comprehensive overview of the Model Context Protocol (MCP):                      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ## What is the Model Context Protocol (MCP)?                                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> The Model Context Protocol (MCP) is an open standard protocol that serves as a standardized communication layer <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> between AI models and external systems. It enables AI assistants to seamlessly integrate with various tools,    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> databases, and services through a unified interface.                                                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ## Purpose and Goals                                                                                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> The primary purposes of MCP include:                                                                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Standardization**: Creating a consistent way for AI models to communicate with external systems             <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Simplification**: Reducing the complexity of integrating AI assistants with various tools and services      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Interoperability**: Enabling different AI systems to work with the same external resources using a common   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> protocol                                                                                                        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Efficiency**: Streamlining data exchange between AI models and external services                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Accessibility**: Making it easier for developers to connect AI models to their existing infrastructure      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ## Key Features and Capabilities                                                                                <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Unified Communication Layer**: Provides a single, standardized way for AI models to interact with external  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> systems                                                                                                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Tool Integration**: Enables AI assistants to access and utilize various tools and services                  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Database Connectivity**: Allows AI models to query and interact with databases                              <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Service Integration**: Facilitates connections to web services and APIs                                     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Data Exchange**: Supports consistent and efficient data transfer between AI models and external resources   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Open Standard**: Being an open protocol, it promotes widespread adoption and community development          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ## Technical Implementation                                                                                     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> MCP works by:                                                                                                   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Acting as an intermediary protocol that translates between AI model requests and external system responses    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Providing a standardized format for data exchange                                                             <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Enabling AI models to make requests to external systems through a consistent interface                        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Supporting various types of integrations including tools, databases, and web services                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ## Developer                                                                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> The Model Context Protocol was developed by **Anthropic**, the AI safety company known for creating the Claude  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> AI assistant. This aligns with Anthropic's focus on building safe and beneficial AI systems.                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ## Current Adoption Status                                                                                      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> As an open standard protocol, MCP is designed to promote widespread adoption across the AI ecosystem. Being     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> developed by Anthropic, it represents their effort to create industry standards that can benefit the broader AI <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> community, though specific adoption metrics would require more detailed industry analysis.                      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ## Notable Implementations and Use Cases                                                                        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> The protocol is particularly valuable for:                                                                      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **AI Assistant Integration**: Connecting AI models like Claude to external tools and services                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Enterprise Applications**: Enabling AI systems to work with existing business infrastructure                <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Developer Tools**: Providing a standardized way to build AI-powered applications                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **Database Integration**: Allowing AI models to query and analyze data from various database systems          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - **API Connectivity**: Facilitating connections between AI models and web services                             <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> The Model Context Protocol represents a significant step toward creating more interoperable and capable AI      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> systems by standardizing how they communicate with the external world, ultimately making AI assistants more     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> useful and easier to integrate into existing workflows and systems.                                             <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Based on my research, here's a comprehensive overview of the Model Context Protocol (MCP):                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> ## What is the Model Context Protocol (MCP)?                                                                    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> The Model Context Protocol (MCP) is an open standard protocol developed by Anthropic that serves as a           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> standardized communication layer between AI models and external systems. It enables AI assistants to seamlessly <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> integrate with various tools, databases, and services through a unified interface.                              <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> ## Purpose and Goals                                                                                            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> MCP was created to address several key challenges in AI integration:                                            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Standardization**: Provides a consistent way for AI models to communicate with external systems             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Simplification**: Reduces complexity when integrating AI assistants with various tools and services         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Interoperability**: Enables different AI systems to work with the same external resources using a common    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> protocol                                                                                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Efficiency**: Streamlines data exchange between AI models and external services                             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Accessibility**: Makes it easier for developers to connect AI models to existing infrastructure             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> ## Key Features and Capabilities                                                                                <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Unified Communication Layer**: Single, standardized interface for AI-external system interactions           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Tool Integration**: Enables AI assistants to access and utilize various tools and services                  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Database Connectivity**: Allows AI models to query and interact with databases                              <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Service Integration**: Facilitates connections to web services and APIs                                     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Data Exchange**: Supports consistent and efficient data transfer                                            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Open Standard**: Promotes widespread adoption and community development                                     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> ## How It Works                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> MCP functions as an intermediary protocol that:                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - Translates between AI model requests and external system responses                                            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - Provides standardized formats for data exchange                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - Enables AI models to make requests through a consistent interface                                             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - Supports various integration types including tools, databases, and web services                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> ## Developer and Adoption                                                                                       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> **Developer**: Anthropic (the company behind Claude AI)                                                         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> As an open standard, MCP is designed to promote industry-wide adoption, representing Anthropic's effort to      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> create beneficial standards for the broader AI community.                                                       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> ## Notable Use Cases                                                                                            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> The protocol is particularly valuable for:                                                                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **AI Assistant Integration**: Connecting models like Claude to external tools                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Enterprise Applications**: Integrating AI with existing business infrastructure                             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Developer Tools**: Standardizing AI-powered application development                                         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Database Integration**: Enabling AI models to query and analyze data                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **API Connectivity**: Facilitating AI-web service connections                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> MCP represents a significant advancement toward more interoperable and capable AI systems by standardizing how  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> they communicate with the external world, ultimately making AI assistants more useful and easier to integrate   <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> into existing workflows.                                                                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div>
+    </div>
+<div class="md-cell"><p>Trace: <br>https://smith.langchain.com/public/26cc1c2b-e785-4c6d-a2a7-c30a31875fc7/r<br><!-- https://smith.langchain.com/public/edc4e672-db9c-457a-953d-f62e7813591c/r --></p></div>
+<div class="md-cell"></div>
+</div>
+</body>
+</html>

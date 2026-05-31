@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4 Research Supervisor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../deep-agent-research.html">← Project: Deep Agent with Research</a>
+  <h1>4 Research Supervisor</h1>
+</div>
+<div class="nb">
+<div class="code-cell">
+      <div class="code-in"><pre><code># Load environment variables and set up auto-reload
+from dotenv import load_dotenv
+load_dotenv()
+
+%load_ext autoreload
+%autoreload 2</code></pre></div>
+      <div class="out out-stream"><pre>The autoreload extension is already loaded. To reload it, use:
+  %reload_ext autoreload
+</pre></div>
+    </div>
+<div class="md-cell"><h1>Research Supervisor</h1>
+<p><em>The supervisor has a simple job: delegate research tasks to an appropriate number of sub-agents.</em></p>
+<p>Here is our overall research flow:</p>
+<img src="attachment:834d54a0-26dc-48fc-bc7f-39713ebf5396.webp" alt="image.webp">
+<p>We previously built a research agent bound to either custom tools or MCP server. Now, what happens if the request is complex and has several sub-topics? Single agent response quality <em>can</em> suffer with multiple sub-topics (e.g., compare A to B to C) because a single context window needs to store and reason about tool feedback across all of the sub-topics.</p>
+<p><a href="https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html" target="_blank">Numerous failure modes</a>, such as <a href="https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html" target="_blank">context clash</a>, become prevalent as the context window accumulates tool calls across many different sub-topics. As discussed in <a href="https://www.anthropic.com/engineering/built-multi-agent-research-system" target="_blank">Anthropic's blog post</a>, multi-agent systems can split sub-topic to sub-agents with isolated context windows. We'll build a system where a supervisor determines if the research brief can be broken-down into independent sub-topics and delegates to sub-agents with isolated context windows.</p>
+<img src="attachment:cac50ae6-f10d-4f40-8604-d4b3244628ed.webp" alt="image.webp">
+<h3>Prompt</h3>
+<p>Now, let's design a prompt for the supervisor that follows the principles we've discussed, and include some insights from <a href="https://www.anthropic.com/engineering/built-multi-agent-research-system" target="_blank">the research literature</a>.</p>
+<h4>1. Think Like The Agent</h4>
+What instructions would you give a new work colleague?
+<ul><li><strong>Read the question carefully</strong> - What specific information does the user need?</li>
+<li><strong>Decide how to delegate the research</strong> - Carefully consider the question and decide how to delegate the research. Are there multiple independent directions that can be explored simultaneously?</li>
+<li><strong>After each call to ConductResearch, pause and assess</strong> - Do I have enough to answer? What's still missing?</li>
+</ul>
+<h4>2. Concrete Heuristics (For task delegation)</h4>
+Use <strong>Hard Limits</strong> to prevent the research agent from calling tools excessively:
+<ul><li><strong>Bias towards single agent</strong> - Use single agent for simplicity unless the user request has clear opportunity for parallelization. </li>
+<li><strong>Stop when you can answer confidently</strong> - Don't keep delegating research for perfection.</li>
+<li><strong>Limit tool calls</strong> - Always stop after 3 tool calls to ConductResearch if you cannot find the right source(s).</li>
+</ul>
+<h4>3. Show your thinking</h4>
+Before you call ConductResearch tool call, use think_tool to plan your approach:
+<ul><li>Can the task be broken down into smaller sub-tasks?</li>
+</ul>
+After each ConductResearch tool call, use think_tool to analyze the results:
+<ul><li>What key information did I find? </li>
+<li>What's missing?</li>
+<li>Do I have enough to answer the question comprehensively?</li>
+<li>Should I search more or provide my answer?</li>
+</ul>
+<h4>4. Scaling rules</h4>
+Simple fact-finding, lists, and rankings can use a single sub-agent.
+<ul><li><em>Example</em>: List the top 10 coffee shops in San Francisco -> Use 1 sub-agent</li>
+</ul>
+Comparisons presented in the user request can use a sub-agent for each element of the comparison.
+<ul><li><em>Example</em>: Compare OpenAI vs. Anthropic vs. DeepMind approaches to AI safety -> Use 3 sub-agents.</li>
+<li>Delegate clear, distinct, non-overlapping subtopics</li></ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from utils import show_prompt
+from deep_research_from_scratch.prompts import lead_researcher_prompt
+show_prompt(lead_researcher_prompt, &quot;Lead Researcher Prompt&quot;)</code></pre></div>
+      <div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">╭──────────────────────────────────────────── </span><span style="color: #008000; text-decoration-color: #008000; font-weight: bold">Lead Researcher Prompt</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────╮</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  You are a research supervisor. Your job is to conduct research by calling the "ConductResearch" tool. For      <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  context, today's date is {date}.                                                                               <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Task&gt;</span>                                                                                                         <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  Your focus is to call the "ConductResearch" tool to conduct research against the overall research question     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  passed in by the user.                                                                                         <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  When you are completely satisfied with the research findings returned from the tool calls, then you should     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  call the "ResearchComplete" tool to indicate that you are done with your research.                             <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Task&gt;</span>                                                                                                        <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Available Tools&gt;</span>                                                                                              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  You have access to three main tools:                                                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  1. **ConductResearch**: Delegate research tasks to specialized sub-agents                                      <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  2. **ResearchComplete**: Indicate that research is complete                                                    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  3. **think_tool**: For reflection and strategic planning during research                                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **CRITICAL: Use think_tool before calling ConductResearch to plan your approach, and after each                <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  ConductResearch to assess progress**                                                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **PARALLEL RESEARCH**: When you identify multiple independent sub-topics that can be explored simultaneously,  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  make multiple ConductResearch tool calls in a single response to enable parallel research execution. This is   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  more efficient than sequential research for comparative or multi-faceted questions. Use at most                <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  {max_concurrent_research_units} parallel agents per iteration.                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Available Tools&gt;</span>                                                                                             <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Instructions&gt;</span>                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  Think like a research manager with limited time and resources. Follow these steps:                             <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  1. **Read the question carefully** - What specific information does the user need?                             <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  2. **Decide how to delegate the research** - Carefully consider the question and decide how to delegate the    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  research. Are there multiple independent directions that can be explored simultaneously?                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  3. **After each call to ConductResearch, pause and assess** - Do I have enough to answer? What's still         <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  missing?                                                                                                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Instructions&gt;</span>                                                                                                <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Hard Limits&gt;</span>                                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Task Delegation Budgets** (Prevent excessive delegation):                                                    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - **Bias towards single agent** - Use single agent for simplicity unless the user request has clear            <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  opportunity for parallelization                                                                                <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - **Stop when you can answer confidently** - Don't keep delegating research for perfection                     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - **Limit tool calls** - Always stop after {max_researcher_iterations} tool calls to think_tool and            <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  ConductResearch if you cannot find the right sources                                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Hard Limits&gt;</span>                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Show Your Thinking&gt;</span>                                                                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  Before you call ConductResearch tool call, use think_tool to plan your approach:                               <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Can the task be broken down into smaller sub-tasks?                                                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  After each ConductResearch tool call, use think_tool to analyze the results:                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - What key information did I find?                                                                             <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - What's missing?                                                                                              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Do I have enough to answer the question comprehensively?                                                     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Should I delegate more research or call ResearchComplete?                                                    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Show Your Thinking&gt;</span>                                                                                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;Scaling Rules&gt;</span>                                                                                                <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Simple fact-finding, lists, and rankings** can use a single sub-agent:                                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - *Example*: List the top 10 coffee shops in San Francisco → Use 1 sub-agent                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Comparisons presented in the user request** can use a sub-agent for each element of the comparison:          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - *Example*: Compare OpenAI vs. Anthropic vs. DeepMind approaches to AI safety → Use 3 sub-agents              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Delegate clear, distinct, non-overlapping subtopics                                                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  **Important Reminders:**                                                                                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Each ConductResearch call spawns a dedicated research agent for that specific topic                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - A separate agent will write the final report - you just need to gather information                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - When calling ConductResearch, provide complete standalone instructions - sub-agents can't see other agents'  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  work                                                                                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Do NOT use acronyms or abbreviations in your research questions, be very clear and specific                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #000080; text-decoration-color: #000080; font-weight: bold">&lt;/Scaling Rules&gt;</span>                                                                                               <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div>
+    </div>
+<div class="md-cell"><h3>State</h3>
+<p>The supervisor state manages the overall research coordination, while the researcher state handles individual research tasks.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%writefile ../src/deep_research_from_scratch/state_multi_agent_supervisor.py
+
+&quot;&quot;&quot;
+State Definitions for Multi-Agent Research Supervisor
+
+This module defines the state objects and tools used for the multi-agent
+research supervisor workflow, including coordination state and research tools.
+&quot;&quot;&quot;
+
+import operator
+from typing_extensions import Annotated, TypedDict, Sequence
+
+from langchain_core.messages import BaseMessage
+from langchain_core.tools import tool
+from langgraph.graph.message import add_messages
+from pydantic import BaseModel, Field
+
+class SupervisorState(TypedDict):
+    &quot;&quot;&quot;
+    State for the multi-agent research supervisor.
+    
+    Manages coordination between supervisor and research agents, tracking
+    research progress and accumulating findings from multiple sub-agents.
+    &quot;&quot;&quot;
+    
+    # Messages exchanged with supervisor for coordination and decision-making
+    supervisor_messages: Annotated[Sequence[BaseMessage], add_messages]
+    # Detailed research brief that guides the overall research direction
+    research_brief: str
+    # Processed and structured notes ready for final report generation
+    notes: Annotated[list[str], operator.add] = []
+    # Counter tracking the number of research iterations performed
+    research_iterations: int = 0
+    # Raw unprocessed research notes collected from sub-agent research
+    raw_notes: Annotated[list[str], operator.add] = []
+
+@tool
+class ConductResearch(BaseModel):
+    &quot;&quot;&quot;Tool for delegating a research task to a specialized sub-agent.&quot;&quot;&quot;
+    research_topic: str = Field(
+        description=&quot;The topic to research. Should be a single topic, and should be described in high detail (at least a paragraph).&quot;,
+    )
+
+@tool
+class ResearchComplete(BaseModel):
+    &quot;&quot;&quot;Tool for indicating that the research process is complete.&quot;&quot;&quot;
+    pass</code></pre></div>
+      <div class="out out-stream"><pre>Overwriting ../src/deep_research_from_scratch/state_multi_agent_supervisor.py
+</pre></div>
+    </div>
+<div class="md-cell"><h3>Multi-agent </h3>
+<p>Now, we'll define our agent. A multi-agent system is a system that consists of multiple agents that work together to complete a task. The main benefit is context isolated, as discussed in <a href="https://blog.langchain.com/context-engineering-for-agents/" target="_blank">Context Engineering for Agents</a>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%writefile ../src/deep_research_from_scratch/multi_agent_supervisor.py
+
+&quot;&quot;&quot;Multi-agent supervisor for coordinating research across multiple specialized agents.
+
+This module implements a supervisor pattern where:
+1. A supervisor agent coordinates research activities and delegates tasks
+2. Multiple researcher agents work on specific sub-topics independently
+3. Results are aggregated and compressed for final reporting
+
+The supervisor uses parallel research execution to improve efficiency while
+maintaining isolated context windows for each research topic.
+&quot;&quot;&quot;
+
+import asyncio
+
+from typing_extensions import Literal
+
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import (
+    HumanMessage, 
+    BaseMessage, 
+    SystemMessage, 
+    ToolMessage,
+    filter_messages
+)
+from langgraph.graph import StateGraph, START, END
+from langgraph.types import Command
+
+from deep_research_from_scratch.prompts import lead_researcher_prompt
+from deep_research_from_scratch.research_agent import researcher_agent
+from deep_research_from_scratch.state_multi_agent_supervisor import (
+    SupervisorState, 
+    ConductResearch, 
+    ResearchComplete
+)
+from deep_research_from_scratch.utils import get_today_str, think_tool
+
+def get_notes_from_tool_calls(messages: list[BaseMessage]) -&gt; list[str]:
+    &quot;&quot;&quot;Extract research notes from ToolMessage objects in supervisor message history.
+    
+    This function retrieves the compressed research findings that sub-agents
+    return as ToolMessage content. When the supervisor delegates research to
+    sub-agents via ConductResearch tool calls, each sub-agent returns its
+    compressed findings as the content of a ToolMessage. This function
+    extracts all such ToolMessage content to compile the final research notes.
+    
+    Args:
+        messages: List of messages from supervisor's conversation history
+        
+    Returns:
+        List of research note strings extracted from ToolMessage objects
+    &quot;&quot;&quot;
+    return [tool_msg.content for tool_msg in filter_messages(messages, include_types=&quot;tool&quot;)]
+
+# Ensure async compatibility for Jupyter environments
+try:
+    import nest_asyncio
+    # Only apply if running in Jupyter/IPython environment
+    try:
+        from IPython import get_ipython
+        if get_ipython() is not None:
+            nest_asyncio.apply()
+    except ImportError:
+        pass  # Not in Jupyter, no need for nest_asyncio
+except ImportError:
+    pass  # nest_asyncio not available, proceed without it
+
+
+# ===== CONFIGURATION =====
+
+supervisor_tools = [ConductResearch, ResearchComplete, think_tool]
+supervisor_model = init_chat_model(model=&quot;anthropic:claude-sonnet-4-20250514&quot;)
+supervisor_model_with_tools = supervisor_model.bind_tools(supervisor_tools)
+
+# System constants
+# Maximum number of tool call iterations for individual researcher agents
+# This prevents infinite loops and controls research depth per topic
+max_researcher_iterations = 6 # Calls to think_tool + ConductResearch
+
+# Maximum number of concurrent research agents the supervisor can launch
+# This is passed to the lead_researcher_prompt to limit parallel research tasks
+max_concurrent_researchers = 3
+
+# ===== SUPERVISOR NODES =====
+
+async def supervisor(state: SupervisorState) -&gt; Command[Literal[&quot;supervisor_tools&quot;]]:
+    &quot;&quot;&quot;Coordinate research activities.
+    
+    Analyzes the research brief and current progress to decide:
+    - What research topics need investigation
+    - Whether to conduct parallel research
+    - When research is complete
+    
+    Args:
+        state: Current supervisor state with messages and research progress
+        
+    Returns:
+        Command to proceed to supervisor_tools node with updated state
+    &quot;&quot;&quot;
+    supervisor_messages = state.get(&quot;supervisor_messages&quot;, [])
+    
+    # Prepare system message with current date and constraints
+    system_message = lead_researcher_prompt.format(
+        date=get_today_str(), 
+        max_concurrent_research_units=max_concurrent_researchers,
+        max_researcher_iterations=max_researcher_iterations
+    )
+    messages = [SystemMessage(content=system_message)] + supervisor_messages
+    
+    # Make decision about next research steps
+    response = await supervisor_model_with_tools.ainvoke(messages)
+    
+    return Command(
+        goto=&quot;supervisor_tools&quot;,
+        update={
+            &quot;supervisor_messages&quot;: [response],
+            &quot;research_iterations&quot;: state.get(&quot;research_iterations&quot;, 0) + 1
+        }
+    )
+
+async def supervisor_tools(state: SupervisorState) -&gt; Command[Literal[&quot;supervisor&quot;, &quot;__end__&quot;]]:
+    &quot;&quot;&quot;Execute supervisor decisions - either conduct research or end the process.
+    
+    Handles:
+    - Executing think_tool calls for strategic reflection
+    - Launching parallel research agents for different topics
+    - Aggregating research results
+    - Determining when research is complete
+    
+    Args:
+        state: Current supervisor state with messages and iteration count
+        
+    Returns:
+        Command to continue supervision, end process, or handle errors
+    &quot;&quot;&quot;
+    supervisor_messages = state.get(&quot;supervisor_messages&quot;, [])
+    research_iterations = state.get(&quot;research_iterations&quot;, 0)
+    most_recent_message = supervisor_messages[-1]
+    
+    # Initialize variables for single return pattern
+    tool_messages = []
+    all_raw_notes = []
+    next_step = &quot;supervisor&quot;  # Default next step
+    should_end = False
+    
+    # Check exit criteria first
+    exceeded_iterations = research_iterations &gt;= max_researcher_iterations
+    no_tool_calls = not most_recent_message.tool_calls
+    research_complete = any(
+        tool_call[&quot;name&quot;] == &quot;ResearchComplete&quot; 
+        for tool_call in most_recent_message.tool_calls
+    )
+    
+    if exceeded_iterations or no_tool_calls or research_complete:
+        should_end = True
+        next_step = END
+    
+    else:
+        # Execute ALL tool calls before deciding next step
+        try:
+            # Separate think_tool calls from ConductResearch calls
+            think_tool_calls = [
+                tool_call for tool_call in most_recent_message.tool_calls 
+                if tool_call[&quot;name&quot;] == &quot;think_tool&quot;
+            ]
+            
+            conduct_research_calls = [
+                tool_call for tool_call in most_recent_message.tool_calls 
+                if tool_call[&quot;name&quot;] == &quot;ConductResearch&quot;
+            ]
+
+            # Handle think_tool calls (synchronous)
+            for tool_call in think_tool_calls:
+                observation = think_tool.invoke(tool_call[&quot;args&quot;])
+                tool_messages.append(
+                    ToolMessage(
+                        content=observation,
+                        name=tool_call[&quot;name&quot;],
+                        tool_call_id=tool_call[&quot;id&quot;]
+                    )
+                )
+
+            # Handle ConductResearch calls (asynchronous)
+            if conduct_research_calls:
+                # Launch parallel research agents
+                coros = [
+                    researcher_agent.ainvoke({
+                        &quot;researcher_messages&quot;: [
+                            HumanMessage(content=tool_call[&quot;args&quot;][&quot;research_topic&quot;])
+                        ],
+                        &quot;research_topic&quot;: tool_call[&quot;args&quot;][&quot;research_topic&quot;]
+                    }) 
+                    for tool_call in conduct_research_calls
+                ]
+
+                # Wait for all research to complete
+                tool_results = await asyncio.gather(*coros)
+
+                # Format research results as tool messages
+                # Each sub-agent returns compressed research findings in result[&quot;compressed_research&quot;]
+                # We write this compressed research as the content of a ToolMessage, which allows
+                # the supervisor to later retrieve these findings via get_notes_from_tool_calls()
+                research_tool_messages = [
+                    ToolMessage(
+                        content=result.get(&quot;compressed_research&quot;, &quot;Error synthesizing research report&quot;),
+                        name=tool_call[&quot;name&quot;],
+                        tool_call_id=tool_call[&quot;id&quot;]
+                    ) for result, tool_call in zip(tool_results, conduct_research_calls)
+                ]
+                
+                tool_messages.extend(research_tool_messages)
+
+                # Aggregate raw notes from all research
+                all_raw_notes = [
+                    &quot;\n&quot;.join(result.get(&quot;raw_notes&quot;, [])) 
+                    for result in tool_results
+                ]
+                
+        except Exception as e:
+            print(f&quot;Error in supervisor tools: {e}&quot;)
+            should_end = True
+            next_step = END
+    
+    # Single return point with appropriate state updates
+    if should_end:
+        return Command(
+            goto=next_step,
+            update={
+                &quot;notes&quot;: get_notes_from_tool_calls(supervisor_messages),
+                &quot;research_brief&quot;: state.get(&quot;research_brief&quot;, &quot;&quot;)
+            }
+        )
+    else:
+        return Command(
+            goto=next_step,
+            update={
+                &quot;supervisor_messages&quot;: tool_messages,
+                &quot;raw_notes&quot;: all_raw_notes
+            }
+        )
+
+# ===== GRAPH CONSTRUCTION =====
+
+# Build supervisor graph
+supervisor_builder = StateGraph(SupervisorState)
+supervisor_builder.add_node(&quot;supervisor&quot;, supervisor)
+supervisor_builder.add_node(&quot;supervisor_tools&quot;, supervisor_tools)
+supervisor_builder.add_edge(START, &quot;supervisor&quot;)
+supervisor_agent = supervisor_builder.compile()</code></pre></div>
+      <div class="out out-stream"><pre>Overwriting ../src/deep_research_from_scratch/multi_agent_supervisor.py
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from IPython.display import Image, display
+from deep_research_from_scratch.multi_agent_supervisor import supervisor_agent
+
+# Show the agent
+display(Image(supervisor_agent.get_graph(xray=True).draw_mermaid_png()))</code></pre></div>
+      <div class="out"><img src="data:image/png;base64,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" alt="output"></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Run the multi-agent supervisor agent
+from utils import format_messages
+from langchain_core.messages import HumanMessage
+
+research_brief = &quot;&quot;&quot;I want to identify and evaluate the coffee shops in San Francisco that are considered the best based specifically  
+on coffee quality. My research should focus on analyzing and comparing coffee shops within the San Francisco area, 
+using coffee quality as the primary criterion. I am open regarding methods of assessing coffee quality (e.g.,      
+expert reviews, customer ratings, specialty coffee certifications), and there are no constraints on ambiance,      
+location, wifi, or food options unless they directly impact perceived coffee quality. Please prioritize primary    
+sources such as the official websites of coffee shops, reputable third-party coffee review organizations (like     
+Coffee Review or Specialty Coffee Association), and prominent review aggregators like Google or Yelp where direct  
+customer feedback about coffee quality can be found. The study should result in a well-supported list or ranking of
+the top coffee shops in San Francisco, emphasizing their coffee quality according to the latest available data as  
+of July 2025.&quot;&quot;&quot;
+
+result = await supervisor_agent.ainvoke({&quot;supervisor_messages&quot;: [HumanMessage(content=f&quot;{research_brief}.&quot;)]})
+format_messages(result['supervisor_messages'])</code></pre></div>
+      <div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">╭─────────────────────────────────────────────────── 🧑 Human ────────────────────────────────────────────────────╮</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> I want to identify and evaluate the coffee shops in San Francisco that are considered the best based            <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> specifically                                                                                                    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> on coffee quality. My research should focus on analyzing and comparing coffee shops within the San Francisco    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> area,                                                                                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> using coffee quality as the primary criterion. I am open regarding methods of assessing coffee quality (e.g.,   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> expert reviews, customer ratings, specialty coffee certifications), and there are no constraints on ambiance,   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> location, wifi, or food options unless they directly impact perceived coffee quality. Please prioritize primary <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> sources such as the official websites of coffee shops, reputable third-party coffee review organizations (like  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> Coffee Review or Specialty Coffee Association), and prominent review aggregators like Google or Yelp where      <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> direct                                                                                                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> customer feedback about coffee quality can be found. The study should result in a well-supported list or        <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> ranking of                                                                                                      <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> the top coffee shops in San Francisco, emphasizing their coffee quality according to the latest available data  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> as                                                                                                              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> of July 2025..                                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> 🔧 Tool Call: think_tool                                                                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    Args: {                                                                                                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   "reflection": "Let me analyze this research request carefully:\n\n**User's Core Need**: Identify and evaluate <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> the best coffee shops in San Francisco based specifically on coffee quality, with a focus on creating a         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> well-supported ranking.\n\n**Key Requirements**:\n- Geographic focus: San Francisco area\n- Primary criterion:  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Coffee quality (not ambiance, location, wifi, food)\n- Methods: Expert reviews, customer ratings, specialty     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> coffee certifications\n- Sources: Official websites, Coffee Review, Specialty Coffee Association,               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Google/Yelp\n- Timeline: Latest data as of July 2025 (though today is August 2025, so this is recent)\n-        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Output: Well-supported list/ranking\n\n**Research Strategy Decision**:\nThis appears to be a comprehensive but  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> focused research task that can be handled by a single specialized agent. While I could potentially break this   <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> into multiple sub-agents (e.g., one for expert reviews, one for customer ratings, one for certifications), the  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> user is asking for an integrated evaluation and ranking that combines all these sources. A single agent can     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> more effectively synthesize these different evaluation methods into a cohesive ranking.\n\n**Approach**: I'll   <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> delegate this to one research agent with comprehensive instructions to:\n1. Research top SF coffee shops known  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> for quality\n2. Evaluate using multiple quality assessment methods\n3. Prioritize the specified primary         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> sources\n4. Create a well-supported ranking focused on coffee quality\n\nThis is more efficient than            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> fragmenting the research and will ensure better integration of findings."                                       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> }                                                                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    ID: toolu_01X7TdgmGvjBsYT9TuR8p23k                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000">╭──────────────────────────────────────────────── 🔧 Tool Output ─────────────────────────────────────────────────╮</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Reflection recorded: Let me analyze this research request carefully:                                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> **User's Core Need**: Identify and evaluate the best coffee shops in San Francisco based specifically on coffee <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> quality, with a focus on creating a well-supported ranking.                                                     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> **Key Requirements**:                                                                                           <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Geographic focus: San Francisco area                                                                          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Primary criterion: Coffee quality (not ambiance, location, wifi, food)                                        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Methods: Expert reviews, customer ratings, specialty coffee certifications                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Sources: Official websites, Coffee Review, Specialty Coffee Association, Google/Yelp                          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Timeline: Latest data as of July 2025 (though today is August 2025, so this is recent)                        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Output: Well-supported list/ranking                                                                           <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> **Research Strategy Decision**:                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> This appears to be a comprehensive but focused research task that can be handled by a single specialized agent. <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> While I could potentially break this into multiple sub-agents (e.g., one for expert reviews, one for customer   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ratings, one for certifications), the user is asking for an integrated evaluation and ranking that combines all <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> these sources. A single agent can more effectively synthesize these different evaluation methods into a         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> cohesive ranking.                                                                                               <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> **Approach**: I'll delegate this to one research agent with comprehensive instructions to:                      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 1. Research top SF coffee shops known for quality                                                               <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 2. Evaluate using multiple quality assessment methods                                                           <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 3. Prioritize the specified primary sources                                                                     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 4. Create a well-supported ranking focused on coffee quality                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> This is more efficient than fragmenting the research and will ensure better integration of findings.            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> 🔧 Tool Call: ConductResearch                                                                                   <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    Args: {                                                                                                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   "research_topic": "Research and evaluate the best coffee shops in San Francisco based on coffee quality.      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Create a comprehensive ranking of top San Francisco coffee shops using coffee quality as the primary criterion. <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Focus on multiple assessment methods including: expert reviews from coffee industry publications, customer      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> ratings and feedback specifically about coffee quality, specialty coffee certifications, and roaster            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> credentials. Prioritize primary sources such as official coffee shop websites, reputable third-party coffee     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> review organizations like Coffee Review or Specialty Coffee Association, and prominent review aggregators like  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Google Reviews and Yelp where customers specifically comment on coffee quality. Exclude factors like ambiance,  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> location convenience, wifi, or food options unless they directly impact perceived coffee quality. Provide a     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> well-supported list or ranking with evidence from the latest available data as of July 2025, including specific <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> details about what makes each coffee shop's coffee quality exceptional (such as sourcing practices, roasting    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> methods, brewing techniques, bean quality, or barista expertise)."                                              <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> }                                                                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    ID: toolu_01MS5u8zNuCvkKuAwcR2wmkX                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000">╭──────────────────────────────────────────────── 🔧 Tool Output ─────────────────────────────────────────────────╮</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> **List of Queries and Tool Calls Made**                                                                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 1. Query: best coffee shops San Francisco 2024 2025 coffee quality specialty coffee roasters expert reviews     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 2. Query: "Coffee Review" "Specialty Coffee Association" San Francisco coffee roasters ratings reviews Sextant  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Saint Frank Andytown                                                                                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 3. Query: San Francisco coffee roasters expert reviews Coffee Review magazine specialty coffee ratings Blue     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Bottle Ritual Four Barrel                                                                                       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 4. Query: Sightglass Coffee Four Barrel Coffee Ritual Coffee San Francisco sourcing roasting methods direct     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> trade specialty coffee quality reviews                                                                          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 5. Query: "Saint Frank Coffee" "Paper Son Coffee" "Andytown Coffee" San Francisco coffee quality barista        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> training sourcing roasting awards 2024 2025                                                                     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ---                                                                                                             <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> **Fully Comprehensive Findings**                                                                                <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Best Coffee Roaster Near San Francisco, California: Graffeo Coffee Roasting Company. 4.7 (196 reviews);       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Andytown Coffee Roasters. 4.5 (1.1k reviews) [1].                                                               <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Eater SF presents a curated list of the absolute best coffee shops in San Francisco as of 2025, highlighting  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> the city’s rich cultural coffee history and innovative coffee scene. San Francisco is noted as a global coffee  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> culture summit, being the birthplace of significant coffee industry changes such as the “waves of coffee”       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> terminology introduced by Trish Rothgeb (Wrecking Ball Coffee), and the West Coast introduction of Yemeni       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> coffee by Port of Mokha and Delah Coffee House. The city also claims historic ties to the Irish Coffee and      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Italian espresso cultures and coffee packaging innovations.                                                     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - The list features 16 coffee shops, with recent changes including the removal of Coffee Movement on Balboa     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Street, Poorboy Coffee, and Flywheel Coffee, and additions like Caffe Trieste, the Coffee Movement at Side A,   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> and Cafe Shoji.                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Highlighted shops include:                                                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Saint Frank Coffee: Known for tea-like Bolivian coffee and minimal aesthetic; expanded with new locations   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Juniper and a SoMa venue.                                                                                       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Outset Coffee: Offers innovative fruit coffee blends, such as an Ethiopian coffee Americano with orange     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> juice and jasmine green tea.                                                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Scullery: A small cafe in the Tenderloin serving specialty Mother Tongue Coffee and high-quality toast.     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Sextant Coffee Roasters: Black-owned, sourcing beans directly from growers in Ethiopia, Kenya, and          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Colombia, with pastries from Firebrand Artisan Breads; considered a model of fourth wave coffee.                <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Telescope Coffee: SoMa shop known for unique drinks including seasonal honeycomb lattes and a signature     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> strawberry milk served in a strawberry-shaped glass.                                                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Abanico Coffee Roasters: Mission District shop owned by Ana Valle, originally from El Salvador, brewing     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> specialty drinks inspired by Central American coffee traditions.                                                <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - SPRO: Playful coffee drinks including the Cold Fashioned, combining cold brew with orange bitters and gum   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> syrup; three city locations.                                                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Grand Coffee: Over 11 years old with two locations; a vibrant spot serving high-quality coffee including    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Chemex brews.                                                                                                   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Hey Neighbor Cafe: Bayview shop opened in 2021, recognized for quality toast and using beans from Captain + <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Stoker.                                                                                                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Excelsior Coffee: Black and brown-owned shop in the Excelsior neighborhood known for its chai and specialty <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> coffee roasts.                                                                                                  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Andytown Coffee Roasters: Beloved west side shop reopened with a fresh look and strong Guatemalan espresso  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> shots.                                                                                                          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Hi NRG: A Hong Kong-inspired pop-up known for inventive drinks and lively atmosphere.                       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Paper Son: Merges Asian American heritage with skilled espresso and pour-over techniques, newest location   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> opened downtown via the Vacant to Vibrant program.                                                              <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Shoji: SoMa-based cafe with award-winning MAME coffee and a popular spot for matcha-based drinks and        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Japanese cuisine.                                                                                               <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - Caffe Trieste: Historic North Beach café famous for dark, sweet coffee and as a cultural landmark linked    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> with filmmaker Francis Ford Coppola.                                                                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>   - The Coffee Movement at Side A: Collaboration providing coffee, soft serve, and doughnuts, promoting a       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> unique café experience discouraging phone use.                                                                  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - San Francisco is and has been for many the world over the summit of coffee culture. It’s the birthplace of    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Wrecking Ball Coffee, where Trish Rothgeb introduced the “waves of coffee” terminology and changed the industry <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> forever. These 16 coffee shops keep the torch burning, making those great ascents into the future. Paolo        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Bicchieri thinks a good coffee shop should offer well-sourced beans, lively conversation, and a respite from    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> the world. Outset on Valencia and New Montgomery streets takes the fruit coffee form to the next level with a   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> delicate, multi-textural drink unlike anything else in the city. Sextant founder Kinani Ahmed works directly    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> with Ethiopian, Kenyan, and Colombian growers, producing communities owning the means of production [2].        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Coffee Movement and St. Frank are my favs with Sightglass and Ritual being the more “chain” backup (read: you <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> can always find one of…) [3].                                                                                   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Sextant Coffee Roasters is a specialty coffee company based in San Francisco, with multiple store locations   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> at 1415 Folsom Street, 539 Valencia Street, and 201 3rd Street. They offer top-grade, freshly roasted coffee    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> beans sourced from renowned farms, including a partner farm in Ethiopia, known for washed coffee processing.    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Their product line includes various featured coffee collections such as Maiden Voyage Espresso, Black Lion,     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Dancing Goat, Kochere, and Ogsadey's Horse, showcasing diverse flavor profiles from Ethiopian and Colombian     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> coffees. Alongside coffee, Sextant sells brewing equipment (e.g., French presses, Hario filters, Chemex,        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> AeroPress) and branded merchandise like t-shirts. The company invites customers to subscribe to their artisanal <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> coffee collections and offers a wholesale partnership via an online form. Contact information includes a phone  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> number (415-355-1415) and email (info@sextantcoffee.com). Their website also features a newsletter signup for   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> exclusive updates and events. [6]                                                                               <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Sextant Coffee Roasters, San Francisco : See 4 unbiased reviews of Sextant Coffee Roasters, rated 4.5 of 5 on <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Tripadvisor and ranked #2032 of 3345 [4].                                                                       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Coffee Review is a leading online guide dedicated to coffee, providing detailed reviews and ratings of        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> coffees and espressos from various roasters, with a focus on those roasted in the greater San Francisco area.   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> The site features 260 reviews listed in reverse chronological order, highlighting tasting notes such as aroma,  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> cup profile, acidity, mouthfeel, and finish for each coffee. Examples include Equator Coffees’ Decaf Shakeout   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Blend noted for its sweet nutty and chocolaty character, Sightglass Coffee’s Owl’s Howl Espresso Blend praised  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> for its crisply chocolaty and sweet-tart finish, and Peet's Coffee &amp; Tea’s Sumatra recognized for its rich      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> earthy sweetness. The website also promotes several top-rated coffee roasters through prominent advertisements  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> and provides services such as advertising opportunities and coffee review submissions. Coffee Review’s detailed <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> tasting notes capture flavors ranging from chocolate, nuts, citrus, spices, and floral tones, supporting        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> consumers in discovering high-quality, expertly evaluated coffee products [7]. Sweetly nut-toned, chocolaty.    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Cocoa powder, roasted almond, pink grapefruit, caramel, nutmeg in aroma and cup; Evaluated as espresso. Crisply <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> chocolaty, sweet and nutty. Baking chocolate, kumquat, cashew, orange zest, fresh oak in aroma and cup;         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Rich-toned, earthy-sweet. Fresh humus, cocoa powder, gently scorched sandalwood, gardenia, graphite in aroma    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> and cup; Rich-toned, complex, bittersweet. Dark chocolate, sweet tobacco, dried fig, nutmeg, molasses in aroma  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> and cup.                                                                                                        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Four Barrel Coffee (2228 reviews). Sightglass Coffee (2143 reviews). Ritual Coffee Roasters (1980 reviews).   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Blue Bottle Coffee - Hayes Valley Kiosk (1759...) [9].                                                          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Sightglass Coffee is a specialty coffee retailer offering organic and sustainably sourced coffee products,    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> including best sellers like Organic Owl's Howl, Blueboon, Toketee, and seasonal varieties such as Autumnal      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Equinox. They provide various coffee categories including single origin, espresso, blends, instant, and decaf.  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Promotions include 15% off when bundling three bags and free shipping on all 2lb bags. Customers can subscribe  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> for coffee delivery, receive 10% off first orders, and shop goods like mugs and tote bags. Sightglass Coffee    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> operates daily retail locations in San Francisco across SOMA, Mission, and Divisadero districts, and in         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Hollywood, Los Angeles, offering both in-store and to-go orders. The brand emphasizes quality through their     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> roasting, sourcing, and sustainability practices and highlights their presence in reputable publications such   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> as Bon Appétit, Chowhound, CNN Underscored, and The New York Times Wirecutter. Bundle 3 Bags and Get 15% Off.   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Free Shipping on all 2lb bags. Autumnal Equinox is back for a well-balanced cup to settle your ritual into the  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> new season. A single origin coffee is a record of a particular time and place. Crafted to display complex,      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> balanced flavors with clarity and rich textures. Carefully sourced coffees, naturally decaffeinated with        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> exceptional flavor and quality. Join us daily in San Francisco or Los Angeles. Subscribers receive first access <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> to special offers and limited releases [10].                                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - Andytown Coffee Roasters – Downtown, Mission, Outer Richmond, Outer Sunset + SoMa ↓ Must Order Drinks: Snowy  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Plover (Original Bird) [12].                                                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> - San Francisco ’s Best Coffee Shops | Eater SF: The webpage highlights the absolute best coffee shops in San   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Francisco as of 2025, emphasizing the city's rich coffee culture that includes pioneering influences like       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Wrecking Ball Coffee and the introduction of Yemeni coffee on the West Coast. It details changes in notable     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> coffee venues, mentioning that Coffee Movement on Balboa Street, Poorboy Coffee, and Flywheel Coffee were       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> removed from the list, while Caffe Trieste, Coffee Movement at Side A, and Cafe Shoji were added. The guide     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> profiles 16 top coffee shops, each praised for unique offerings and contributions to the city's coffee scene.   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Key featured cafes include Saint Frank Coffee, known for its Bolivian teas and minimalist aesthetic; Outset     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Coffee, recognized for innovative fruit coffee blends; and Sextant Coffee Roasters, which focuses on direct     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> relationships with Ethiopian, Kenyan, and Colombian growers. Additional notable places include Telescope Coffee <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> with its seasonal lattes, Abanico Coffee Roasters bringing Latin American coffee traditions, SPRO for inventive <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> drinks, and historic Caffe Trieste noted for its cultural legacy. The Coffee Movement at Side A merges          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> specialty coffee with soft serve and doughnuts, providing a unique café experience. The piece concludes with    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> author credits and links to related dining guides in San Francisco. San Francisco is and has been for many the  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> world over the summit of coffee culture. These 16 coffee shops keep the torch burning, making those great       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ascents into the future. Saint Frank is to San Francisco coffee as Dungeness crab is to San Francisco           <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> restaurants. Outset Americano is a medley of Ethiopian coffee plus not-from-concentrate orange juice, jasmine   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> green tea, and orange syrup. Sextant founder Kinani Ahmed works directly with Ethiopian, Kenyan, and Colombian  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> growers, making high-end but affordable beans to-go [13].                                                       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> ---                                                                                                             <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> **List of All Relevant Sources (with citations in the report)**                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span>                                                                                                                 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [1] Best Coffee Roaster San Francisco, CA - Last Updated August 2025 - Yelp:                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://m.yelp.com/search?find_desc=Best+Coffee+Roaster&amp;find_loc=San+Francisco%2C+CA                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [2] The Absolute Best San Francisco Coffee Shops - Eater SF:                                                    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://sf.eater.com/maps/best-coffee-shops-san-francisco                                                       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [3] Recently moved to San Francisco, looking for good coffee place ... - Reddit:                                <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://www.reddit.com/r/AskSF/comments/1di0g1l/recently_moved_to_san_francisco_looking_for_good/               <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [4] Sextant Coffee Roasters - San Francisco Restaurants - Tripadvisor:                                          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://www.tripadvisor.com/Restaurant_Review-g60713-d15122404-Reviews-Sextant_Coffee_Roasters-San_Francisco_Ca <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> lifornia.html                                                                                                   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [5] SEXTANT COFFEE ROASTERS - Updated August 2025 - Yelp:                                                       <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://www.yelp.com/biz/sextant-coffee-roasters-san-francisco                                                  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [6] Sextant Coffee Roasters - Best Speciality Coffee in San ...:                                                <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://sextantcoffee.com/?srsltid=AfmBOor5HMUq7Ou7XCwlSdVtZdhrU6Z0-Mr052Yunq0owT2VAvA9m2vd                     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [7] San Francisco Coffee Ratings and Reviews - Coffee Review:                                                   <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://www.coffeereview.com/best-coffee-cities/san-francisco/                                                  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [8] Blue Bottle Coffee | Fresh Roasted Specialty Coffee:                                                        <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://bluebottlecoffee.com/?srsltid=AfmBOordS_-ygbQq5WKaZsn7h8r_xKqWXtKq30zLayttsMysBNse0cEA                  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [9] Blue Bottle Coffe San Francisco, CA - Last Updated August 2025 - Yelp:                                      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://www.yelp.com/search?find_desc=Blue+Bottle+Coffe&amp;find_loc=San+Francisco%2C+CA                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [10] Sightglass Coffee:                                                                                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> https://sightglasscoffee.com/?srsltid=AfmBOop1VARlyNB5tmvFKhGVfTUQjJZ3yq2OocJ9hYxnTy-7cy909KJq                  <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [11] SIGHTGLASS COFFEE - Updated August 2025 - Yelp: https://www.yelp.com/biz/sightglass-coffee-san-francisco-7 <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [12] San Francisco Coffee Worth Seeking - Food GPS: https://foodgps.com/san-francisco-coffee-worth-seeking/     <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> [13] San Francisco’s Best Coffee Shops | Eater SF: https://sf.eater.com/maps/best-coffee-shops-san-francisco    <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> 🔧 Tool Call: think_tool                                                                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    Args: {                                                                                                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   "reflection": "Excellent! The research agent has provided comprehensive findings about San Francisco's top    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> coffee shops based on coffee quality. Let me analyze what we've gathered:\n\n**Key Information Found**:\n1.     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> **Authoritative Sources**: The research successfully accessed Eater SF (major food publication), Coffee Review  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> (specialized coffee evaluation site), Yelp reviews, and official coffee shop websites.\n\n2. **Comprehensive    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Coverage**: The research identified 16+ top coffee shops with detailed information about what makes their       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> coffee quality exceptional.\n\n3. **Quality Assessment Methods**: The findings include:\n   - Expert reviews    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> from Coffee Review with detailed tasting notes\n   - Customer ratings and review counts from Yelp\n   -         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Specialty coffee credentials (direct trade, sourcing practices)\n   - Recognition from major publications       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> (Eater SF's curated list)\n\n4. **Specific Quality Details**: For many shops, we have concrete details about:\n <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - Sourcing practices (direct trade relationships)\n   - Roasting methods and expertise\n   - Specific coffee    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> origins and processing methods\n   - Unique brewing techniques and specialty drinks\n   - Awards and industry   <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> recognition\n\n**Quality of Evidence**: The research provides well-supported evidence from:\n- Coffee Review    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> (industry authority) with specific ratings and tasting notes\n- Eater SF's 2025 curated list (major food        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> publication)\n- Yelp ratings with review counts\n- Official websites showing sourcing and roasting              <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> credentials\n\n**Completeness**: The research covers the full spectrum of what the user requested:\n\u2713      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Geographic focus: San Francisco area\n\u2713 Primary criterion: Coffee quality with specific details\n\u2713    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Multiple assessment methods: Expert reviews, customer ratings, specialty certifications\n\u2713 Prioritized     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> primary sources: Official websites, Coffee Review, review aggregators\n\u2713 Latest data: 2025                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> information\n\u2713 Well-supported ranking with evidence\n\n**Assessment**: This research is comprehensive and  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> provides exactly what the user requested. We have enough information to create a well-supported ranking of San  <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> Francisco's top coffee shops based on coffee quality, with specific evidence for each recommendation. The       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> findings include both broad recognition (Eater SF's authoritative list) and detailed quality assessments        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> (Coffee Review's expert evaluations).\n\n**Decision**: I have sufficient information to answer the user's       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> question comprehensively. The research covers all required elements and provides the evidence-based ranking     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> they requested."                                                                                                <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> }                                                                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    ID: toolu_01Jv53CjxQgMhvqCsUJV9c3D                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div>
+    </div>
+<div class="md-cell"><p>We can look at the trace <a href="https://smith.langchain.com/public/99eaaecd-fd9a-4ead-8eed-abdfe4ab9288/r" target="_blank">here</a>.</p>
+<h3>LangGraph Studio</h3>
+<p>Just as we did before, we can also use LangGraph Studio to visualize the agent.</p>
+<p>This agent has been added to the <code class="ic">langgraph.json</code> file, so you can select <code class="ic">research_agent_supervisor</code> in the dropdown menu:</p>
+<pre class="md-code"><code>&quot;research_agent_supervisor&quot;: &quot;./src/deep_research_from_scratch/multi_agent_supervisor.py:supervisor_agent&quot;,</code></pre>
+<p>Run the following command to start the studio</p>
+<pre class="md-code"><code>uvx --refresh --from &quot;langgraph-cli[inmem]&quot; --with-editable . --python 3.11 langgraph dev --allow-blocking</code></pre>
+<h2>Eval</h2>
+<p>The clear benefit of multi-agent is context isolation when there are clearly separable sub-topics. As we discuss <a href="https://blog.langchain.com/open-deep-research/" target="_blank">in our blog</a>:</p>
+<blockquote>Our experiments showed that single agent response quality suffers if the request has multiple sub-topics (e.g., compare A to B to C). The intuition here is straightforward: a single context window needs to store and reason about tool feedback across all of the sub-topics. This tool feedback is often token heavy. Numerous failure modes, such as context clash, become prevalent as the context window accumulates tool calls across many different sub-topics.</blockquote>
+<p>But, we want to be careful not to spawn sub-agents in cases where it is not required:</p>
+<blockquote>The supervisor can handle both cases by selectively spawning sub-agents to tune the level of research depth needed for a request. The supervisor is prompted with heuristics to reason about when research should be parallelized, and when a single thread of research is sufficient. Our deep research agent has the flexibility to choose whether to parallelize research or not.</blockquote>
+<p>Let's set up a few tests to make sure that we are parallelizing when it makes sense.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Example messages with think_tool calls and tool messages for evaluation
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+
+should_parallelize = [
+    HumanMessage(content=&quot;Compare OpenAI vs Gemini deep research.&quot;),
+    AIMessage(content=&quot;I need to analyze this request to determine if can should be parallelized.&quot;, tool_calls=[
+        {
+            &quot;name&quot;: &quot;think_tool&quot;,
+            &quot;args&quot;: {&quot;reflection&quot;: &quot;This is a comparison task involving two distinct AI products: OpenAI v Gemini Deep Research.&quot;},
+            &quot;id&quot;: &quot;call_think_1&quot;
+        }
+    ]),
+    ToolMessage(content=&quot;Analysis complete: This is a comparison task involving two distinct AI products: OpenAI v Gemini Deep Research.&quot;, tool_call_id=&quot;call_think_1&quot;, name=&quot;think_tool&quot;)
+]
+
+should_not_parallelize = [
+    HumanMessage(content=&quot;What are the top three Chinese restaurants in Chelsea, Manhattan&quot;),
+    AIMessage(content=&quot;Let me think about whether this task requires parallelization.&quot;, tool_calls=[
+        {
+            &quot;name&quot;: &quot;think_tool&quot;, 
+            &quot;args&quot;: {&quot;reflection&quot;: &quot;This is a ranking/listing task for restaurants in a specific geographic area (Chelsea, Manhattan).&quot;},
+            &quot;id&quot;: &quot;call_think_2&quot;
+        }
+    ]),
+    ToolMessage(content=&quot;Analysis complete: This is a ranking/listing task for restaurants in a specific geographic area (Chelsea, Manhattan).&quot;, tool_call_id=&quot;call_think_2&quot;, name=&quot;think_tool&quot;)
+]</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os
+from langsmith import Client
+
+# Initialize client 
+langsmith_client = Client(api_key=os.getenv(&quot;LANGSMITH_API_KEY&quot;))
+
+# Create the dataset
+dataset_name = &quot;deep_research_supervisor_parallelism&quot;
+if not langsmith_client.has_dataset(dataset_name=dataset_name):
+
+    dataset = langsmith_client.create_dataset(
+        dataset_name=dataset_name,
+        description=&quot;A dataset that evaluates whether a supervisor can accurately decide when to parallelize research.&quot;,
+    )
+
+    langsmith_client.create_examples(
+        dataset_id=dataset.id,
+        examples=[
+            {
+                &quot;inputs&quot;: {&quot;supervisor_messages&quot;: should_parallelize},
+                &quot;outputs&quot;: {&quot;num_expected_threads&quot;: 2},
+            },
+            {
+                &quot;inputs&quot;: {&quot;supervisor_messages&quot;: should_not_parallelize},
+                &quot;outputs&quot;: {&quot;num_expected_threads&quot;: 1},
+            },
+        ],
+    )</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>Now we can run evals.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import uuid
+
+def evaluate_parallelism(outputs: dict, reference_outputs:dict):
+    tool_calls = outputs[&quot;output&quot;].update[&quot;supervisor_messages&quot;][-1].tool_calls
+    return {
+        &quot;key&quot;: &quot;correct_next_step&quot;,
+        &quot;score&quot;: len(tool_calls) == reference_outputs[&quot;num_expected_threads&quot;]
+    }
+
+async def target_func(inputs: dict):
+    config = {&quot;configurable&quot;: {&quot;thread_id&quot;: uuid.uuid4()}}
+    return await supervisor_agent.nodes[&quot;supervisor&quot;].ainvoke(inputs, config=config)
+
+await langsmith_client.aevaluate(
+    target_func,
+    data=dataset_name,
+    evaluators=[evaluate_parallelism],
+    experiment_prefix=&quot;Supervisor Parallelism&quot;,
+)</code></pre></div>
+      <div class="out out-stream"><pre>View the evaluation results for experiment: 'Supervisor Parallelism-b4e2c6e6' at:
+https://smith.langchain.com/o/ebbaf2eb-769b-4505-aca2-d11de10372a4/datasets/87d6f859-3fc2-4727-a213-4106ef8851ae/compare?selectedSessions=a7113523-bfbb-472b-bf37-810ae9f22e09
+
+
+</pre></div><div class="out"><pre>0it [00:00, ?it/s]</pre></div><div class="out out-html"><AsyncExperimentResults Supervisor Parallelism-b4e2c6e6></div>
+    </div>
+<div class="md-cell"><p>In the first example, we asked the agent to compare and contrast products.</p>
+<p>This sort of problem is great for parallel research, and we expect the agent to deep dive into each lab in parallel before synthesizing findings when writing the report.</p>
+<p>The second example asks the agent for the top restaurants in Chelsea, Manhattan.</p>
+<p>The agent needs to conduct a single thread of research here and reflect on websites that presumably list out highly rated restaurants.</p>
+<p>There's not an obvious opportunity for parallelism for this ranking task.</p></div>
+
+</div>
+</body>
+</html>

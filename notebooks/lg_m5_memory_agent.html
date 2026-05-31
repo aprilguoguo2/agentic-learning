@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Memory Agent</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><h1>Memory Agent</h1>
+<h2>Review</h2>
+<p>We created a chatbot that saves semantic memories to a single <a href="https://docs.langchain.com/oss/python/concepts/memory#profile" target="_blank">user profile</a> or <a href="https://docs.langchain.com/oss/python/concepts/memory#collection" target="_blank">collection</a>.</p>
+<p>We introduced <a href="https://github.com/hinthornw/trustcall" target="_blank">Trustcall</a> as a way to update either schema.</p>
+<h2>Goals</h2>
+<p>Now, we're going to pull together the pieces we've learned to build an agent with long-term memory.</p>
+<p>Our agent, <code class="ic">task_mAIstro</code>, will help us manage a ToDo list!</p>
+<p>The chatbots we built previously <em>always</em> reflected on the conversation and saved memories.</p>
+<p><code class="ic">task_mAIstro</code> will decide <em>when</em> to save memories (items to our ToDo list).</p>
+<p>The chatbots we built previously always saved one type of memory, a profile or a collection.</p>
+<p><code class="ic">task_mAIstro</code> can decide to save to either a user profile or a collection of ToDo items.</p>
+<p>In addition semantic memory, <code class="ic">task_mAIstro</code> also will manage procedural memory.</p>
+<p>This allows the user to update their preferences for creating ToDo items.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install -U langchain_openai langgraph trustcall langchain_core</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os, getpass
+
+def _set_env(var: str):
+    # Check if the variable is set in the OS environment
+    env_value = os.environ.get(var)
+    if not env_value:
+        # If not set, prompt the user for input
+        env_value = getpass.getpass(f&quot;{var}: &quot;)
+    
+    # Set the environment variable for the current process
+    os.environ[var] = env_value
+
+_set_env(&quot;LANGSMITH_API_KEY&quot;)
+os.environ[&quot;LANGSMITH_TRACING&quot;] = &quot;true&quot;
+os.environ[&quot;LANGSMITH_PROJECT&quot;] = &quot;langchain-academy&quot;</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>_set_env(&quot;OPENAI_API_KEY&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Visibility into Trustcall updates</h2>
+<p>Trustcall creates and updates JSON schemas.</p>
+<p>What if we want visibility into the <em>specific changes</em> made by Trustcall?</p>
+<p>For example, we saw before that Trustcall has some of its own tools to:</p>
+<ul><li>Self-correct from validation failures -- <a href="https://smith.langchain.com/public/5cd23009-3e05-4b00-99f0-c66ee3edd06e/r/9684db76-2003-443b-9aa2-9a9dbc5498b7" target="_blank">see trace example here</a> </li>
+<li>Update existing documents -- <a href="https://smith.langchain.com/public/f45bdaf0-6963-4c19-8ec9-f4b7fe0f68ad/r/760f90e1-a5dc-48f1-8c34-79d6a3414ac3" target="_blank">see trace example here</a></li>
+</ul>
+Visibility into these tools can be useful for the agent we're going to build.
+<p>Below, we'll show how to do this!</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from pydantic import BaseModel, Field
+
+class Memory(BaseModel):
+    content: str = Field(description=&quot;The main content of the memory. For example: User expressed interest in learning about French.&quot;)
+
+class MemoryCollection(BaseModel):
+    memories: list[Memory] = Field(description=&quot;A list of memories about the user.&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>We can add a <a href="https://python.langchain.com/docs/how_to/lcel_cheatsheet/#add-lifecycle-listeners" target="_blank">listener</a> <!-- broken, but cannot find better linke --> to the Trustcall extractor.</p>
+<p>This will pass runs from the extractor's execution to a class, <code class="ic">Spy</code>, that we will define.</p>
+<p>Our <code class="ic">Spy</code> class will extract information about what tool calls were made by Trustcall.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from trustcall import create_extractor
+from langchain_openai import ChatOpenAI
+
+# Inspect the tool calls made by Trustcall
+class Spy:
+    def __init__(self):
+        self.called_tools = []
+
+    def __call__(self, run):
+        # Collect information about the tool calls made by the extractor.
+        q = [run]
+        while q:
+            r = q.pop()
+            if r.child_runs:
+                q.extend(r.child_runs)
+            if r.run_type == &quot;chat_model&quot;:
+                self.called_tools.append(
+                    r.outputs[&quot;generations&quot;][0][0][&quot;message&quot;][&quot;kwargs&quot;][&quot;tool_calls&quot;]
+                )
+
+# Initialize the spy
+spy = Spy()
+
+# Initialize the model
+model = ChatOpenAI(model=&quot;gpt-4o&quot;, temperature=0)
+
+# Create the extractor
+trustcall_extractor = create_extractor(
+    model,
+    tools=[Memory],
+    tool_choice=&quot;Memory&quot;,
+    enable_inserts=True,
+)
+
+# Add the spy as a listener
+trustcall_extractor_see_all_tool_calls = trustcall_extractor.with_listeners(on_end=spy)</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+
+# Instruction
+instruction = &quot;&quot;&quot;Extract memories from the following conversation:&quot;&quot;&quot;
+
+# Conversation
+conversation = [HumanMessage(content=&quot;Hi, I'm Lance.&quot;), 
+                AIMessage(content=&quot;Nice to meet you, Lance.&quot;), 
+                HumanMessage(content=&quot;This morning I had a nice bike ride in San Francisco.&quot;)]
+
+# Invoke the extractor
+result = trustcall_extractor.invoke({&quot;messages&quot;: [SystemMessage(content=instruction)] + conversation})</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Messages contain the tool calls
+for m in result[&quot;messages&quot;]:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================== Ai Message ==================================
+Tool Calls:
+  Memory (call_NkjwwJGjrgxHzTb7KwD8lTaH)
+ Call ID: call_NkjwwJGjrgxHzTb7KwD8lTaH
+  Args:
+    content: Lance had a nice bike ride in San Francisco this morning.
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Responses contain the memories that adhere to the schema
+for m in result[&quot;responses&quot;]: 
+    print(m)</code></pre></div>
+      <div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning.'
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Metadata contains the tool call  
+for m in result[&quot;response_metadata&quot;]: 
+    print(m)</code></pre></div>
+      <div class="out out-stream"><pre>{'id': 'call_NkjwwJGjrgxHzTb7KwD8lTaH'}
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Update the conversation
+updated_conversation = [AIMessage(content=&quot;That's great, did you do after?&quot;), 
+                        HumanMessage(content=&quot;I went to Tartine and ate a croissant.&quot;),                        
+                        AIMessage(content=&quot;What else is on your mind?&quot;),
+                        HumanMessage(content=&quot;I was thinking about my Japan, and going back this winter!&quot;),]
+
+# Update the instruction
+system_msg = &quot;&quot;&quot;Update existing memories and create new ones based on the following conversation:&quot;&quot;&quot;
+
+# We'll save existing memories, giving them an ID, key (tool name), and value
+tool_name = &quot;Memory&quot;
+existing_memories = [(str(i), tool_name, memory.model_dump()) for i, memory in enumerate(result[&quot;responses&quot;])] if result[&quot;responses&quot;] else None
+existing_memories</code></pre></div>
+      <div class="out"><pre>[('0',
+  'Memory',
+  {'content': 'Lance had a nice bike ride in San Francisco this morning.'})]</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Invoke the extractor with our updated conversation and existing memories
+result = trustcall_extractor_see_all_tool_calls.invoke({&quot;messages&quot;: updated_conversation, 
+                                                        &quot;existing&quot;: existing_memories})</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Metadata contains the tool call  
+for m in result[&quot;response_metadata&quot;]: 
+    print(m)</code></pre></div>
+      <div class="out out-stream"><pre>{'id': 'call_bF0w0hE4YZmGyDbuJVe1mh5H', 'json_doc_id': '0'}
+{'id': 'call_fQAxxRypV914Xev6nJ9VKw3X'}
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Messages contain the tool calls
+for m in result[&quot;messages&quot;]:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================== Ai Message ==================================
+Tool Calls:
+  Memory (call_bF0w0hE4YZmGyDbuJVe1mh5H)
+ Call ID: call_bF0w0hE4YZmGyDbuJVe1mh5H
+  Args:
+    content: Lance had a nice bike ride in San Francisco this morning. Afterward, he went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.
+  Memory (call_fQAxxRypV914Xev6nJ9VKw3X)
+ Call ID: call_fQAxxRypV914Xev6nJ9VKw3X
+  Args:
+    content: Lance went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Parsed responses
+for m in result[&quot;responses&quot;]:
+    print(m)</code></pre></div>
+      <div class="out out-stream"><pre>content='Lance had a nice bike ride in San Francisco this morning. Afterward, he went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'
+content='Lance went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Inspect the tool calls made by Trustcall
+spy.called_tools</code></pre></div>
+      <div class="out"><pre>[[{'name': 'PatchDoc',
+   'args': {'json_doc_id': '0',
+    'planned_edits': '1. Replace the existing content with the updated memory that includes the new activities: going to Tartine for a croissant and thinking about going back to Japan this winter.',
+    'patches': [{'op': 'replace',
+      'path': '/content',
+      'value': 'Lance had a nice bike ride in San Francisco this morning. Afterward, he went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'}]},
+   'id': 'call_bF0w0hE4YZmGyDbuJVe1mh5H',
+   'type': 'tool_call'},
+  {'name': 'Memory',
+   'args': {'content': 'Lance went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'},
+   'id': 'call_fQAxxRypV914Xev6nJ9VKw3X',
+   'type': 'tool_call'}]]</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>def extract_tool_info(tool_calls, schema_name=&quot;Memory&quot;):
+    &quot;&quot;&quot;Extract information from tool calls for both patches and new memories.
+    
+    Args:
+        tool_calls: List of tool calls from the model
+        schema_name: Name of the schema tool (e.g., &quot;Memory&quot;, &quot;ToDo&quot;, &quot;Profile&quot;)
+    &quot;&quot;&quot;
+
+    # Initialize list of changes
+    changes = []
+    
+    for call_group in tool_calls:
+        for call in call_group:
+            if call['name'] == 'PatchDoc':
+                changes.append({
+                    'type': 'update',
+                    'doc_id': call['args']['json_doc_id'],
+                    'planned_edits': call['args']['planned_edits'],
+                    'value': call['args']['patches'][0]['value']
+                })
+            elif call['name'] == schema_name:
+                changes.append({
+                    'type': 'new',
+                    'value': call['args']
+                })
+
+    # Format results as a single string
+    result_parts = []
+    for change in changes:
+        if change['type'] == 'update':
+            result_parts.append(
+                f&quot;Document {change['doc_id']} updated:\n&quot;
+                f&quot;Plan: {change['planned_edits']}\n&quot;
+                f&quot;Added content: {change['value']}&quot;
+            )
+        else:
+            result_parts.append(
+                f&quot;New {schema_name} created:\n&quot;
+                f&quot;Content: {change['value']}&quot;
+            )
+    
+    return &quot;\n\n&quot;.join(result_parts)
+
+# Inspect spy.called_tools to see exactly what happened during the extraction
+schema_name = &quot;Memory&quot;
+changes = extract_tool_info(spy.called_tools, schema_name)
+print(changes)</code></pre></div>
+      <div class="out out-stream"><pre>Document 0 updated:
+Plan: 1. Replace the existing content with the updated memory that includes the new activities: going to Tartine for a croissant and thinking about going back to Japan this winter.
+Added content: Lance had a nice bike ride in San Francisco this morning. Afterward, he went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.
+
+New Memory created:
+Content: {'content': 'Lance went to Tartine and ate a croissant. He was also thinking about his trip to Japan and going back this winter.'}
+</pre></div>
+    </div>
+<div class="md-cell"><h2>Creating an agent</h2>
+<p>There are many different agent architectures to choose from.</p>
+<p>Here, we'll implement something simple, a <a href="https://docs.langchain.com/oss/python/langgraph/workflows-agents#agents" target="_blank">ReAct</a> agent.</p>
+<p>This agent will be a helpful companion for creating and managing a ToDo list.</p>
+<p>This agent can make a decision to update three types of long-term memory:</p>
+<p>(a) Create or update a user <code class="ic">profile</code> with general user information</p>
+<p>(b) Add or update items in a ToDo list <code class="ic">collection</code></p>
+<p>(c) Update its own <code class="ic">instructions</code> on how to update items to the ToDo list</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from typing import TypedDict, Literal
+
+# Update memory tool
+class UpdateMemory(TypedDict):
+    &quot;&quot;&quot; Decision on what memory type to update &quot;&quot;&quot;
+    update_type: Literal['user', 'todo', 'instructions']</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>_set_env(&quot;OPENAI_API_KEY&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Graph definition </h2>
+<p>We add a simple router, <code class="ic">route_message</code>, that makes a binary decision to save memories.</p>
+<p>The memory collection updating is handled by <code class="ic">Trustcall</code> in the <code class="ic">write_memory</code> node, as before!</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import uuid
+from IPython.display import Image, display
+
+from datetime import datetime
+from trustcall import create_extractor
+from typing import Optional
+from pydantic import BaseModel, Field
+
+from langchain_core.runnables import RunnableConfig
+from langchain_core.messages import merge_message_runs, HumanMessage, SystemMessage
+
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import StateGraph, MessagesState, END, START
+from langgraph.store.base import BaseStore
+from langgraph.store.memory import InMemoryStore
+
+from langchain_openai import ChatOpenAI
+
+# Initialize the model
+model = ChatOpenAI(model=&quot;gpt-4o&quot;, temperature=0)
+
+# User profile schema
+class Profile(BaseModel):
+    &quot;&quot;&quot;This is the profile of the user you are chatting with&quot;&quot;&quot;
+    name: Optional[str] = Field(description=&quot;The user's name&quot;, default=None)
+    location: Optional[str] = Field(description=&quot;The user's location&quot;, default=None)
+    job: Optional[str] = Field(description=&quot;The user's job&quot;, default=None)
+    connections: list[str] = Field(
+        description=&quot;Personal connection of the user, such as family members, friends, or coworkers&quot;,
+        default_factory=list
+    )
+    interests: list[str] = Field(
+        description=&quot;Interests that the user has&quot;, 
+        default_factory=list
+    )
+
+# ToDo schema
+class ToDo(BaseModel):
+    task: str = Field(description=&quot;The task to be completed.&quot;)
+    time_to_complete: Optional[int] = Field(description=&quot;Estimated time to complete the task (minutes).&quot;)
+    deadline: Optional[datetime] = Field(
+        description=&quot;When the task needs to be completed by (if applicable)&quot;,
+        default=None
+    )
+    solutions: list[str] = Field(
+        description=&quot;List of specific, actionable solutions (e.g., specific ideas, service providers, or concrete options relevant to completing the task)&quot;,
+        min_items=1,
+        default_factory=list
+    )
+    status: Literal[&quot;not started&quot;, &quot;in progress&quot;, &quot;done&quot;, &quot;archived&quot;] = Field(
+        description=&quot;Current status of the task&quot;,
+        default=&quot;not started&quot;
+    )
+
+# Create the Trustcall extractor for updating the user profile 
+profile_extractor = create_extractor(
+    model,
+    tools=[Profile],
+    tool_choice=&quot;Profile&quot;,
+)
+
+# Chatbot instruction for choosing what to update and what tools to call 
+MODEL_SYSTEM_MESSAGE = &quot;&quot;&quot;You are a helpful chatbot. 
+
+You are designed to be a companion to a user, helping them keep track of their ToDo list.
+
+You have a long term memory which keeps track of three things:
+1. The user's profile (general information about them) 
+2. The user's ToDo list
+3. General instructions for updating the ToDo list
+
+Here is the current User Profile (may be empty if no information has been collected yet):
+&lt;user_profile&gt;
+{user_profile}
+&lt;/user_profile&gt;
+
+Here is the current ToDo List (may be empty if no tasks have been added yet):
+&lt;todo&gt;
+{todo}
+&lt;/todo&gt;
+
+Here are the current user-specified preferences for updating the ToDo list (may be empty if no preferences have been specified yet):
+&lt;instructions&gt;
+{instructions}
+&lt;/instructions&gt;
+
+Here are your instructions for reasoning about the user's messages:
+
+1. Reason carefully about the user's messages as presented below. 
+
+2. Decide whether any of the your long-term memory should be updated:
+- If personal information was provided about the user, update the user's profile by calling UpdateMemory tool with type `user`
+- If tasks are mentioned, update the ToDo list by calling UpdateMemory tool with type `todo`
+- If the user has specified preferences for how to update the ToDo list, update the instructions by calling UpdateMemory tool with type `instructions`
+
+3. Tell the user that you have updated your memory, if appropriate:
+- Do not tell the user you have updated the user's profile
+- Tell the user them when you update the todo list
+- Do not tell the user that you have updated instructions
+
+4. Err on the side of updating the todo list. No need to ask for explicit permission.
+
+5. Respond naturally to user user after a tool call was made to save memories, or if no tool call was made.&quot;&quot;&quot;
+
+# Trustcall instruction
+TRUSTCALL_INSTRUCTION = &quot;&quot;&quot;Reflect on following interaction. 
+
+Use the provided tools to retain any necessary memories about the user. 
+
+Use parallel tool calling to handle updates and insertions simultaneously.
+
+System Time: {time}&quot;&quot;&quot;
+
+# Instructions for updating the ToDo list
+CREATE_INSTRUCTIONS = &quot;&quot;&quot;Reflect on the following interaction.
+
+Based on this interaction, update your instructions for how to update ToDo list items. 
+
+Use any feedback from the user to update how they like to have items added, etc.
+
+Your current instructions are:
+
+&lt;current_instructions&gt;
+{current_instructions}
+&lt;/current_instructions&gt;&quot;&quot;&quot;
+
+# Node definitions
+def task_mAIstro(state: MessagesState, config: RunnableConfig, store: BaseStore):
+
+    &quot;&quot;&quot;Load memories from the store and use them to personalize the chatbot's response.&quot;&quot;&quot;
+    
+    # Get the user ID from the config
+    user_id = config[&quot;configurable&quot;][&quot;user_id&quot;]
+
+    # Retrieve profile memory from the store
+    namespace = (&quot;profile&quot;, user_id)
+    memories = store.search(namespace)
+    if memories:
+        user_profile = memories[0].value
+    else:
+        user_profile = None
+
+    # Retrieve task memory from the store
+    namespace = (&quot;todo&quot;, user_id)
+    memories = store.search(namespace)
+    todo = &quot;\n&quot;.join(f&quot;{mem.value}&quot; for mem in memories)
+
+    # Retrieve custom instructions
+    namespace = (&quot;instructions&quot;, user_id)
+    memories = store.search(namespace)
+    if memories:
+        instructions = memories[0].value
+    else:
+        instructions = &quot;&quot;
+    
+    system_msg = MODEL_SYSTEM_MESSAGE.format(user_profile=user_profile, todo=todo, instructions=instructions)
+
+    # Respond using memory as well as the chat history
+    response = model.bind_tools([UpdateMemory], parallel_tool_calls=False).invoke([SystemMessage(content=system_msg)]+state[&quot;messages&quot;])
+
+    return {&quot;messages&quot;: [response]}
+
+def update_profile(state: MessagesState, config: RunnableConfig, store: BaseStore):
+
+    &quot;&quot;&quot;Reflect on the chat history and update the memory collection.&quot;&quot;&quot;
+    
+    # Get the user ID from the config
+    user_id = config[&quot;configurable&quot;][&quot;user_id&quot;]
+
+    # Define the namespace for the memories
+    namespace = (&quot;profile&quot;, user_id)
+
+    # Retrieve the most recent memories for context
+    existing_items = store.search(namespace)
+
+    # Format the existing memories for the Trustcall extractor
+    tool_name = &quot;Profile&quot;
+    existing_memories = ([(existing_item.key, tool_name, existing_item.value)
+                          for existing_item in existing_items]
+                          if existing_items
+                          else None
+                        )
+
+    # Merge the chat history and the instruction
+    TRUSTCALL_INSTRUCTION_FORMATTED=TRUSTCALL_INSTRUCTION.format(time=datetime.now().isoformat())
+    updated_messages=list(merge_message_runs(messages=[SystemMessage(content=TRUSTCALL_INSTRUCTION_FORMATTED)] + state[&quot;messages&quot;][:-1]))
+
+    # Invoke the extractor
+    result = profile_extractor.invoke({&quot;messages&quot;: updated_messages, 
+                                         &quot;existing&quot;: existing_memories})
+
+    # Save the memories from Trustcall to the store
+    for r, rmeta in zip(result[&quot;responses&quot;], result[&quot;response_metadata&quot;]):
+        store.put(namespace,
+                  rmeta.get(&quot;json_doc_id&quot;, str(uuid.uuid4())),
+                  r.model_dump(mode=&quot;json&quot;),
+            )
+    tool_calls = state['messages'][-1].tool_calls
+    return {&quot;messages&quot;: [{&quot;role&quot;: &quot;tool&quot;, &quot;content&quot;: &quot;updated profile&quot;, &quot;tool_call_id&quot;:tool_calls[0]['id']}]}
+
+def update_todos(state: MessagesState, config: RunnableConfig, store: BaseStore):
+
+    &quot;&quot;&quot;Reflect on the chat history and update the memory collection.&quot;&quot;&quot;
+    
+    # Get the user ID from the config
+    user_id = config[&quot;configurable&quot;][&quot;user_id&quot;]
+
+    # Define the namespace for the memories
+    namespace = (&quot;todo&quot;, user_id)
+
+    # Retrieve the most recent memories for context
+    existing_items = store.search(namespace)
+
+    # Format the existing memories for the Trustcall extractor
+    tool_name = &quot;ToDo&quot;
+    existing_memories = ([(existing_item.key, tool_name, existing_item.value)
+                          for existing_item in existing_items]
+                          if existing_items
+                          else None
+                        )
+
+    # Merge the chat history and the instruction
+    TRUSTCALL_INSTRUCTION_FORMATTED=TRUSTCALL_INSTRUCTION.format(time=datetime.now().isoformat())
+    updated_messages=list(merge_message_runs(messages=[SystemMessage(content=TRUSTCALL_INSTRUCTION_FORMATTED)] + state[&quot;messages&quot;][:-1]))
+
+    # Initialize the spy for visibility into the tool calls made by Trustcall
+    spy = Spy()
+    
+    # Create the Trustcall extractor for updating the ToDo list 
+    todo_extractor = create_extractor(
+    model,
+    tools=[ToDo],
+    tool_choice=tool_name,
+    enable_inserts=True
+    ).with_listeners(on_end=spy)
+
+    # Invoke the extractor
+    result = todo_extractor.invoke({&quot;messages&quot;: updated_messages, 
+                                    &quot;existing&quot;: existing_memories})
+
+    # Save the memories from Trustcall to the store
+    for r, rmeta in zip(result[&quot;responses&quot;], result[&quot;response_metadata&quot;]):
+        store.put(namespace,
+                  rmeta.get(&quot;json_doc_id&quot;, str(uuid.uuid4())),
+                  r.model_dump(mode=&quot;json&quot;),
+            )
+        
+    # Respond to the tool call made in task_mAIstro, confirming the update
+    tool_calls = state['messages'][-1].tool_calls
+
+    # Extract the changes made by Trustcall and add the the ToolMessage returned to task_mAIstro
+    todo_update_msg = extract_tool_info(spy.called_tools, tool_name)
+    return {&quot;messages&quot;: [{&quot;role&quot;: &quot;tool&quot;, &quot;content&quot;: todo_update_msg, &quot;tool_call_id&quot;:tool_calls[0]['id']}]}
+
+def update_instructions(state: MessagesState, config: RunnableConfig, store: BaseStore):
+
+    &quot;&quot;&quot;Reflect on the chat history and update the memory collection.&quot;&quot;&quot;
+    
+    # Get the user ID from the config
+    user_id = config[&quot;configurable&quot;][&quot;user_id&quot;]
+    
+    namespace = (&quot;instructions&quot;, user_id)
+
+    existing_memory = store.get(namespace, &quot;user_instructions&quot;)
+        
+    # Format the memory in the system prompt
+    system_msg = CREATE_INSTRUCTIONS.format(current_instructions=existing_memory.value if existing_memory else None)
+    new_memory = model.invoke([SystemMessage(content=system_msg)]+state['messages'][:-1] + [HumanMessage(content=&quot;Please update the instructions based on the conversation&quot;)])
+
+    # Overwrite the existing memory in the store 
+    key = &quot;user_instructions&quot;
+    store.put(namespace, key, {&quot;memory&quot;: new_memory.content})
+    tool_calls = state['messages'][-1].tool_calls
+    return {&quot;messages&quot;: [{&quot;role&quot;: &quot;tool&quot;, &quot;content&quot;: &quot;updated instructions&quot;, &quot;tool_call_id&quot;:tool_calls[0]['id']}]}
+
+# Conditional edge
+def route_message(state: MessagesState, config: RunnableConfig, store: BaseStore) -&gt; Literal[END, &quot;update_todos&quot;, &quot;update_instructions&quot;, &quot;update_profile&quot;]:
+
+    &quot;&quot;&quot;Reflect on the memories and chat history to decide whether to update the memory collection.&quot;&quot;&quot;
+    message = state['messages'][-1]
+    if len(message.tool_calls) ==0:
+        return END
+    else:
+        tool_call = message.tool_calls[0]
+        if tool_call['args']['update_type'] == &quot;user&quot;:
+            return &quot;update_profile&quot;
+        elif tool_call['args']['update_type'] == &quot;todo&quot;:
+            return &quot;update_todos&quot;
+        elif tool_call['args']['update_type'] == &quot;instructions&quot;:
+            return &quot;update_instructions&quot;
+        else:
+            raise ValueError
+
+# Create the graph + all nodes
+builder = StateGraph(MessagesState)
+
+# Define the flow of the memory extraction process
+builder.add_node(task_mAIstro)
+builder.add_node(update_todos)
+builder.add_node(update_profile)
+builder.add_node(update_instructions)
+builder.add_edge(START, &quot;task_mAIstro&quot;)
+builder.add_conditional_edges(&quot;task_mAIstro&quot;, route_message)
+builder.add_edge(&quot;update_todos&quot;, &quot;task_mAIstro&quot;)
+builder.add_edge(&quot;update_profile&quot;, &quot;task_mAIstro&quot;)
+builder.add_edge(&quot;update_instructions&quot;, &quot;task_mAIstro&quot;)
+
+# Store for long-term (across-thread) memory
+across_thread_memory = InMemoryStore()
+
+# Checkpointer for short-term (within-thread) memory
+within_thread_memory = MemorySaver()
+
+# We compile the graph with the checkpointer and store
+graph = builder.compile(checkpointer=within_thread_memory, store=across_thread_memory)
+
+# View
+display(Image(graph.get_graph(xray=1).draw_mermaid_png()))</code></pre></div>
+      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># We supply a thread ID for short-term (within-thread) memory
+# We supply a user ID for long-term (across-thread) memory 
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;, &quot;user_id&quot;: &quot;Lance&quot;}}
+
+# User input to create a profile memory
+input_messages = [HumanMessage(content=&quot;My name is Lance. I live in SF with my wife. I have a 1 year old daughter.&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+My name is Lance. I live in SF with my wife. I have a 1 year old daughter.
+================================== Ai Message ==================================
+Tool Calls:
+  UpdateMemory (call_rOuw3bLYjFFKuSVWsIHF27k5)
+ Call ID: call_rOuw3bLYjFFKuSVWsIHF27k5
+  Args:
+    update_type: user
+================================= Tool Message =================================
+
+updated profile
+================================== Ai Message ==================================
+
+Got it! How can I assist you today, Lance?
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># User input for a ToDo
+input_messages = [HumanMessage(content=&quot;My wife asked me to book swim lessons for the baby.&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+My wife asked me to book swim lessons for the baby.
+================================== Ai Message ==================================
+Tool Calls:
+  UpdateMemory (call_VjLbRpbLqniJ8we2CNKQ0m3P)
+ Call ID: call_VjLbRpbLqniJ8we2CNKQ0m3P
+  Args:
+    update_type: todo
+================================= Tool Message =================================
+
+New ToDo created:
+Content: {'task': 'Book swim lessons for 1-year-old daughter.', 'time_to_complete': 30, 'solutions': ['Check local swim schools in SF', 'Look for baby swim classes online', 'Ask friends for recommendations'], 'status': 'not started'}
+================================== Ai Message ==================================
+
+I've added &quot;Book swim lessons for your 1-year-old daughter&quot; to your ToDo list. If you need any help with that, just let me know!
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># User input to update instructions for creating ToDos
+input_messages = [HumanMessage(content=&quot;When creating or updating ToDo items, include specific local businesses / vendors.&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+When creating or updating ToDo items, include specific local businesses / vendors.
+================================== Ai Message ==================================
+Tool Calls:
+  UpdateMemory (call_22w3V3Krhjf8WxDeH9YrQILa)
+ Call ID: call_22w3V3Krhjf8WxDeH9YrQILa
+  Args:
+    update_type: instructions
+================================= Tool Message =================================
+
+updated instructions
+================================== Ai Message ==================================
+
+Got it! I'll make sure to include specific local businesses or vendors in San Francisco when creating or updating your ToDo items. Let me know if there's anything else you need!
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Check for updated instructions
+user_id = &quot;Lance&quot;
+
+# Search 
+for memory in across_thread_memory.search((&quot;instructions&quot;, user_id)):
+    print(memory.value)</code></pre></div>
+      <div class="out out-stream"><pre>{'memory': '&lt;current_instructions&gt;\nWhen creating or updating ToDo list items for Lance, include specific local businesses or vendors in San Francisco. For example, when adding a task like booking swim lessons, suggest local swim schools or classes in the area.\n&lt;/current_instructions&gt;'}
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># User input for a ToDo
+input_messages = [HumanMessage(content=&quot;I need to fix the jammed electric Yale lock on the door.&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+I need to fix the jammed electric Yale lock on the door.
+================================== Ai Message ==================================
+Tool Calls:
+  UpdateMemory (call_7ooNemi3d6qWMfjf2g2h97EF)
+ Call ID: call_7ooNemi3d6qWMfjf2g2h97EF
+  Args:
+    update_type: todo
+================================= Tool Message =================================
+
+New ToDo created:
+Content: {'task': 'Fix the jammed electric Yale lock on the door.', 'time_to_complete': 60, 'solutions': ['Contact a local locksmith in SF', &quot;Check Yale's customer support for troubleshooting&quot;, 'Look for repair guides online'], 'status': 'not started'}
+
+Document ed0af900-52fa-4f15-907c-1aed1e17b0ce updated:
+Plan: Add specific local businesses or vendors to the solutions for booking swim lessons.
+Added content: ['Check local swim schools in SF', 'Look for baby swim classes online', 'Ask friends for recommendations', 'Contact La Petite Baleen Swim School', 'Check with SF Recreation and Parks for classes']
+================================== Ai Message ==================================
+
+I've added &quot;Fix the jammed electric Yale lock on the door&quot; to your ToDo list. If you need any specific recommendations or help, feel free to ask!
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Namespace for the memory to save
+user_id = &quot;Lance&quot;
+
+# Search 
+for memory in across_thread_memory.search((&quot;todo&quot;, user_id)):
+    print(memory.value)</code></pre></div>
+      <div class="out out-stream"><pre>{'task': 'Book swim lessons for 1-year-old daughter.', 'time_to_complete': 30, 'deadline': None, 'solutions': ['Check local swim schools in SF', 'Look for baby swim classes online', 'Ask friends for recommendations', 'Contact La Petite Baleen Swim School', 'Check with SF Recreation and Parks for classes'], 'status': 'not started'}
+{'task': 'Fix the jammed electric Yale lock on the door.', 'time_to_complete': 60, 'deadline': None, 'solutions': ['Contact a local locksmith in SF', &quot;Check Yale's customer support for troubleshooting&quot;, 'Look for repair guides online'], 'status': 'not started'}
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># User input to update an existing ToDo
+input_messages = [HumanMessage(content=&quot;For the swim lessons, I need to get that done by end of November.&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+For the swim lessons, I need to get that done by end of November.
+================================== Ai Message ==================================
+Tool Calls:
+  UpdateMemory (call_6AbsrTps4EPyD0gKBzkMIC90)
+ Call ID: call_6AbsrTps4EPyD0gKBzkMIC90
+  Args:
+    update_type: todo
+================================= Tool Message =================================
+
+Document ed0af900-52fa-4f15-907c-1aed1e17b0ce updated:
+Plan: Add a deadline for the swim lessons task to ensure it is completed by the end of November.
+Added content: 2024-11-30T23:59:59
+================================== Ai Message ==================================
+
+I've updated the swim lessons task with a deadline to be completed by the end of November. If there's anything else you need, just let me know!
+</pre></div>
+    </div>
+<div class="md-cell"><p>We can see that Trustcall performs patching of the existing memory:</p>
+<p>https://smith.langchain.com/public/4ad3a8af-3b1e-493d-b163-3111aa3d575a/r</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># User input for a ToDo
+input_messages = [HumanMessage(content=&quot;Need to call back City Toyota to schedule car service.&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Need to call back City Toyota to schedule car service.
+================================== Ai Message ==================================
+Tool Calls:
+  UpdateMemory (call_tDuYZL7njpwOkg2YMEcf6DDJ)
+ Call ID: call_tDuYZL7njpwOkg2YMEcf6DDJ
+  Args:
+    update_type: todo
+================================= Tool Message =================================
+
+New ToDo created:
+Content: {'task': 'Call back City Toyota to schedule car service.', 'time_to_complete': 10, 'solutions': [&quot;Find City Toyota's contact number&quot;, 'Check car service availability', 'Prepare car details for service scheduling'], 'status': 'not started'}
+
+Document a77482f0-d654-4b41-ab74-d6f2b343a969 updated:
+Plan: Add specific local businesses or vendors to the solutions for fixing the jammed electric Yale lock.
+Added content: Contact City Locksmith SF
+================================== Ai Message ==================================
+
+I've added &quot;Call back City Toyota to schedule car service&quot; to your ToDo list. If you need any assistance with that, just let me know!
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Namespace for the memory to save
+user_id = &quot;Lance&quot;
+
+# Search 
+for memory in across_thread_memory.search((&quot;todo&quot;, user_id)):
+    print(memory.value)</code></pre></div>
+      <div class="out out-stream"><pre>{'task': 'Book swim lessons for 1-year-old daughter.', 'time_to_complete': 30, 'deadline': '2024-11-30T23:59:59', 'solutions': ['Check local swim schools in SF', 'Look for baby swim classes online', 'Ask friends for recommendations', 'Contact La Petite Baleen Swim School', 'Check with SF Recreation and Parks for classes'], 'status': 'not started'}
+{'task': 'Fix the jammed electric Yale lock on the door.', 'time_to_complete': 60, 'deadline': None, 'solutions': ['Contact a local locksmith in SF', &quot;Check Yale's customer support for troubleshooting&quot;, 'Look for repair guides online', 'Contact City Locksmith SF', 'Visit SF Lock and Key for assistance'], 'status': 'not started'}
+{'task': 'Call back City Toyota to schedule car service.', 'time_to_complete': 10, 'deadline': None, 'solutions': [&quot;Find City Toyota's contact number&quot;, 'Check car service availability', 'Prepare car details for service scheduling'], 'status': 'not started'}
+</pre></div>
+    </div>
+<div class="md-cell"><p>Now we can create a new thread.</p>
+<p>This creates a new session.</p>
+<p>Profile, ToDos, and Instructions saved to long-term memory are accessed.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># We supply a thread ID for short-term (within-thread) memory
+# We supply a user ID for long-term (across-thread) memory 
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;2&quot;, &quot;user_id&quot;: &quot;Lance&quot;}}
+
+# Chat with the chatbot
+input_messages = [HumanMessage(content=&quot;I have 30 minutes, what tasks can I get done?&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+I have 30 minutes, what tasks can I get done?
+================================== Ai Message ==================================
+
+You can work on the following tasks that fit within your 30-minute timeframe:
+
+1. **Book swim lessons for your 1-year-old daughter.** 
+   - Estimated time to complete: 30 minutes
+   - Solutions include checking local swim schools in SF, looking for baby swim classes online, asking friends for recommendations, contacting La Petite Baleen Swim School, or checking with SF Recreation and Parks for classes.
+
+2. **Call back City Toyota to schedule car service.**
+   - Estimated time to complete: 10 minutes
+   - Solutions include finding City Toyota's contact number, checking car service availability, and preparing car details for service scheduling.
+
+You can choose either of these tasks to complete within your available time.
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Chat with the chatbot
+input_messages = [HumanMessage(content=&quot;Yes, give me some options to call for swim lessons.&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Yes, give me some options to call for swim lessons.
+================================== Ai Message ==================================
+
+Here are some options you can consider for booking swim lessons for your 1-year-old daughter in San Francisco:
+
+1. **La Petite Baleen Swim School**: Known for their baby swim classes, you can contact them to inquire about their schedule and availability.
+
+2. **SF Recreation and Parks**: They often offer swim classes for young children. Check their website or contact them for more information.
+
+3. **Local Swim Schools**: Search for other local swim schools in SF that offer baby swim classes. You might find some good options nearby.
+
+4. **Ask Friends for Recommendations**: Reach out to friends or family in the area who might have experience with swim lessons for young children.
+
+These options should help you get started on booking swim lessons.
+</pre></div>
+    </div>
+<div class="md-cell"><p>Trace:</p>
+<p>https://smith.langchain.com/public/84768705-be91-43e4-8a6f-f9d3cee93782/r</p>
+<h2>Studio</h2>
+<img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/6732cfb05d9709862eba4e6c_Screenshot%202024-11-11%20at%207.46.40%E2%80%AFPM.png" alt="Screenshot 2024-11-04 at 1.00.19 PM.png"></div>
+</div>
+</body>
+</html>

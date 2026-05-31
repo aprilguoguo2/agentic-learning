@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangGraph Course — April's Agentic Learning</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F0FF;--card:#FDF5FF;--accent:#C084A8;--accent2:#9B6FA8;
+  --accent-light:#F0E6F6;--text:#2D1B3D;--muted:#8B7A9A;
+  --border:#E8D5F0;--radius:16px;--shadow:0 2px 16px rgba(160,100,180,.11);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px}
+
+/* top bar */
+.topbar{background:linear-gradient(135deg,#C084A8,#9B6FA8);padding:16px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(120,60,140,.2)}
+.back{color:#fff;text-decoration:none;font-size:13px;background:rgba(255,255,255,.22);padding:7px 16px;border-radius:20px;white-space:nowrap;flex-shrink:0;font-weight:600;letter-spacing:.2px}
+.topbar h1{color:#fff;font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* page subtitle */
+.page-sub{max-width:720px;margin:28px auto 8px;padding:0 20px;font-size:13px;color:var(--muted);font-weight:500;letter-spacing:.4px;text-transform:uppercase}
+
+/* modules */
+.modules{max-width:720px;margin:0 auto;padding:0 16px}
+.module{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+
+/* module header / accordion */
+.mod-hdr{
+  width:100%;background:none;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px;text-align:left;gap:12px;
+  -webkit-tap-highlight-color:transparent;
+}
+.mod-hdr:hover{background:var(--accent-light)}
+.mod-hdr-left{display:flex;align-items:center;gap:12px}
+.mod-num{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--accent-light);color:var(--accent2);
+  font-size:13px;font-weight:700;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.mod-title{font-size:15px;font-weight:700;color:var(--text)}
+.mod-count{font-size:12px;color:var(--muted);margin-top:2px}
+.chevron{font-size:18px;color:var(--accent);transition:transform .25s ease;flex-shrink:0}
+.chevron.open{transform:rotate(180deg)}
+
+/* module body */
+.mod-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.mod-body.open{max-height:9999px}
+.mod-inner{padding:0 16px 16px}
+
+/* lesson */
+.lesson{
+  border:1px solid var(--border);border-radius:12px;
+  margin-bottom:14px;overflow:hidden;background:#fff;
+}
+.lesson-title{
+  font-size:14px;font-weight:700;color:var(--text);
+  padding:14px 16px 10px;
+  display:flex;align-items:center;gap:8px;
+}
+.lesson-title::before{content:'▶';font-size:10px;color:var(--accent);flex-shrink:0}
+
+/* video */
+.video-wrap{
+  position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
+  background:#1e1e2e;
+}
+.video-wrap iframe{
+  position:absolute;top:0;left:0;width:100%;height:100%;border:none;
+}
+.video-placeholder{
+  background:linear-gradient(135deg,#f3e8ff,#fde8f5);
+  padding:28px 20px;text-align:center;
+  font-size:13px;color:var(--muted);
+  border-top:1px solid var(--border);
+}
+.video-placeholder span{font-size:22px;display:block;margin-bottom:6px}
+
+/* notebooks */
+.nb-links{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--border);background:var(--accent-light)}
+.nb-link{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#fff;color:var(--accent2);
+  border:1px solid var(--border);border-radius:20px;
+  padding:6px 14px;font-size:13px;font-weight:600;
+  text-decoration:none;transition:background .15s,transform .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.nb-link:hover,.nb-link:focus{background:var(--accent-light);transform:translateY(-1px);outline:none}
+.nb-link::before{content:'📓';font-size:14px}
+
+/* notebook-only row (no video) */
+.nb-only{padding:14px 16px;border-top:1px solid var(--border)}
+</style>
+<script src="video-ids.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="index.html">← Home</a>
+  <h1>🕸️ LangGraph Course</h1>
+</div>
+
+<div class="page-sub">Modules</div>
+<div class="modules">
+
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">1</div>
+          <div>
+            <div class="mod-title">Module 0 — Welcome</div>
+            <div class="mod-count">1 lesson</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Getting Started — Basics</div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m0_basics.html" target="_blank">Basics</a></div>
+      </div>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">2</div>
+          <div>
+            <div class="mod-title">Module 1 — Introduction</div>
+            <div class="mod-count">8 lessons</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Lesson 1 — Motivation</div>
+        <div id="v_lg_m1_l1"></div>
+      </div>
+<script>document.getElementById('v_lg_m1_l1').outerHTML=vid('lg_m1_l1');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 2 — Simple Graph</div>
+        <div id="v_lg_m1_l2"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m1_simple_graph.html" target="_blank">Simple Graph</a></div>
+      </div>
+<script>document.getElementById('v_lg_m1_l2').outerHTML=vid('lg_m1_l2');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 3 — LangSmith Studio</div>
+        <div id="v_lg_m1_l3"></div>
+      </div>
+<script>document.getElementById('v_lg_m1_l3').outerHTML=vid('lg_m1_l3');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 4 — Chain</div>
+        <div id="v_lg_m1_l4"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m1_chain.html" target="_blank">Chain</a></div>
+      </div>
+<script>document.getElementById('v_lg_m1_l4').outerHTML=vid('lg_m1_l4');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 5 — Router</div>
+        <div id="v_lg_m1_l5"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m1_router.html" target="_blank">Router</a></div>
+      </div>
+<script>document.getElementById('v_lg_m1_l5').outerHTML=vid('lg_m1_l5');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 6 — Agent</div>
+        <div id="v_lg_m1_l6"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m1_agent.html" target="_blank">Agent</a></div>
+      </div>
+<script>document.getElementById('v_lg_m1_l6').outerHTML=vid('lg_m1_l6');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 7 — Agent with Memory</div>
+        <div id="v_lg_m1_l7"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m1_agent_memory.html" target="_blank">Agent with Memory</a></div>
+      </div>
+<script>document.getElementById('v_lg_m1_l7').outerHTML=vid('lg_m1_l7');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 8 — Intro to Deployment</div>
+        <div id="v_lg_m1_l8"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m1_deployment.html" target="_blank">Deployment</a></div>
+      </div>
+<script>document.getElementById('v_lg_m1_l8').outerHTML=vid('lg_m1_l8');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">3</div>
+          <div>
+            <div class="mod-title">Module 2 — State and Memory</div>
+            <div class="mod-count">6 lessons</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Lesson 1 — State Schema</div>
+        <div id="v_lg_m2_l1"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m2_state_schema.html" target="_blank">State Schema</a></div>
+      </div>
+<script>document.getElementById('v_lg_m2_l1').outerHTML=vid('lg_m2_l1');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 2 — State Reducers</div>
+        <div id="v_lg_m2_l2"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m2_state_reducers.html" target="_blank">State Reducers</a></div>
+      </div>
+<script>document.getElementById('v_lg_m2_l2').outerHTML=vid('lg_m2_l2');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 3 — Multiple Schemas</div>
+        <div id="v_lg_m2_l3"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m2_multiple_schemas.html" target="_blank">Multiple Schemas</a></div>
+      </div>
+<script>document.getElementById('v_lg_m2_l3').outerHTML=vid('lg_m2_l3');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 4 — Trim and Filter Messages</div>
+        <div id="v_lg_m2_l4"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m2_trim_filter.html" target="_blank">Trim & Filter Messages</a></div>
+      </div>
+<script>document.getElementById('v_lg_m2_l4').outerHTML=vid('lg_m2_l4');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 5 — Chatbot with Summarizing Messages and Memory</div>
+        <div id="v_lg_m2_l5"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m2_chatbot_summ.html" target="_blank">Chatbot Summarization</a></div>
+      </div>
+<script>document.getElementById('v_lg_m2_l5').outerHTML=vid('lg_m2_l5');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 6 — Chatbot with Summarizing Messages and External Memory</div>
+        <div id="v_lg_m2_l6"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m2_chatbot_ext.html" target="_blank">Chatbot External Memory</a></div>
+      </div>
+<script>document.getElementById('v_lg_m2_l6').outerHTML=vid('lg_m2_l6');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">4</div>
+          <div>
+            <div class="mod-title">Module 3 — UX and Human-in-the-Loop</div>
+            <div class="mod-count">5 lessons</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Lesson 1 — Streaming</div>
+        <div id="v_lg_m3_l1"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m3_streaming.html" target="_blank">Streaming & Interruption</a></div>
+      </div>
+<script>document.getElementById('v_lg_m3_l1').outerHTML=vid('lg_m3_l1');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 2 — Breakpoints</div>
+        <div id="v_lg_m3_l2"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m3_breakpoints.html" target="_blank">Breakpoints</a></div>
+      </div>
+<script>document.getElementById('v_lg_m3_l2').outerHTML=vid('lg_m3_l2');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 3 — Editing State and Human Feedback</div>
+        <div id="v_lg_m3_l3"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m3_edit_state.html" target="_blank">Edit State & Human Feedback</a></div>
+      </div>
+<script>document.getElementById('v_lg_m3_l3').outerHTML=vid('lg_m3_l3');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 4 — Dynamic Breakpoints</div>
+        <div id="v_lg_m3_l4"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m3_dyn_breaks.html" target="_blank">Dynamic Breakpoints</a></div>
+      </div>
+<script>document.getElementById('v_lg_m3_l4').outerHTML=vid('lg_m3_l4');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 5 — Time Travel</div>
+        <div id="v_lg_m3_l5"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m3_time_travel.html" target="_blank">Time Travel</a></div>
+      </div>
+<script>document.getElementById('v_lg_m3_l5').outerHTML=vid('lg_m3_l5');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">5</div>
+          <div>
+            <div class="mod-title">Module 4 — Building Your Assistant</div>
+            <div class="mod-count">4 lessons</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Lesson 1 — Parallelization</div>
+        <div id="v_lg_m4_l1"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m4_parallel.html" target="_blank">Parallelization</a></div>
+      </div>
+<script>document.getElementById('v_lg_m4_l1').outerHTML=vid('lg_m4_l1');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 2 — Sub-graphs</div>
+        <div id="v_lg_m4_l2"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m4_sub_graph.html" target="_blank">Sub-graph</a></div>
+      </div>
+<script>document.getElementById('v_lg_m4_l2').outerHTML=vid('lg_m4_l2');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 3 — Map-reduce</div>
+        <div id="v_lg_m4_l3"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m4_map_reduce.html" target="_blank">Map-reduce</a></div>
+      </div>
+<script>document.getElementById('v_lg_m4_l3').outerHTML=vid('lg_m4_l3');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 4 — Research Assistant</div>
+        <div id="v_lg_m4_l4"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m4_research_asst.html" target="_blank">Research Assistant</a></div>
+      </div>
+<script>document.getElementById('v_lg_m4_l4').outerHTML=vid('lg_m4_l4');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">6</div>
+          <div>
+            <div class="mod-title">Module 5 — Long-Term Memory</div>
+            <div class="mod-count">5 lessons</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Lesson 1 — Short vs Long-Term Memory</div>
+        <div id="v_lg_m5_l1"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m5_memory_store.html" target="_blank">Memory Store</a></div>
+      </div>
+<script>document.getElementById('v_lg_m5_l1').outerHTML=vid('lg_m5_l1');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 2 — LangGraph Store</div>
+        <div id="v_lg_m5_l2"></div>
+      </div>
+<script>document.getElementById('v_lg_m5_l2').outerHTML=vid('lg_m5_l2');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 3 — Memory Schema and Profile</div>
+        <div id="v_lg_m5_l3"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m5_schema_profile.html" target="_blank">Memory Schema — Profile</a></div>
+      </div>
+<script>document.getElementById('v_lg_m5_l3').outerHTML=vid('lg_m5_l3');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 4 — Memory Schema and Collection</div>
+        <div id="v_lg_m5_l4"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m5_schema_coll.html" target="_blank">Memory Schema — Collection</a></div>
+      </div>
+<script>document.getElementById('v_lg_m5_l4').outerHTML=vid('lg_m5_l4');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 5 — Build an Agent with Long-Term Memory</div>
+        <div id="v_lg_m5_l5"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m5_memory_agent.html" target="_blank">Memory Agent</a></div>
+      </div>
+<script>document.getElementById('v_lg_m5_l5').outerHTML=vid('lg_m5_l5');</script>
+        </div>
+      </div>
+    </div>
+    <div class="module">
+      <button class="mod-hdr">
+        <div class="mod-hdr-left">
+          <div class="mod-num">7</div>
+          <div>
+            <div class="mod-title">Module 6 — Deployment</div>
+            <div class="mod-count">5 lessons</div>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </button>
+      <div class="mod-body">
+        <div class="mod-inner">
+      <div class="lesson">
+        <div class="lesson-title">Lesson 1 — Deployment Concepts</div>
+        <div id="v_lg_m6_l1"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m6_creating.html" target="_blank">Creating a Deployment</a></div>
+      </div>
+<script>document.getElementById('v_lg_m6_l1').outerHTML=vid('lg_m6_l1');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 2 — Creating a Deployment</div>
+        <div id="v_lg_m6_l2"></div>
+      </div>
+<script>document.getElementById('v_lg_m6_l2').outerHTML=vid('lg_m6_l2');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 3 — Connecting to a Deployment</div>
+        <div id="v_lg_m6_l3"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m6_connecting.html" target="_blank">Connecting</a></div>
+      </div>
+<script>document.getElementById('v_lg_m6_l3').outerHTML=vid('lg_m6_l3');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 4 — Double Texting</div>
+        <div id="v_lg_m6_l4"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m6_double_text.html" target="_blank">Double Texting</a></div>
+      </div>
+<script>document.getElementById('v_lg_m6_l4').outerHTML=vid('lg_m6_l4');</script>
+      <div class="lesson">
+        <div class="lesson-title">Lesson 5 — Assistants</div>
+        <div id="v_lg_m6_l5"></div>
+        <div class="nb-links"><a class="nb-link" href="notebooks/lg_m6_assistant.html" target="_blank">Assistants</a></div>
+      </div>
+<script>document.getElementById('v_lg_m6_l5').outerHTML=vid('lg_m6_l5');</script>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script>
+
+function initModules() {
+  document.querySelectorAll('.mod-hdr').forEach((btn, i) => {
+    const body = btn.nextElementSibling;
+    const chev = btn.querySelector('.chevron');
+    if (i === 0) { body.classList.add('open'); chev.classList.add('open'); }
+    btn.addEventListener('click', () => {
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      chev.classList.toggle('open', !isOpen);
+    });
+  });
+}
+
+function vid(key) {
+  const id = (window.VIDEO_IDS || {})[key];
+  if (!id) return `<div class="video-placeholder"><span>🎬</span>Add Google Drive ID for this video in video-ids.js</div>`;
+  return `<div class="video-wrap"><iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div>`;
+}
+
+window.addEventListener('DOMContentLoaded', initModules);
+</script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1 Todo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../deep-agent.html">← Project: Deep Agent</a>
+  <h1>1 Todo</h1>
+</div>
+<div class="nb">
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os
+
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(&quot;..&quot;, &quot;.env&quot;), override=True)
+
+%load_ext autoreload
+%autoreload 2</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import warnings
+warnings.filterwarnings(
+    &quot;ignore&quot;,
+    message=&quot;LangSmith now uses UUID v7&quot;, 
+    category=UserWarning,
+)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Planning: TODO Lists</h2>
+<img src="attachment:e94d5803-050b-4502-b784-f520a96c322b.png" alt="Screenshot 2025-08-15 at 11.41.46 AM.png">
+<p>Many agents use TODO lists as a critical navigation tool for steering through long-running, complex tasks. Claude Code leverages <a href="https://www.anthropic.com/engineering/claude-code-best-practices" target="_blank">plan mode</a> to create structured TODO lists before executing tasks, utilizing a specific tool called <code class="ic">TodoWrite</code> based on the <a href="https://cchistory.mariozechner.at/" target="_blank">Claude Code prompt</a>. Each TODO item contains two key components: content (a short, specific task description) and status (pending, in_progress, or completed).</p>
+<p>The challenge with TODO lists lies in maintaining attention as context windows grow—the average Manus task uses approximately 50 tool calls, creating substantial risk of <a href="https://research.trychroma.com/context-rot" target="_blank">context rot</a>. Agents become vulnerable to drifting off-topic or forgetting earlier objectives during lengthy conversations or complicated tasks. By continuously rewriting and updating the TODO list, agents like Manus effectively recite their objectives at the end of the context, helping to <a href="https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus" target="_blank">stay focused on task</a> and prevent mission drift.</p>
+<p><!-- The style below reduces the gap between items in the same bulleted list. Run once per notebook --><br><style><br>/<em> JupyterLab + classic notebook </em>/<br>.jp-RenderedHTMLCommon ul, .text_cell_render ul { margin-top: .25em; margin-bottom: .35em; padding-left: 1.2em; }<br>.jp-RenderedHTMLCommon ul ul, .text_cell_render ul ul { margin-top: .15em; margin-bottom: .15em; padding-left: 1.0em; }<br>.jp-RenderedHTMLCommon li, .text_cell_render li { margin: .1em 0; }<br></style></p></div>
+<div class="md-cell"><p><div style="background-color: #fff3b0; padding: 10px; border-radius: 4px;"><br><b>Note:</b>  <br>The <code>create_react_agent</code> was moved from the LangGraph library to the LangChain library and renamed to <code>create_agent</code> in the 1.0 code release post-filming. There are slight changes to the imports and code to accommodate this. The video may display the previous configuration.<br></div></p></div>
+<div class="md-cell"><h3>State</h3>
+<p>Just as in the previous lesson, you will be using a <code class="ic">create_agent</code> with custom state.</p>
+<p>The state object serves as our primary mechanism for storing and passing context between different phases of the workflow. The State consists of the schema of the graph as well as reducer functions which specify how to apply updates to the state.</p>
+<p>There are three primary elements defined in the DeepAgent scheme: <strong><code class="ic">messages</code></strong>, <strong><code class="ic">todo</code></strong> and <strong><code class="ic">files</code></strong>.</p>
+<ul><li><strong><code class="ic">messages</code></strong> are inherited from <code class="ic">AgentState</code>, which was described in the first lesson.</li>
+<li>The <code class="ic">add_messages</code> reducer will append new messages to the end of the message list.  </li>
+<li><strong><code class="ic">todo</code></strong> are a list of <code class="ic">Todo</code> tasks. Each task has a description: <code class="ic">content</code> and a <code class="ic">status</code>: pending, in_progress, completed.</li>
+<li>No custom reducer is defined, so updates overwrite the list on write.</li>
+<li><strong><code class="ic">files</code></strong> is a virtual file system contained in state which you will explore in the next lesson.  </li>
+</ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%writefile ../src/deep_agents_from_scratch/state.py
+&quot;&quot;&quot;State management for deep agents with TODO tracking and virtual file systems.
+
+This module defines the extended agent state structure that supports:
+- Task planning and progress tracking through TODO lists
+- Context offloading through a virtual file system stored in state
+- Efficient state merging with reducer functions
+&quot;&quot;&quot;
+
+from typing import Annotated, Literal, NotRequired
+from typing_extensions import TypedDict
+
+#from langgraph.prebuilt.chat_agent_executor import AgentState
+from langchain.agents import AgentState  # updated in 1.0
+
+class Todo(TypedDict):
+    &quot;&quot;&quot;A structured task item for tracking progress through complex workflows.
+
+    Attributes:
+        content: Short, specific description of the task
+        status: Current state - pending, in_progress, or completed
+    &quot;&quot;&quot;
+
+    content: str
+    status: Literal[&quot;pending&quot;, &quot;in_progress&quot;, &quot;completed&quot;]
+
+
+def file_reducer(left, right):
+    &quot;&quot;&quot;Merge two file dictionaries, with right side taking precedence.
+
+    Used as a reducer function for the files field in agent state,
+    allowing incremental updates to the virtual file system.
+
+    Args:
+        left: Left side dictionary (existing files)
+        right: Right side dictionary (new/updated files)
+
+    Returns:
+        Merged dictionary with right values overriding left values
+    &quot;&quot;&quot;
+    if left is None:
+        return right
+    elif right is None:
+        return left
+    else:
+        return {**left, **right}
+
+
+class DeepAgentState(AgentState):
+    &quot;&quot;&quot;Extended agent state that includes task tracking and virtual file system.
+
+    Inherits from LangGraph's AgentState and adds:
+    - todos: List of Todo items for task planning and progress tracking
+    - files: Virtual file system stored as dict mapping filenames to content
+    &quot;&quot;&quot;
+
+    todos: NotRequired[list[Todo]]
+    files: Annotated[NotRequired[dict[str, str]], file_reducer]</code></pre></div>
+      <div class="out out-stream"><pre>Overwriting ../src/deep_agents_from_scratch/state.py
+</pre></div>
+    </div>
+<div class="md-cell"><h3>Tool Description  - Todo Tool</h3>
+As described above, long-running agents can use a todo list to stay on task. To enable that, todo tools, <code class="ic">write_todo</code> and <code class="ic">read_todo</code> are created. The tool description below is provided to the LLM detailing when to use the todo list, what it contains, and how to read and update it.   
+Note, that while the list contains individual tasks, it is updated with a full rewrite of the list. This allows the LLM to reconsider tasks as it makes progress.
+</div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from utils import show_prompt
+
+from deep_agents_from_scratch.prompts import WRITE_TODOS_DESCRIPTION
+
+show_prompt(WRITE_TODOS_DESCRIPTION)</code></pre></div>
+      <div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">╭──────────────────────────────────────────────────── </span><span style="color: #008000; text-decoration-color: #008000; font-weight: bold">Prompt</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────────╮</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  Create and manage structured task lists for tracking progress through complex workflows.                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">## When to Use</span>                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Multi-step or non-trivial tasks requiring coordination                                                       <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - When user provides multiple tasks or explicitly requests todo list                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Avoid for single, trivial actions unless directed otherwise                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">## Structure</span>                                                                                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Maintain one list containing multiple todo objects (content, status, id)                                     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Use clear, actionable content descriptions                                                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Status must be: pending, in_progress, or completed                                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">## Best Practices  </span>                                                                                            <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Only one in_progress task at a time                                                                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Mark completed immediately when task is fully done                                                           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Always send the full updated list when making changes                                                        <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Prune irrelevant items to keep list focused                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">## Progress Updates</span>                                                                                            <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Call TodoWrite again to change task status or edit content                                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - Reflect real-time progress; don't batch completions                                                          <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - If blocked, keep in_progress and add new task describing blocker                                             <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">## Parameters</span>                                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  - todos: List of TODO items with content and status fields                                                     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">## Returns</span>                                                                                                     <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  Updates agent state with new todo list.                                                                        <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div>
+    </div>
+<div class="md-cell"><h3>Write and Read ToDo Tools </h3>
+<p>Below, you will create the <strong><code class="ic">write_todos</code></strong> and <strong><code class="ic">read_todos</code></strong> tools:  <br>The <strong><code class="ic">write_todos</code></strong> tool takes a todo list from the LLM as an argument and writes it to state, overwriting any previous list. It then returns a <code class="ic">ToolMessage</code> containing the list that was written. Note that writing the list makes the information available to the LLM in the conversation history stored in <code class="ic">messages</code>, both in the LLM-generated tool call and in the returned <code class="ic">ToolMessage</code>.</p>
+<p>The <strong><code class="ic">read_todos</code></strong> tool reads the todo list from state and returns it as a <code class="ic">ToolMessage</code>. It can be used to refresh the information in the LLM context.</p>
+<p>Note that these tools will use some of the features that were discussed in the previous lesson:</p>
+<ul><li><code class="ic">InjectedState</code> to provide the tool access to the graph state.</li>
+<li><code class="ic">Command</code> to update values in state.</li>
+</ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%writefile ../src/deep_agents_from_scratch/todo_tools.py
+&quot;&quot;&quot;TODO management tools for task planning and progress tracking.
+
+This module provides tools for creating and managing structured task lists
+that enable agents to plan complex workflows and track progress through
+multi-step operations.
+&quot;&quot;&quot;
+
+from typing import Annotated
+
+from langchain_core.messages import ToolMessage
+from langchain_core.tools import InjectedToolCallId, tool
+from langgraph.prebuilt import InjectedState
+from langgraph.types import Command
+
+from deep_agents_from_scratch.prompts import WRITE_TODOS_DESCRIPTION
+from deep_agents_from_scratch.state import DeepAgentState, Todo
+
+
+@tool(description=WRITE_TODOS_DESCRIPTION,parse_docstring=True)
+def write_todos(
+    todos: list[Todo], tool_call_id: Annotated[str, InjectedToolCallId]
+) -&gt; Command:
+    &quot;&quot;&quot;Create or update the agent's TODO list for task planning and tracking.
+
+    Args:
+        todos: List of Todo items with content and status
+        tool_call_id: Tool call identifier for message response
+
+    Returns:
+        Command to update agent state with new TODO list
+    &quot;&quot;&quot;
+    return Command(
+        update={
+            &quot;todos&quot;: todos,
+            &quot;messages&quot;: [
+                ToolMessage(f&quot;Updated todo list to {todos}&quot;, tool_call_id=tool_call_id)
+            ],
+        }
+    )
+
+
+@tool(parse_docstring=True)
+def read_todos(
+    state: Annotated[DeepAgentState, InjectedState],
+    tool_call_id: Annotated[str, InjectedToolCallId],
+) -&gt; str:
+    &quot;&quot;&quot;Read the current TODO list from the agent state.
+
+    This tool allows the agent to retrieve and review the current TODO list
+    to stay focused on remaining tasks and track progress through complex workflows.
+
+    Args:
+        state: Injected agent state containing the current TODO list
+        tool_call_id: Injected tool call identifier for message tracking
+
+    Returns:
+        Formatted string representation of the current TODO list
+    &quot;&quot;&quot;
+    todos = state.get(&quot;todos&quot;, [])
+    if not todos:
+        return &quot;No todos currently in the list.&quot;
+
+    result = &quot;Current TODO List:\n&quot;
+    for i, todo in enumerate(todos, 1):
+        status_emoji = {&quot;pending&quot;: &quot;⏳&quot;, &quot;in_progress&quot;: &quot;🔄&quot;, &quot;completed&quot;: &quot;✅&quot;}
+        emoji = status_emoji.get(todo[&quot;status&quot;], &quot;❓&quot;)
+        result += f&quot;{i}. {emoji} {todo['content']} ({todo['status']})\n&quot;
+
+    return result.strip()</code></pre></div>
+      <div class="out out-stream"><pre>Overwriting ../src/deep_agents_from_scratch/todo_tools.py
+</pre></div>
+    </div>
+<div class="md-cell"><h3>Graph  </h3>
+<p>As in the first lesson, you'll build an agent using <code class="ic">create_react_agent</code>.  We're going to focus on getting our agent to use a todo list. We'll follow the Manus approach of having a todo recitation after each task, and we'll use the tools you just created above.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from deep_agents_from_scratch.prompts import TODO_USAGE_INSTRUCTIONS
+
+show_prompt(TODO_USAGE_INSTRUCTIONS)</code></pre></div>
+      <div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">╭──────────────────────────────────────────────────── </span><span style="color: #008000; text-decoration-color: #008000; font-weight: bold">Prompt</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────────╮</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  Based upon the user's request:                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  1. Use the write_todos tool to create TODO at the start of a user request, per the tool description.           <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  2. After you accomplish a TODO, use the read_todos to read the TODOs in order to remind yourself of the plan.  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  3. Reflect on what you've done and the TODO.                                                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  4. Mark you task as completed, and proceed to the next TODO.                                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  5. Continue this process until you have completed all TODOs.                                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  IMPORTANT: Always create a research plan of TODOs and conduct research following the above guidelines for ANY  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  user request.                                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  IMPORTANT: Aim to batch research tasks into a *single TODO* in order to minimize the number of TODOs you have  <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>  to keep track of.                                                                                              <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span>                                                                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from IPython.display import Image, display
+from langchain.chat_models import init_chat_model
+from langchain_core.tools import tool
+#from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
+from utils import format_messages
+
+from deep_agents_from_scratch.prompts import TODO_USAGE_INSTRUCTIONS
+from deep_agents_from_scratch.state import DeepAgentState
+from deep_agents_from_scratch.todo_tools import read_todos, write_todos
+
+# Mock search result
+search_result = &quot;&quot;&quot;The Model Context Protocol (MCP) is an open standard protocol developed 
+by Anthropic to enable seamless integration between AI models and external systems like 
+tools, databases, and other services. It acts as a standardized communication layer, 
+allowing AI models to access and utilize data from various sources in a consistent and 
+efficient manner. Essentially, MCP simplifies the process of connecting AI assistants 
+to external services by providing a unified language for data exchange. &quot;&quot;&quot;
+
+
+# Mock search tool
+@tool(parse_docstring=True)
+def web_search(
+    query: str,
+):
+    &quot;&quot;&quot;Search the web for information on a specific topic.
+
+    This tool performs web searches and returns relevant results
+    for the given query. Use this when you need to gather information from
+    the internet about any topic.
+
+    Args:
+        query: The search query string. Be specific and clear about what
+               information you're looking for.
+
+    Returns:
+        Search results from search engine.
+
+    Example:
+        web_search(&quot;machine learning applications in healthcare&quot;)
+    &quot;&quot;&quot;
+    return search_result
+
+
+# Create agent using create_react_agent directly
+model = init_chat_model(model=&quot;anthropic:claude-sonnet-4-20250514&quot;, temperature=0.0)
+tools = [write_todos, web_search, read_todos]
+
+# Add mock research instructions
+SIMPLE_RESEARCH_INSTRUCTIONS = &quot;&quot;&quot;IMPORTANT: Just make a single call to the web_search tool and use the result provided by the tool to answer the user's question.&quot;&quot;&quot;
+
+# Create agent
+agent = create_agent(
+    model,
+    tools,
+    system_prompt=TODO_USAGE_INSTRUCTIONS
+    + &quot;\n\n&quot;
+    + &quot;=&quot; * 80
+    + &quot;\n\n&quot;
+    + SIMPLE_RESEARCH_INSTRUCTIONS,
+    state_schema=DeepAgentState,
+)
+
+# Show the agent
+display(Image(agent.get_graph(xray=True).draw_mermaid_png()))</code></pre></div>
+      <div class="out"><img src="data:image/png;base64,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" alt="output"></div>
+    </div>
+<div class="md-cell"><p>Start the graph with no <code class="ic">todos</code> in state and an user research request.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Example usage
+result = agent.invoke(
+    {
+        &quot;messages&quot;: [
+            {
+                &quot;role&quot;: &quot;user&quot;,
+                &quot;content&quot;: &quot;Give me a short summary of the Model Context Protocol (MCP).&quot;,
+            }
+        ],
+        &quot;todos&quot;: [],
+    }
+)
+
+format_messages(result[&quot;messages&quot;])</code></pre></div>
+      <div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">╭─────────────────────────────────────────────────── 🧑 Human ────────────────────────────────────────────────────╮</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> Give me a short summary of the Model Context Protocol (MCP).                                                    <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> I'll help you get a summary of the Model Context Protocol (MCP). Let me search for current information about    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> it.                                                                                                             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> 🔧 Tool Call: write_todos                                                                                       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    Args: {                                                                                                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   "todos": [                                                                                                    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>     {                                                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>       "content": "Search for information about Model Context Protocol (MCP) and provide a short summary",       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>       "status": "pending"                                                                                       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>     }                                                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   ]                                                                                                             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> }                                                                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    ID: toolu_018syrw8YgPcijJKkjXQ8vNP                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000">╭──────────────────────────────────────────────── 🔧 Tool Output ─────────────────────────────────────────────────╮</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Updated todo list to [{'content': 'Search for information about Model Context Protocol (MCP) and provide a      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> short summary', 'status': 'pending'}]                                                                           <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> 🔧 Tool Call: web_search                                                                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    Args: {                                                                                                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   "query": "Model Context Protocol MCP overview summary"                                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> }                                                                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    ID: toolu_01DZKwgNus8ANZ7nL6954MVS                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000">╭──────────────────────────────────────────────── 🔧 Tool Output ─────────────────────────────────────────────────╮</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> The Model Context Protocol (MCP) is an open standard protocol developed                                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> by Anthropic to enable seamless integration between AI models and external systems like                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> tools, databases, and other services. It acts as a standardized communication layer,                            <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> allowing AI models to access and utilize data from various sources in a consistent and                          <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> efficient manner. Essentially, MCP simplifies the process of connecting AI assistants                           <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> to external services by providing a unified language for data exchange.                                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> 🔧 Tool Call: read_todos                                                                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    Args: {}                                                                                                     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    ID: toolu_018ZWnNN1QnHJKEH4msuBxLq                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000">╭──────────────────────────────────────────────── 🔧 Tool Output ─────────────────────────────────────────────────╮</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Current TODO List:                                                                                              <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> 1. ⏳ Search for information about Model Context Protocol (MCP) and provide a short summary (pending)           <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> 🔧 Tool Call: write_todos                                                                                       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    Args: {                                                                                                      <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   "todos": [                                                                                                    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>     {                                                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>       "content": "Search for information about Model Context Protocol (MCP) and provide a short summary",       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>       "status": "completed"                                                                                     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>     }                                                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>   ]                                                                                                             <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> }                                                                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>    ID: toolu_018oPp7u9hJwnJ2pCvRKybKB                                                                           <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000">╭──────────────────────────────────────────────── 🔧 Tool Output ─────────────────────────────────────────────────╮</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> Updated todo list to [{'content': 'Search for information about Model Context Protocol (MCP) and provide a      <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">│</span> short summary', 'status': 'completed'}]                                                                         <span style="color: #808000; text-decoration-color: #808000">│</span>
+<span style="color: #808000; text-decoration-color: #808000">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div><div class="out out-html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╭───────────────────────────────────────────────────── 📝 AI ─────────────────────────────────────────────────────╮</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> ## Model Context Protocol (MCP) Summary                                                                         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> The **Model Context Protocol (MCP)** is an open standard protocol developed by Anthropic that serves as a       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> standardized communication layer between AI models and external systems. Here are the key points:               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> **Purpose**: MCP enables seamless integration between AI assistants and various external services including:    <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - Tools and applications                                                                                        <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - Databases                                                                                                     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - APIs and other services                                                                                       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> **Key Benefits**:                                                                                               <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Standardization**: Provides a unified language for data exchange                                            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Simplification**: Streamlines the process of connecting AI models to external resources                     <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> - **Efficiency**: Enables consistent and efficient data access across different systems                         <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> **Function**: MCP acts as a bridge that allows AI models to access and utilize data from various sources in a   <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> standardized way, eliminating the need for custom integrations for each external service.                       <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>                                                                                                                 <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> In essence, MCP makes it easier for AI assistants to interact with the broader digital ecosystem by providing a <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span> common protocol for communication and data exchange.                                                            <span style="color: #c0c0c0; text-decoration-color: #c0c0c0">│</span>
+<span style="color: #c0c0c0; text-decoration-color: #c0c0c0">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+</pre>
+</div>
+    </div>
+<div class="md-cell"><p>Trace: <br>https://smith.langchain.com/public/7e771e79-8996-4833-8242-2b3559c2c1d7/r<br><!-- https://smith.langchain.com/public/57e530e5-c3bb-4ed6-aff6-c57d06158fe9/r  --></p></div>
+<div class="md-cell"></div>
+
+</div>
+</body>
+</html>

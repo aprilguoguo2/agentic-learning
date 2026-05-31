@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Breakpoints</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Dynamic Breakpoints</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><p><a href="https://colab.research.google.com/github/langchain-ai/langchain-academy/blob/main/module-3/dynamic-breakpoints.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></a> <a href="https://academy.langchain.com/courses/take/intro-to-langgraph/lessons/58239526-lesson-4-dynamic-breakpoints" target="_blank"><img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66e9eba12c7b7688aa3dbb5e_LCA-badge-green.svg" alt="Open in LangChain Academy"></a></p></div>
+<div class="md-cell"><h1>Dynamic breakpoints </h1>
+<h2>Review</h2>
+<p>We discussed motivations for human-in-the-loop:</p>
+<p>(1) <code class="ic">Approval</code> - We can interrupt our agent, surface state to a user, and allow the user to accept an action</p>
+<p>(2) <code class="ic">Debugging</code> - We can rewind the graph to reproduce or avoid issues</p>
+<p>(3) <code class="ic">Editing</code> - You can modify the state</p>
+<p>We covered breakpoints as a general way to stop the graph at specific steps, which enables use-cases like <code class="ic">Approval</code></p>
+<p>We also showed how to edit graph state, and introduce human feedback.</p>
+<h2>Goals</h2>
+<p>Breakpoints are set by the developer on a specific node during graph compilation.</p>
+<p>But, sometimes it is helpful to allow the graph <strong>dynamically interrupt</strong> itself!</p>
+<p>This is an internal breakpoint, and can be achieved using <code class="ic">NodeInterrupt</code>.</p>
+<p>This has a few specific benefits:</p>
+<p>(1) You can do it conditionally (from inside a node based on developer-defined logic).</p>
+<p>(2) You can communicate to the user why it's interrupted (by passing whatever you want to the <code class="ic">NodeInterrupt</code>).</p>
+<p>Let's create a graph where a <code class="ic">NodeInterrupt</code> is thrown based on the length of the input.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install --quiet -U langgraph langchain_openai langgraph_sdk</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from IPython.display import Image, display
+
+from typing_extensions import TypedDict
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.errors import NodeInterrupt
+from langgraph.graph import START, END, StateGraph
+
+class State(TypedDict):
+    input: str
+
+def step_1(state: State) -&gt; State:
+    print(&quot;---Step 1---&quot;)
+    return state
+
+def step_2(state: State) -&gt; State:
+    # Let's optionally raise a NodeInterrupt if the length of the input is longer than 5 characters
+    if len(state['input']) &gt; 5:
+        raise NodeInterrupt(f&quot;Received input that is longer than 5 characters: {state['input']}&quot;)
+    
+    print(&quot;---Step 2---&quot;)
+    return state
+
+def step_3(state: State) -&gt; State:
+    print(&quot;---Step 3---&quot;)
+    return state
+
+builder = StateGraph(State)
+builder.add_node(&quot;step_1&quot;, step_1)
+builder.add_node(&quot;step_2&quot;, step_2)
+builder.add_node(&quot;step_3&quot;, step_3)
+builder.add_edge(START, &quot;step_1&quot;)
+builder.add_edge(&quot;step_1&quot;, &quot;step_2&quot;)
+builder.add_edge(&quot;step_2&quot;, &quot;step_3&quot;)
+builder.add_edge(&quot;step_3&quot;, END)
+
+# Set up memory
+memory = MemorySaver()
+
+# Compile the graph with memory
+graph = builder.compile(checkpointer=memory)
+
+# View
+display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
+      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+    </div>
+<div class="md-cell"><p>Let's run the graph with an input that's longer than 5 characters.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>initial_input = {&quot;input&quot;: &quot;hello world&quot;}
+thread_config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;}}
+
+# Run the graph until the first interruption
+for event in graph.stream(initial_input, thread_config, stream_mode=&quot;values&quot;):
+    print(event)</code></pre></div>
+      <div class="out out-stream"><pre>{'input': 'hello world'}
+---Step 1---
+{'input': 'hello world'}
+</pre></div>
+    </div>
+<div class="md-cell"><p>If we inspect the graph state at this point, we the node set to execute next (<code class="ic">step_2</code>).</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>state = graph.get_state(thread_config)
+print(state.next)</code></pre></div>
+      <div class="out out-stream"><pre>('step_2',)
+</pre></div>
+    </div>
+<div class="md-cell"><p>We can see that the <code class="ic">Interrupt</code> is logged to state.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>print(state.tasks)</code></pre></div>
+      <div class="out out-stream"><pre>(PregelTask(id='6eb3910d-e231-5ba2-b25e-28ad575690bd', name='step_2', error=None, interrupts=(Interrupt(value='Received input that is longer than 5 characters: hello world', when='during'),), state=None),)
+</pre></div>
+    </div>
+<div class="md-cell"><p>We can try to resume the graph from the breakpoint.</p>
+<p>But, this just re-runs the same node!</p>
+<p>Unless state is changed we will be stuck here.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>for event in graph.stream(None, thread_config, stream_mode=&quot;values&quot;):
+    print(event)</code></pre></div>
+      <div class="out out-stream"><pre>{'input': 'hello world'}
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>state = graph.get_state(thread_config)
+print(state.next)</code></pre></div>
+      <div class="out out-stream"><pre>('step_2',)
+</pre></div>
+    </div>
+<div class="md-cell"><p>Now, we can update state.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>graph.update_state(
+    thread_config,
+    {&quot;input&quot;: &quot;hi&quot;},
+)</code></pre></div>
+      <div class="out"><pre>{'configurable': {'thread_id': '1',
+  'checkpoint_ns': '',
+  'checkpoint_id': '1ef6a434-06cf-6f1e-8002-0ea6dc69e075'}}</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>for event in graph.stream(None, thread_config, stream_mode=&quot;values&quot;):
+    print(event)</code></pre></div>
+      <div class="out out-stream"><pre>{'input': 'hi'}
+---Step 2---
+{'input': 'hi'}
+---Step 3---
+{'input': 'hi'}
+</pre></div>
+    </div>
+<div class="md-cell"><h3>Usage with LangGraph API</h3>
+<p><strong>⚠️ Notice</strong></p>
+<p>Since filming these videos, we've updated Studio so that it can now be run locally and accessed through your browser. This is the preferred way to run Studio instead of using the Desktop App shown in the video. It is now called _LangSmith Studio_ instead of _LangGraph Studio_. Detailed setup instructions are available in the "Getting Setup" guide at the start of the course. You can find a description of Studio <a href="https://docs.langchain.com/langsmith/studio" target="_blank">here</a>, and specific details for local deployment <a href="https://docs.langchain.com/langsmith/quick-start-studio#local-development-server" target="_blank">here</a>.  <br>To start the local development server, run the following command in your terminal in the <code class="ic">/studio</code> directory in this module:</p>
+<pre class="md-code"><code>langgraph dev</code></pre>
+<p>You should see the following output:<br><pre class="md-code"><code>- 🚀 API: http://127.0.0.1:2024<br><ul><li>🎨 Studio UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024</li><br><li>📚 API Docs: http://127.0.0.1:2024/docs</code></pre></li><br></ul><br>Open your browser and navigate to the <strong>Studio UI</strong> URL shown above.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>if 'google.colab' in str(get_ipython()):
+    raise Exception(&quot;Unfortunately LangGraph Studio is currently not supported on Google Colab&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>We connect to it via the SDK.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph_sdk import get_client
+
+# This is the URL of the local development server
+URL = &quot;http://127.0.0.1:2024&quot;
+client = get_client(url=URL)
+
+# Search all hosted graphs
+assistants = await client.assistants.search()</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>thread = await client.threads.create()
+input_dict = {&quot;input&quot;: &quot;hello world&quot;}
+
+async for chunk in client.runs.stream(
+    thread[&quot;thread_id&quot;],
+    assistant_id=&quot;dynamic_breakpoints&quot;,
+    input=input_dict,
+    stream_mode=&quot;values&quot;,):
+    
+    print(f&quot;Receiving new event of type: {chunk.event}...&quot;)
+    print(chunk.data)
+    print(&quot;\n\n&quot;)</code></pre></div>
+      <div class="out out-stream"><pre>Receiving new event of type: metadata...
+{'run_id': '1ef6a43a-1b04-64d0-9a79-1caff72c8a89'}
+
+
+
+Receiving new event of type: values...
+{'input': 'hello world'}
+
+
+
+Receiving new event of type: values...
+{'input': 'hello world'}
+
+
+
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>current_state = await client.threads.get_state(thread['thread_id'])</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>current_state['next']</code></pre></div>
+      <div class="out"><pre>['step_2']</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>await client.threads.update_state(thread['thread_id'], {&quot;input&quot;: &quot;hi!&quot;})</code></pre></div>
+      <div class="out"><pre>{'configurable': {'thread_id': 'ea8c2912-987e-49d9-b890-6e81d46065f9',
+  'checkpoint_ns': '',
+  'checkpoint_id': '1ef6a43a-64b2-6e85-8002-3cf4f2873968'},
+ 'checkpoint_id': '1ef6a43a-64b2-6e85-8002-3cf4f2873968'}</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>async for chunk in client.runs.stream(
+    thread[&quot;thread_id&quot;],
+    assistant_id=&quot;dynamic_breakpoints&quot;,
+    input=None,
+    stream_mode=&quot;values&quot;,):
+    
+    print(f&quot;Receiving new event of type: {chunk.event}...&quot;)
+    print(chunk.data)
+    print(&quot;\n\n&quot;)</code></pre></div>
+      <div class="out out-stream"><pre>Receiving new event of type: metadata...
+{'run_id': '1ef64c33-fb34-6eaf-8b59-1d85c5b8acc9'}
+
+
+
+Receiving new event of type: values...
+{'input': 'hi!'}
+
+
+
+Receiving new event of type: values...
+{'input': 'hi!'}
+
+
+
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>current_state = await client.threads.get_state(thread['thread_id'])
+current_state</code></pre></div>
+      <div class="out"><pre>{'values': {'input': 'hi!'},
+ 'next': ['step_2'],
+ 'tasks': [{'id': '858e41b2-6501-585c-9bca-55c1e729ef91',
+   'name': 'step_2',
+   'error': None,
+   'interrupts': [],
+   'state': None}],
+ 'metadata': {'step': 2,
+  'source': 'update',
+  'writes': {'step_1': {'input': 'hi!'}},
+  'parents': {},
+  'graph_id': 'dynamic_breakpoints'},
+ 'created_at': '2024-09-03T22:27:05.707260+00:00',
+ 'checkpoint_id': '1ef6a43a-64b2-6e85-8002-3cf4f2873968',
+ 'parent_checkpoint_id': '1ef6a43a-1cb8-6c3d-8001-7b11d0d34f00'}</pre></div>
+    </div>
+
+</div>
+</body>
+</html>

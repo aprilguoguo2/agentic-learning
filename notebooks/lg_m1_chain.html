@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chain</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Chain</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><p><a href="https://colab.research.google.com/github/langchain-ai/langchain-academy/blob/main/module-1/chain.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></a> <a href="https://academy.langchain.com/courses/take/intro-to-langgraph/lessons/58238466-lesson-4-chain" target="_blank"><img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66e9eba12c7b7688aa3dbb5e_LCA-badge-green.svg" alt="Open in LangChain Academy"></a></p></div>
+<div class="md-cell"><h1>Chain</h1>
+<h2>Review</h2>
+<p>We built a simple graph with nodes, normal edges, and conditional edges.</p>
+<h2>Goals</h2>
+<p>Now, let's build up to a simple chain that combines 4 concepts.</p>
+<ul><li>Using <a href="https://docs.langchain.com/oss/python/langchain/messages" target="_blank">chat messages</a> as our graph state</li>
+<li>Using <a href="https://docs.langchain.com/oss/python/integrations/chat" target="_blank">chat models</a> in graph nodes</li>
+<li><a href="https://docs.langchain.com/oss/python/langchain/models#tool-calling" target="_blank">Binding tools</a> to our chat model</li>
+<li><a href="https://docs.langchain.com/oss/python/langchain/models#tool-execution-loop" target="_blank">Executing tool calls</a> in graph nodes </li>
+</ul>
+<img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dbab08dd607b08df5e1101_chain1.png" alt="Screenshot 2024-08-21 at 9.24.03 AM.png"></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install --quiet -U langchain_openai langchain_core langgraph</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Messages</h2>
+<p>Chat models can use <a href="https://docs.langchain.com/oss/python/langchain/messages" target="_blank">messages</a>, which capture different roles within a conversation.</p>
+<p>LangChain supports various message types, including <code class="ic">HumanMessage</code>, <code class="ic">AIMessage</code>, <code class="ic">SystemMessage</code>, and <code class="ic">ToolMessage</code>.</p>
+<p>These represent a message from the user, from chat model, for the chat model to instruct behavior, and from a tool call.</p>
+<p>Let's create a list of messages.</p>
+<p>Each message can be supplied with a few things:</p>
+<ul><li><code class="ic">content</code> - content of the message</li>
+<li><code class="ic">name</code> - optionally, a message author </li>
+<li><code class="ic">response_metadata</code> - optionally, a dict of metadata (e.g., often populated by model provider for <code class="ic">AIMessages</code>)</li></ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from pprint import pprint
+from langchain_core.messages import AIMessage, HumanMessage
+
+messages = [AIMessage(content=f&quot;So you said you were researching ocean mammals?&quot;, name=&quot;Model&quot;)]
+messages.append(HumanMessage(content=f&quot;Yes, that's right.&quot;,name=&quot;Lance&quot;))
+messages.append(AIMessage(content=f&quot;Great, what would you like to learn about.&quot;, name=&quot;Model&quot;))
+messages.append(HumanMessage(content=f&quot;I want to learn about the best place to see Orcas in the US.&quot;, name=&quot;Lance&quot;))
+
+for m in messages:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================== Ai Message ==================================
+Name: Model
+
+So you said you were researching ocean mammals?
+================================ Human Message =================================
+Name: Lance
+
+Yes, that's right.
+================================== Ai Message ==================================
+Name: Model
+
+Great, what would you like to learn about.
+================================ Human Message =================================
+Name: Lance
+
+I want to learn about the best place to see Orcas in the US.
+</pre></div>
+    </div>
+<div class="md-cell"><h2>Chat Models</h2>
+<p>Chat models use a sequence of messages as input and support message types, as discussed above.</p>
+<p>There are <a href="https://docs.langchain.com/oss/python/integrations/chat" target="_blank">many</a> to choose from! Let's work with OpenAI.</p>
+<p>Let's check that your <code class="ic">OPENAI_API_KEY</code> is set and, if not, you will be asked to enter it.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os, getpass
+
+def _set_env(var: str):
+    if not os.environ.get(var):
+        os.environ[var] = getpass.getpass(f&quot;{var}: &quot;)
+
+_set_env(&quot;OPENAI_API_KEY&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>We can load a chat model and invoke it with out list of messages.</p>
+<p>We can see that the result is an <code class="ic">AIMessage</code> with specific <code class="ic">response_metadata</code>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain_openai import ChatOpenAI
+llm = ChatOpenAI(model=&quot;gpt-4o&quot;)
+result = llm.invoke(messages)
+type(result)</code></pre></div>
+      <div class="out"><pre>langchain_core.messages.ai.AIMessage</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>result</code></pre></div>
+      <div class="out"><pre>AIMessage(content='One of the best places to see orcas in the United States is the Pacific Northwest, particularly around the San Juan Islands in Washington State. Here are some details:\n\n1. **San Juan Islands, Washington**: These islands are a renowned spot for whale watching, with orcas frequently spotted between late spring and early fall. The waters around the San Juan Islands are home to both resident and transient orca pods, making it an excellent location for sightings.\n\n2. **Puget Sound, Washington**: This area, including places like Seattle and the surrounding waters, offers additional opportunities to see orcas, particularly the Southern Resident killer whale population.\n\n3. **Olympic National Park, Washington**: The coastal areas of the park provide a stunning backdrop for spotting orcas, especially during their migration periods.\n\nWhen planning a trip for whale watching, consider peak seasons for orca activity and book tours with reputable operators who adhere to responsible wildlife viewing practices. Additionally, land-based spots like Lime Kiln Point State Park, also known as “Whale Watch Park,” on San Juan Island, offer great opportunities for orca watching from shore.', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 228, 'prompt_tokens': 67, 'total_tokens': 295, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_50cad350e4', 'finish_reason': 'stop', 'logprobs': None}, id='run-57ed2891-c426-4452-b44b-15d0a5c3f225-0', usage_metadata={'input_tokens': 67, 'output_tokens': 228, 'total_tokens': 295, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}})</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>result.response_metadata</code></pre></div>
+      <div class="out"><pre>{'token_usage': {'completion_tokens': 228,
+  'prompt_tokens': 67,
+  'total_tokens': 295,
+  'completion_tokens_details': {'accepted_prediction_tokens': 0,
+   'audio_tokens': 0,
+   'reasoning_tokens': 0,
+   'rejected_prediction_tokens': 0},
+  'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}},
+ 'model_name': 'gpt-4o-2024-08-06',
+ 'system_fingerprint': 'fp_50cad350e4',
+ 'finish_reason': 'stop',
+ 'logprobs': None}</pre></div>
+    </div>
+<div class="md-cell"><h2>Tools</h2>
+<p>Tools are useful whenever you want a model to interact with external systems.</p>
+<p>External systems (e.g., APIs) often require a particular input schema or payload, rather than natural language.</p>
+<p>When we bind an API, for example, as a tool we given the model awareness of the required input schema.</p>
+<p>The model will choose to call a tool based upon the natural language input from the user.</p>
+<p>And, it will return an output that adheres to the tool's schema.</p>
+<p><a href="https://docs.langchain.com/oss/python/integrations/chat" target="_blank">Many LLM providers support tool calling</a> and <a href="https://blog.langchain.com/improving-core-tool-interfaces-and-docs-in-langchain/" target="_blank">tool calling interface</a> in LangChain is simple. <br> <br>You can simply pass any Python <code class="ic">function</code> into <code class="ic">ChatModel.bind_tools(function)</code>.</p>
+<img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dbab08dc1c17a7a57f9960_chain2.png" alt="Screenshot 2024-08-19 at 7.46.28 PM.png"></div>
+<div class="md-cell"><p>Let's showcase a simple example of tool calling!<br> <br>The <code class="ic">multiply</code> function is our tool.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>def multiply(a: int, b: int) -&gt; int:
+    &quot;&quot;&quot;Multiply a and b.
+
+    Args:
+        a: first int
+        b: second int
+    &quot;&quot;&quot;
+    return a * b
+
+llm_with_tools = llm.bind_tools([multiply])</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>If we pass an input - e.g., <code class="ic">"What is 2 multiplied by 3"</code> - we see a tool call returned.</p>
+<p>The tool call has specific arguments that match the input schema of our function along with the name of the function to call.</p>
+<pre class="md-code"><code>{'arguments': '{&quot;a&quot;:2,&quot;b&quot;:3}', 'name': 'multiply'}</code></pre></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>tool_call = llm_with_tools.invoke([HumanMessage(content=f&quot;What is 2 multiplied by 3&quot;, name=&quot;Lance&quot;)])</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>tool_call.tool_calls</code></pre></div>
+      <div class="out"><pre>[{'name': 'multiply',
+  'args': {'a': 2, 'b': 3},
+  'id': 'call_lBBBNo5oYpHGRqwxNaNRbsiT',
+  'type': 'tool_call'}]</pre></div>
+    </div>
+<div class="md-cell"><h2>Using messages as state</h2>
+<p>With these foundations in place, we can now use  <a href="https://docs.langchain.com/oss/python/langchain/overview#messages" target="_blank">messages</a> in our graph state.</p>
+<p>Let's define our state, <code class="ic">MessagesState</code>, as a <code class="ic">TypedDict</code> with a single key: <code class="ic">messages</code>.</p>
+<p><code class="ic">messages</code> is simply a list of messages, as we defined above (e.g., <code class="ic">HumanMessage</code>, etc).</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from typing_extensions import TypedDict
+from langchain_core.messages import AnyMessage
+
+class MessagesState(TypedDict):
+    messages: list[AnyMessage]</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Reducers</h2>
+<p>Now, we have a minor problem!</p>
+<p>As we discussed, each node will return a new value for our state key <code class="ic">messages</code>.</p>
+<p>But, this new value will overwrite the prior <code class="ic">messages</code> value!<br> <br>As our graph runs, we want to <strong>append</strong> messages to our <code class="ic">messages</code> state key.<br> <br>We can use <a href="https://docs.langchain.com/oss/python/langgraph/graph-api#reducers" target="_blank">reducer functions</a> to address this.</p>
+<p>Reducers specify how state updates are performed.</p>
+<p>If no reducer function is specified, then it is assumed that updates to the key should <em>override it</em> as we saw before.<br> <br>But, to append messages, we can use the pre-built <code class="ic">add_messages</code> reducer.</p>
+<p>This ensures that any messages are appended to the existing list of messages.</p>
+<p>We simply need to annotate our <code class="ic">messages</code> key with the <code class="ic">add_messages</code> reducer function as metadata.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from typing import Annotated
+from langgraph.graph.message import add_messages
+
+class MessagesState(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>Since having a list of messages in graph state is so common, LangGraph has a pre-built  <a href="https://docs.langchain.com/oss/python/langgraph/graph-api#messagesstate" target="_blank"><code class="ic">MessagesState</code></a>!</p>
+<p><code class="ic">MessagesState</code> is defined:</p>
+<ul><li>With a pre-build single <code class="ic">messages</code> key</li>
+<li>This is a list of <code class="ic">AnyMessage</code> objects </li>
+<li>It uses the <code class="ic">add_messages</code> reducer</li>
+</ul>
+We'll usually use <code class="ic">MessagesState</code> because it is less verbose than defining a custom <code class="ic">TypedDict</code>, as shown above.</div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph.graph import MessagesState
+
+class MessagesState(MessagesState):
+    # Add any keys needed beyond messages, which is pre-built 
+    pass</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>To go a bit deeper, we can see how the <code class="ic">add_messages</code> reducer works in isolation.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Initial state
+initial_messages = [AIMessage(content=&quot;Hello! How can I assist you?&quot;, name=&quot;Model&quot;),
+                    HumanMessage(content=&quot;I'm looking for information on marine biology.&quot;, name=&quot;Lance&quot;)
+                   ]
+
+# New message to add
+new_message = AIMessage(content=&quot;Sure, I can help with that. What specifically are you interested in?&quot;, name=&quot;Model&quot;)
+
+# Test
+add_messages(initial_messages , new_message)</code></pre></div>
+      <div class="out"><pre>[AIMessage(content='Hello! How can I assist you?', name='Model', id='cd566566-0f42-46a4-b374-fe4d4770ffa7'),
+ HumanMessage(content=&quot;I'm looking for information on marine biology.&quot;, name='Lance', id='9b6c4ddb-9de3-4089-8d22-077f53e7e915'),
+ AIMessage(content='Sure, I can help with that. What specifically are you interested in?', name='Model', id='74a549aa-8b8b-48d4-bdf1-12e98404e44e')]</pre></div>
+    </div>
+<div class="md-cell"><h2>Our graph</h2>
+<p>Now, lets use <code class="ic">MessagesState</code> with a graph.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from IPython.display import Image, display
+from langgraph.graph import StateGraph, START, END
+    
+# Node
+def tool_calling_llm(state: MessagesState):
+    return {&quot;messages&quot;: [llm_with_tools.invoke(state[&quot;messages&quot;])]}
+
+# Build graph
+builder = StateGraph(MessagesState)
+builder.add_node(&quot;tool_calling_llm&quot;, tool_calling_llm)
+builder.add_edge(START, &quot;tool_calling_llm&quot;)
+builder.add_edge(&quot;tool_calling_llm&quot;, END)
+graph = builder.compile()
+
+# View
+display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
+      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+    </div>
+<div class="md-cell"><p>If we pass in <code class="ic">Hello!</code>, the LLM responds without any tool calls.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>messages = graph.invoke({&quot;messages&quot;: HumanMessage(content=&quot;Hello!&quot;)})
+for m in messages['messages']:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Hello!
+================================== Ai Message ==================================
+
+Hi there! How can I assist you today?
+</pre></div>
+    </div>
+<div class="md-cell"><p>The LLM chooses to use a tool when it determines that the input or task requires the functionality provided by that tool.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>messages = graph.invoke({&quot;messages&quot;: HumanMessage(content=&quot;Multiply 2 and 3&quot;)})
+for m in messages['messages']:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Multiply 2 and 3!
+================================== Ai Message ==================================
+Tool Calls:
+  multiply (call_Er4gChFoSGzU7lsuaGzfSGTQ)
+ Call ID: call_Er4gChFoSGzU7lsuaGzfSGTQ
+  Args:
+    a: 2
+    b: 3
+</pre></div>
+    </div>
+
+</div>
+</body>
+</html>

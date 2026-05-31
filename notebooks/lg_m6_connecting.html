@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connecting</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Connecting</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><h1>Connecting to a LangGraph Platform Deployment</h1>
+<h2>Deployment Creation</h2>
+<p>We just created a <!--<a href="https://langchain-ai.github.io/langgraph/how-tos/deploy-self-hosted/#how-to-do-a-self-hosted-deployment-of-langgraph" target="_blank">~deployment~</a> --> <a href="https://docs.langchain.com/langsmith/self_hosted_data_plane" target="_blank">deployment</a> for the <code class="ic">task_maistro</code> app from module 5.</p>
+<ul><li>We used the <a href="https://docs.langchain.com/langsmith/cli" target="_blank">the LangGraph CLI</a> to build a Docker image for the LangGraph Server with our <code class="ic">task_maistro</code> graph.</li>
+<li>We used the provided <code class="ic">docker-compose.yml</code> file to create three separate containers based on the services defined: </li>
+<li><code class="ic">langgraph-redis</code>: Creates a new container using the official Redis image.</li>
+<li><code class="ic">langgraph-postgres</code>: Creates a new container using the official Postgres image.</li>
+<li><code class="ic">langgraph-api</code>: Creates a new container using our pre-built <code class="ic">task_maistro</code> Docker image.</li>
+</ul>
+<pre class="md-code"><code>$ cd module-6/deployment
+$ docker compose up</code></pre>
+<p>Once running, we can access the deployment through:<br>      <br><ul><li>API: http://localhost:8123</li><br><li>Docs: http://localhost:8123/docs</li><br><li>LangGraph Studio: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:8123</li><br></ul><br><img src="attachment:3a5ede4f-7a62-4e05-9e44-301465ca8555.png" alt="langgraph-platform-high-level.png"></p>
+<h2>Using the API  </h2>
+<p>LangGraph Server exposes <a href="https://github.com/langchain-ai/agent-protocol" target="_blank">many API endpoints</a> for interacting with the deployed agent.</p>
+<p>We can group <a href="https://github.com/langchain-ai/agent-protocol" target="_blank">these endpoints into a few common agent needs</a>:</p>
+<ul><li><strong>Runs</strong>: Atomic agent executions</li>
+<li><strong>Threads</strong>: Multi-turn interactions or human in the loop</li>
+<li><strong>Store</strong>: Long-term memory</li>
+</ul>
+We can test requests directly <a href="http://localhost:8123/docs#tag/thread-runs" target="_blank">in the API docs</a>.</div>
+<div class="md-cell"><h2>SDK</h2>
+<p>The <a href="https://docs.langchain.com/langsmith/sdk" target="_blank">LangGraph SDKs</a> (Python and JS) provide a developer-friendly interface to interact with the LangGraph Server API presented above.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install -U langgraph_sdk</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph_sdk import get_client
+
+# Connect via SDK
+url_for_cli_deployment = &quot;http://localhost:8123&quot;
+client = get_client(url=url_for_cli_deployment)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Remote Graph</h2>
+<p>If you are working in the LangGraph library, <a href="https://docs.langchain.com/langsmith/use-remote-graph" target="_blank">Remote Graph</a> is also a useful way to connect directly to the graph.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install -U langchain_openai langgraph langchain_core</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph.pregel.remote import RemoteGraph
+from langchain_core.messages import convert_to_messages
+from langchain_core.messages import HumanMessage, SystemMessage
+
+# Connect via remote graph
+url = &quot;http://localhost:8123&quot;
+graph_name = &quot;task_maistro&quot; 
+remote_graph = RemoteGraph(graph_name, url=url)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Runs</h2>
+<p>A "run" represents a <a href="https://github.com/langchain-ai/agent-protocol?tab=readme-ov-file#runs-atomic-agent-executions" target="_blank">single execution</a> of your graph. Each time a client makes a request:</p>
+<ul><li>The HTTP worker generates a unique run ID</li>
+<li>This run and its results are stored in PostgreSQL</li>
+<li>You can query these runs to:</li>
+<li>Check their status</li>
+<li>Get their results</li>
+<li>Track execution history</li>
+</ul>
+You can see a full set of How To guides for various types of runs <a href="https://langchain-ai.github.io/langgraph/how-tos/#runs" target="_blank">here</a>.
+<p>Let's looks at a few of the interesting things we can do with runs.</p>
+<h3>Background Runs</h3>
+<p>The LangGraph server supports two types of runs:</p>
+<ul><li><code class="ic">Fire and forget</code> - Launch a run in the background, but don’t wait for it to finish</li>
+<li><code class="ic">Waiting on a reply (blocking or polling)</code> - Launch a run and wait/stream its output</li>
+</ul>
+Background runs and polling are quite useful when working with long-running agents.
+<p>Let's <a href="https://docs.langchain.com/langsmith/background-run" target="_blank">see</a> how this works:</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Create a thread
+thread = await client.threads.create()
+thread</code></pre></div>
+      <div class="out"><pre>{'thread_id': '7f71c0dd-768b-4e53-8349-42bdd10e7caf',
+ 'created_at': '2024-11-14T19:36:08.459457+00:00',
+ 'updated_at': '2024-11-14T19:36:08.459457+00:00',
+ 'metadata': {},
+ 'status': 'idle',
+ 'config': {},
+ 'values': None}</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Check any existing runs on a thread
+thread = await client.threads.create()
+runs = await client.runs.list(thread[&quot;thread_id&quot;])
+print(runs)</code></pre></div>
+      <div class="out out-stream"><pre>[]
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Ensure we've created some ToDos and saved them to my user_id
+user_input = &quot;Add a ToDo to finish booking travel to Hong Kong by end of next week. Also, add a ToDo to call parents back about Thanksgiving plans.&quot;
+config = {&quot;configurable&quot;: {&quot;user_id&quot;: &quot;Test&quot;}}
+graph_name = &quot;task_maistro&quot; 
+run = await client.runs.create(thread[&quot;thread_id&quot;], graph_name, input={&quot;messages&quot;: [HumanMessage(content=user_input)]}, config=config)</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Kick off a new thread and a new run
+thread = await client.threads.create()
+user_input = &quot;Give me a summary of all ToDos.&quot;
+config = {&quot;configurable&quot;: {&quot;user_id&quot;: &quot;Test&quot;}}
+graph_name = &quot;task_maistro&quot; 
+run = await client.runs.create(thread[&quot;thread_id&quot;], graph_name, input={&quot;messages&quot;: [HumanMessage(content=user_input)]}, config=config)</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Check the run status
+print(await client.runs.get(thread[&quot;thread_id&quot;], run[&quot;run_id&quot;]))</code></pre></div>
+      <div class="out out-stream"><pre>{'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21', 'created_at': '2024-11-14T19:38:29.394777+00:00', 'updated_at': '2024-11-14T19:38:29.394777+00:00', 'metadata': {}, 'status': 'pending', 'kwargs': {'input': {'messages': [{'id': None, 'name': None, 'type': 'human', 'content': 'Give me a summary of all ToDos.', 'example': False, 'additional_kwargs': {}, 'response_metadata': {}}]}, 'config': {'metadata': {'created_by': 'system'}, 'configurable': {'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'user_id': 'Test', 'graph_id': 'task_maistro', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21'}}, 'webhook': None, 'subgraphs': False, 'temporary': False, 'stream_mode': ['values'], 'feedback_keys': None, 'interrupt_after': None, 'interrupt_before': None}, 'multitask_strategy': 'reject'}
+</pre></div>
+    </div>
+<div class="md-cell"><p>We can see that it has <code class="ic">'status': 'pending'</code> because it is still running.</p>
+<p>What if we want to wait until the run completes, making it a blocking run?</p>
+<p>We can use <code class="ic">client.runs.join</code> to wait until the run completes.</p>
+<p>This ensures that no new runs are started until the current run completes on the thread.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Wait until the run completes
+await client.runs.join(thread[&quot;thread_id&quot;], run[&quot;run_id&quot;])
+print(await client.runs.get(thread[&quot;thread_id&quot;], run[&quot;run_id&quot;]))</code></pre></div>
+      <div class="out out-stream"><pre>{'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21', 'created_at': '2024-11-14T19:38:29.394777+00:00', 'updated_at': '2024-11-14T19:38:29.394777+00:00', 'metadata': {}, 'status': 'success', 'kwargs': {'input': {'messages': [{'id': None, 'name': None, 'type': 'human', 'content': 'Give me a summary of all ToDos.', 'example': False, 'additional_kwargs': {}, 'response_metadata': {}}]}, 'config': {'metadata': {'created_by': 'system'}, 'configurable': {'run_id': '1efa2c00-63e4-6f4a-9c5b-ca3f5f9bff07', 'user_id': 'Test', 'graph_id': 'task_maistro', 'thread_id': '641c195a-9e31-4250-a729-6b742c089df8', 'assistant_id': 'ea4ebafa-a81d-5063-a5fa-67c755d98a21'}}, 'webhook': None, 'subgraphs': False, 'temporary': False, 'stream_mode': ['values'], 'feedback_keys': None, 'interrupt_after': None, 'interrupt_before': None}, 'multitask_strategy': 'reject'}
+</pre></div>
+    </div>
+<div class="md-cell"><p>Now the run has <code class="ic">'status': 'success'</code> because it has completed.</p></div>
+<div class="md-cell"><h3>Streaming Runs</h3>
+<p>Each time a client makes a streaming request:</p>
+<ul><li>The HTTP worker generates a unique run ID</li>
+<li>The Queue worker begins work on the run </li>
+<li>During execution, the Queue worker publishes update to Redis</li>
+<li>The HTTP worker subscribes to updates from Redis for ths run, and returns them to the client </li>
+</ul>
+This enabled streaming!
+<p>We've covered <a href="https://langchain-ai.github.io/langgraph/how-tos/#streaming_1" target="_blank">streaming</a> in previous modules, but let's pick one method -- streaming tokens -- to highlight.</p>
+<p>Streaming tokens back to the client is especially useful when working with production agents that may take a while to complete.</p>
+<p>We <a href="https://docs.langchain.com/langsmith/streaming" target="_blank">stream tokens</a> using <code class="ic">stream_mode="messages-tuple"</code>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>user_input = &quot;What ToDo should I focus on first.&quot;
+async for chunk in client.runs.stream(thread[&quot;thread_id&quot;], 
+                                      graph_name, 
+                                      input={&quot;messages&quot;: [HumanMessage(content=user_input)]},
+                                      config=config,
+                                      stream_mode=&quot;messages-tuple&quot;):
+
+    if chunk.event == &quot;messages&quot;:
+        print(&quot;&quot;.join(data_item['content'] for data_item in chunk.data if 'content' in data_item), end=&quot;&quot;, flush=True)</code></pre></div>
+      <div class="out out-stream"><pre>You might want to focus on &quot;Call parents back about Thanksgiving plans&quot; first. It has a shorter estimated time to complete (15 minutes) and doesn't have a specific deadline, so it could be a quick task to check off your list. Once that's done, you can dedicate more time to &quot;Finish booking travel to Hong Kong,&quot; which is more time-consuming and has a deadline.</pre></div>
+    </div>
+<div class="md-cell"><h2>Threads</h2>
+<p>Whereas a run is only a single execution of the graph, a thread supports <em>multi-turn</em> interactions.</p>
+<p>When the client makes a graph execution execution with a <code class="ic">thread_id</code>, the server will save all <a href="https://docs.langchain.com/oss/python/langgraph/persistence#checkpoints" target="_blank">checkpoints</a> (steps) in the run to the thread in the Postgres database.</p>
+<p>The server allows us <!-- to  <a href="https://langchain-ai.github.io/langgraph/cloud/how-tos/check_thread_status/" target="_blank">~check the status of created threads~</a> --><br>a variety of ways to <a href="https://reference.langchain.com/python/langsmith/deployment/sdk/#langgraph_sdk.client.ThreadsClient" target="_blank">work with threads</a>.</p>
+<h3>Check thread state</h3>
+<p>For example, we can easily access the state <a href="https://docs.langchain.com/oss/python/langgraph/persistence#checkpoints" target="_blank">checkpoints</a> saved to any specific thread.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>thread_state = await client.threads.get_state(thread['thread_id'])
+for m in convert_to_messages(thread_state['values']['messages']):
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Give me a summary of all ToDos.
+================================== Ai Message ==================================
+
+Here's a summary of your current ToDo list:
+
+1. **Task:** Finish booking travel to Hong Kong
+   - **Status:** Not started
+   - **Deadline:** November 22, 2024
+   - **Solutions:** 
+     - Check flight prices on Skyscanner
+     - Book hotel through Booking.com
+     - Arrange airport transfer
+   - **Estimated Time to Complete:** 120 minutes
+
+2. **Task:** Call parents back about Thanksgiving plans
+   - **Status:** Not started
+   - **Deadline:** None
+   - **Solutions:** 
+     - Check calendar for availability
+     - Discuss travel arrangements
+     - Confirm dinner plans
+   - **Estimated Time to Complete:** 15 minutes
+
+Let me know if there's anything else you'd like to do with your ToDo list!
+================================ Human Message =================================
+
+What ToDo should I focus on first.
+================================== Ai Message ==================================
+
+You might want to focus on &quot;Call parents back about Thanksgiving plans&quot; first. It has a shorter estimated time to complete (15 minutes) and doesn't have a specific deadline, so it could be a quick task to check off your list. Once that's done, you can dedicate more time to &quot;Finish booking travel to Hong Kong,&quot; which is more time-consuming and has a deadline.
+</pre></div>
+    </div>
+<div class="md-cell"><h3>Copy threads</h3>
+<p>We can also <a href="https://docs.langchain.com/langsmith/use-threads#copy-thread" target="_blank">copy</a> (i.e. "fork") an existing thread.</p>
+<p>This will keep the existing thread's history, but allow us to create independent runs that do not affect the original thread.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Copy the thread
+copied_thread = await client.threads.copy(thread['thread_id'])</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Check the state of the copied thread
+copied_thread_state = await client.threads.get_state(copied_thread['thread_id'])
+for m in convert_to_messages(copied_thread_state['values']['messages']):
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Give me a summary of all ToDos.
+================================== Ai Message ==================================
+
+Here's a summary of your current ToDo list:
+
+1. **Task:** Finish booking travel to Hong Kong
+   - **Status:** Not started
+   - **Deadline:** November 22, 2024
+   - **Solutions:** 
+     - Check flight prices on Skyscanner
+     - Book hotel through Booking.com
+     - Arrange airport transfer
+   - **Estimated Time to Complete:** 120 minutes
+
+2. **Task:** Call parents back about Thanksgiving plans
+   - **Status:** Not started
+   - **Deadline:** None
+   - **Solutions:** 
+     - Check calendar for availability
+     - Discuss travel arrangements
+     - Confirm dinner plans
+   - **Estimated Time to Complete:** 15 minutes
+
+Let me know if there's anything else you'd like to do with your ToDo list!
+================================ Human Message =================================
+
+What ToDo should I focus on first.
+================================== Ai Message ==================================
+
+You might want to focus on &quot;Call parents back about Thanksgiving plans&quot; first. It has a shorter estimated time to complete (15 minutes) and doesn't have a specific deadline, so it could be a quick task to check off your list. Once that's done, you can dedicate more time to &quot;Finish booking travel to Hong Kong,&quot; which is more time-consuming and has a deadline.
+</pre></div>
+    </div>
+<div class="md-cell"><h3>Human in the loop</h3>
+<p>We covered <a href="https://docs.langchain.com/langsmith/add-human-in-the-loop" target="_blank">Human in the loop</a> in Module 3, and the server supports all Human in the loop features that we discussed.</p>
+<p>As an example, <a href="https://docs.langchain.com/oss/python/langgraph/persistence#capabilities" target="_blank">we can search, edit, and continue graph execution</a> from any prior checkpoint.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Get the history of the thread
+states = await client.threads.get_history(thread['thread_id'])
+
+# Pick a state update to fork
+to_fork = states[-2]
+to_fork['values']</code></pre></div>
+      <div class="out"><pre>{'messages': [{'content': 'Give me a summary of all ToDos.',
+   'additional_kwargs': {'example': False,
+    'additional_kwargs': {},
+    'response_metadata': {}},
+   'response_metadata': {},
+   'type': 'human',
+   'name': None,
+   'id': '3680da45-e3a5-4a47-b5b1-4fd4d3e8baf9',
+   'example': False}]}</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>to_fork['values']['messages'][0]['id']</code></pre></div>
+      <div class="out"><pre>'3680da45-e3a5-4a47-b5b1-4fd4d3e8baf9'</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>to_fork['next']</code></pre></div>
+      <div class="out"><pre>['task_mAIstro']</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>to_fork['checkpoint_id']</code></pre></div>
+      <div class="out"><pre>'1efa2c00-6609-67ff-8000-491b1dcf8129'</pre></div>
+    </div>
+<div class="md-cell"><p>Let's edit the state. Remember how our reducer on <code class="ic">messages</code> works:</p>
+<ul><li>It will append, unless we supply a message ID.</li>
+<li>We supply the message ID to overwrite the message, rather than appending to state!</li></ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>forked_input = {&quot;messages&quot;: HumanMessage(content=&quot;Give me a summary of all ToDos that need to be done in the next week.&quot;,
+                                         id=to_fork['values']['messages'][0]['id'])}
+
+# Update the state, creating a new checkpoint in the thread
+forked_config = await client.threads.update_state(
+    thread[&quot;thread_id&quot;],
+    forked_input,
+    checkpoint_id=to_fork['checkpoint_id']
+)</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Run the graph from the new checkpoint in the thread
+async for chunk in client.runs.stream(thread[&quot;thread_id&quot;], 
+                                      graph_name, 
+                                      input=None,
+                                      config=config,
+                                      checkpoint_id=forked_config['checkpoint_id'],
+                                      stream_mode=&quot;messages-tuple&quot;):
+
+    if chunk.event == &quot;messages&quot;:
+        print(&quot;&quot;.join(data_item['content'] for data_item in chunk.data if 'content' in data_item), end=&quot;&quot;, flush=True)</code></pre></div>
+      <div class="out out-stream"><pre>Here's a summary of your ToDos that need to be done in the next week:
+
+1. **Finish booking travel to Hong Kong**
+   - **Status:** Not started
+   - **Deadline:** November 22, 2024
+   - **Solutions:** 
+     - Check flight prices on Skyscanner
+     - Book hotel through Booking.com
+     - Arrange airport transfer
+   - **Estimated Time to Complete:** 120 minutes
+
+It looks like this task is due soon, so you might want to prioritize it. Let me know if there's anything else you need help with!</pre></div>
+    </div>
+<div class="md-cell"><h2>Across-thread memory</h2>
+<p>In module 5, we covered how the <a href="https://docs.langchain.com/oss/python/langgraph/persistence#memory-store" target="_blank">LangGraph memory <code class="ic">store</code></a> can be used to save information across threads.</p>
+<p>Our deployed graph, <code class="ic">task_maistro</code>, uses the <code class="ic">store</code> to save information -- such as ToDos -- namespaced to the <code class="ic">user_id</code>.</p>
+<p>Our deployment includes a Postgres database, which stores these long-term (across-thread) memories.</p>
+<p>There are several methods available <a href="https://reference.langchain.com/python/langsmith/deployment/sdk/#langgraph_sdk.client.StoreClient" target="_blank">for interacting with the store</a> in our deployment using the LangGraph SDK.</p>
+<h3>Search items</h3>
+<p>The <code class="ic">task_maistro</code> graph uses the <code class="ic">store</code> to save ToDos namespaced by default to (<code class="ic">todo</code>, <code class="ic">todo_category</code>, <code class="ic">user_id</code>).</p>
+<p>The <code class="ic">todo_category</code> is by default set to <code class="ic">general</code> (as you can see in <code class="ic">deployment/configuration.py</code>).</p>
+<p>We can simply supply this tuple to search for all ToDos.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>items = await client.store.search_items(
+    (&quot;todo&quot;, &quot;general&quot;, &quot;Test&quot;),
+    limit=5,
+    offset=0
+)
+items['items']</code></pre></div>
+      <div class="out"><pre>[{'value': {'task': 'Finish booking travel to Hong Kong',
+   'status': 'not started',
+   'deadline': '2024-11-22T23:59:59',
+   'solutions': ['Check flight prices on Skyscanner',
+    'Book hotel through Booking.com',
+    'Arrange airport transfer'],
+   'time_to_complete': 120},
+  'key': '18524803-c182-49de-9b10-08ccb0a06843',
+  'namespace': ['todo', 'general', 'Test'],
+  'created_at': '2024-11-14T19:37:41.664827+00:00',
+  'updated_at': '2024-11-14T19:37:41.664827+00:00'},
+ {'value': {'task': 'Call parents back about Thanksgiving plans',
+   'status': 'not started',
+   'deadline': None,
+   'solutions': ['Check calendar for availability',
+    'Discuss travel arrangements',
+    'Confirm dinner plans'],
+   'time_to_complete': 15},
+  'key': '375d9596-edf8-4de2-985b-bacdc623d6ef',
+  'namespace': ['todo', 'general', 'Test'],
+  'created_at': '2024-11-14T19:37:41.664827+00:00',
+  'updated_at': '2024-11-14T19:37:41.664827+00:00'}]</pre></div>
+    </div>
+<div class="md-cell"><h3>Add items</h3>
+<p>In our graph, we call <code class="ic">put</code> to add items to the store.</p>
+<p>We can use <a href="https://reference.langchain.com/python/langsmith/deployment/sdk/#langgraph_sdk.client.StoreClient.put_item" target="_blank">put</a> with the SDK if we want to directly add items to the store outside our graph.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from uuid import uuid4
+await client.store.put_item(
+    (&quot;testing&quot;, &quot;Test&quot;),
+    key=str(uuid4()),
+    value={&quot;todo&quot;: &quot;Test SDK put_item&quot;},
+)</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>items = await client.store.search_items(
+    (&quot;testing&quot;, &quot;Test&quot;),
+    limit=5,
+    offset=0
+)
+items['items']</code></pre></div>
+      <div class="out"><pre>[{'value': {'todo': 'Test SDK put_item'},
+  'key': '3de441ba-8c79-4beb-8f52-00e4dcba68d4',
+  'namespace': ['testing', 'Test'],
+  'created_at': '2024-11-14T19:56:30.452808+00:00',
+  'updated_at': '2024-11-14T19:56:30.452808+00:00'},
+ {'value': {'todo': 'Test SDK put_item'},
+  'key': '09b9a869-4406-47c5-a635-4716bd79a8b3',
+  'namespace': ['testing', 'Test'],
+  'created_at': '2024-11-14T19:53:24.812558+00:00',
+  'updated_at': '2024-11-14T19:53:24.812558+00:00'}]</pre></div>
+    </div>
+<div class="md-cell"><h3>Delete items</h3>
+<p>We can use the SDK to <a href="https://reference.langchain.com/python/langsmith/deployment/sdk/#langgraph_sdk.client.StoreClient.delete_item" target="_blank">delete items</a> from the store by key.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>[item['key'] for item in items['items']]</code></pre></div>
+      <div class="out"><pre>['3de441ba-8c79-4beb-8f52-00e4dcba68d4',
+ '09b9a869-4406-47c5-a635-4716bd79a8b3']</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>await client.store.delete_item(
+       (&quot;testing&quot;, &quot;Test&quot;),
+        key='3de441ba-8c79-4beb-8f52-00e4dcba68d4',
+    )</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>items = await client.store.search_items(
+    (&quot;testing&quot;, &quot;Test&quot;),
+    limit=5,
+    offset=0
+)
+items['items']</code></pre></div>
+      <div class="out"><pre>[{'value': {'todo': 'Test SDK put_item'},
+  'key': '09b9a869-4406-47c5-a635-4716bd79a8b3',
+  'namespace': ['testing', 'Test'],
+  'created_at': '2024-11-14T19:53:24.812558+00:00',
+  'updated_at': '2024-11-14T19:53:24.812558+00:00'}]</pre></div>
+    </div>
+<div class="md-cell"></div>
+</div>
+</body>
+</html>

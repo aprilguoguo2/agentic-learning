@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Graph</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Simple Graph</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><p><a href="https://colab.research.google.com/github/langchain-ai/langchain-academy/blob/main/module-1/simple-graph.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></a> <a href="https://academy.langchain.com/courses/take/intro-to-langgraph/lessons/58238187-lesson-2-simple-graph" target="_blank"><img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66e9eba12c7b7688aa3dbb5e_LCA-badge-green.svg" alt="Open in LangChain Academy"></a></p></div>
+<div class="md-cell"><h1>The Simplest Graph</h1>
+<p>Let's build a simple graph with 3 nodes and one conditional edge.</p>
+<img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dba5f465f6e9a2482ad935_simple-graph1.png" alt="Screenshot 2024-08-20 at 3.11.22 PM.png"></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install --quiet -U langgraph</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>State</h2>
+<p>First, define the <a href="https://docs.langchain.com/oss/python/langgraph/graph-api#state" target="_blank">State</a> of the graph.</p>
+<p>The State schema serves as the input schema for all Nodes and Edges in the graph.</p>
+<p>Let's use the <code class="ic">TypedDict</code> class from python's <code class="ic">typing</code> module as our schema, which provides type hints for the keys.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from typing_extensions import TypedDict
+
+class State(TypedDict):
+    graph_state: str</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Nodes</h2>
+<p><a href="https://docs.langchain.com/oss/python/langgraph/graph-api/#nodes" target="_blank">Nodes</a> are just python functions.</p>
+<p>The first positional argument is the state, as defined above.</p>
+<p>Because the state is a <code class="ic">TypedDict</code> with schema as defined above, each node can access the key, <code class="ic">graph_state</code>, with <code class="ic">state['graph_state']</code>.</p>
+<p>Each node returns a new value of the state key <code class="ic">graph_state</code>.<br>  <br>By default, the new value returned by each node <a href="https://docs.langchain.com/oss/python/langgraph/graph-api/#reducers" target="_blank">will override</a> the prior state value.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>def node_1(state):
+    print(&quot;---Node 1---&quot;)
+    return {&quot;graph_state&quot;: state['graph_state'] +&quot; I am&quot;}
+
+def node_2(state):
+    print(&quot;---Node 2---&quot;)
+    return {&quot;graph_state&quot;: state['graph_state'] +&quot; happy!&quot;}
+
+def node_3(state):
+    print(&quot;---Node 3---&quot;)
+    return {&quot;graph_state&quot;: state['graph_state'] +&quot; sad!&quot;}</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Edges</h2>
+<p><a href="https://docs.langchain.com/oss/python/langgraph/graph-api/#edges" target="_blank">Edges</a> connect the nodes.</p>
+<p>Normal Edges are used if you want to <em>always</em> go from, for example, <code class="ic">node_1</code> to <code class="ic">node_2</code>.</p>
+<p><a href="https://docs.langchain.com/oss/python/langgraph/graph-api/#conditional-edges" target="_blank">Conditional Edges</a> are used if you want to <em>optionally</em> route between nodes.<br> <br>Conditional edges are implemented as functions that return the next node to visit based on some logic.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import random
+from typing import Literal
+
+def decide_mood(state) -&gt; Literal[&quot;node_2&quot;, &quot;node_3&quot;]:
+    
+    # Often, we will use state to decide on the next node to visit
+    user_input = state['graph_state'] 
+    
+    # Here, let's just do a 50 / 50 split between nodes 2, 3
+    if random.random() &lt; 0.5:
+
+        # 50% of the time, we return Node 2
+        return &quot;node_2&quot;
+    
+    # 50% of the time, we return Node 3
+    return &quot;node_3&quot;</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Graph Construction</h2>
+<p>Now, we build the graph from our components defined above.</p>
+<p>The <a href="https://docs.langchain.com/oss/python/langgraph/graph-api/#stategraph" target="_blank">StateGraph class</a> is the graph class that we can use.<br> <br>First, we initialize a StateGraph with the <code class="ic">State</code> class we defined above.<br> <br>Then, we add our nodes and edges.</p>
+<p>We use the  <a href="https://docs.langchain.com/oss/python/langgraph/graph-api/#start-node" target="_blank"><code class="ic">START</code> Node, a special node</a> that sends user input to the graph, to indicate where to start our graph.<br> <br>The <a href="https://docs.langchain.com/oss/python/langgraph/graph-api/#end-node" target="_blank"><code class="ic">END</code> Node</a> is a special node that represents a terminal node.</p>
+<p>Finally, we <a href="https://docs.langchain.com/oss/python/langgraph/graph-api/#compiling-your-graph" target="_blank">compile our graph</a> to perform a few basic checks on the graph structure.</p>
+<p>We can visualize the graph as a <a href="https://github.com/mermaid-js/mermaid" target="_blank">Mermaid diagram</a>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from IPython.display import Image, display
+from langgraph.graph import StateGraph, START, END
+
+# Build graph
+builder = StateGraph(State)
+builder.add_node(&quot;node_1&quot;, node_1)
+builder.add_node(&quot;node_2&quot;, node_2)
+builder.add_node(&quot;node_3&quot;, node_3)
+
+# Logic
+builder.add_edge(START, &quot;node_1&quot;)
+builder.add_conditional_edges(&quot;node_1&quot;, decide_mood)
+builder.add_edge(&quot;node_2&quot;, END)
+builder.add_edge(&quot;node_3&quot;, END)
+
+# Add
+graph = builder.compile()
+
+# View
+display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
+      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+    </div>
+<div class="md-cell"><h2>Graph Invocation</h2>
+<p>The compiled graph implements the <a href="https://reference.langchain.com/python/langchain_core/runnables/?h=runnables" target="_blank">runnable</a> protocol.</p>
+<p>This provides a standard way to execute LangChain components. <br> <br><code class="ic">invoke</code> is one of the standard methods in this interface.</p>
+<p>The input is a dictionary <code class="ic">{"graph_state": "Hi, this is lance."}</code>, which sets the initial value for our graph state dict.</p>
+<p>When <code class="ic">invoke</code> is called, the graph starts execution from the <code class="ic">START</code> node.</p>
+<p>It progresses through the defined nodes (<code class="ic">node_1</code>, <code class="ic">node_2</code>, <code class="ic">node_3</code>) in order.</p>
+<p>The conditional edge will traverse from node <code class="ic">1</code> to node <code class="ic">2</code> or <code class="ic">3</code> using a 50/50 decision rule.</p>
+<p>Each node function receives the current state and returns a new value, which overrides the graph state.</p>
+<p>The execution continues until it reaches the <code class="ic">END</code> node.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>graph.invoke({&quot;graph_state&quot; : &quot;Hi, this is Lance.&quot;})</code></pre></div>
+      <div class="out out-stream"><pre>---Node 1---
+---Node 3---
+</pre></div><div class="out"><pre>{'graph_state': 'Hi, this is Lance. I am sad!'}</pre></div>
+    </div>
+<div class="md-cell"><p><code class="ic">invoke</code> runs the entire graph synchronously.</p>
+<p>This waits for each step to complete before moving to the next.</p>
+<p>It returns the final state of the graph after all nodes have executed.</p>
+<p>In this case, it returns the state after <code class="ic">node_3</code> has completed:</p>
+<pre class="md-code"><code>{'graph_state': 'Hi, this is Lance. I am sad!'}</code></pre></div>
+
+</div>
+</body>
+</html>

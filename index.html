@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>April's Agentic Learning</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F0FF;
+  --card:#FDF5FF;
+  --accent:#C084A8;
+  --accent2:#9B6FA8;
+  --accent-light:#F0E6F6;
+  --text:#2D1B3D;
+  --muted:#8B7A9A;
+  --border:#E8D5F0;
+  --radius:18px;
+  --shadow:0 4px 24px rgba(160,100,180,.13);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+/* ── header ── */
+header{
+  background:linear-gradient(135deg,#C084A8 0%,#9B6FA8 100%);
+  padding:48px 24px 40px;
+  text-align:center;
+}
+.header-icon{font-size:48px;margin-bottom:12px;display:block}
+header h1{
+  font-size:clamp(24px,6vw,36px);
+  font-weight:700;
+  color:#fff;
+  letter-spacing:-.5px;
+  margin-bottom:10px;
+}
+header p{
+  color:rgba(255,255,255,.82);
+  font-size:15px;
+  max-width:360px;
+  margin:0 auto;
+  line-height:1.6;
+}
+
+/* ── wave divider ── */
+.wave{display:block;width:100%;margin-bottom:-2px}
+
+/* ── grid ── */
+.grid{
+  max-width:680px;
+  margin:0 auto;
+  padding:32px 20px 60px;
+  display:grid;
+  gap:20px;
+}
+
+/* ── course card ── */
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+  text-decoration:none;
+  color:inherit;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding:22px 24px;
+  transition:transform .18s ease,box-shadow .18s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.card:hover,.card:focus{
+  transform:translateY(-3px);
+  box-shadow:0 8px 32px rgba(160,100,180,.22);
+  outline:none;
+}
+.card:active{transform:translateY(0)}
+
+.card-icon{
+  width:56px;height:56px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;flex-shrink:0;
+}
+.c1 .card-icon{background:#F3E8FF}
+.c2 .card-icon{background:#FDE8F5}
+.c3 .card-icon{background:#E8F0FF}
+.c4 .card-icon{background:#FFF0E8}
+
+.card-body{flex:1;min-width:0}
+.card-title{
+  font-size:17px;font-weight:700;
+  color:var(--text);
+  margin-bottom:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card-meta{font-size:13px;color:var(--muted);line-height:1.5}
+.card-arrow{
+  font-size:20px;color:var(--accent);flex-shrink:0;
+  margin-left:4px;opacity:.7;
+}
+
+/* ── footer ── */
+footer{
+  text-align:center;
+  padding:20px;
+  font-size:12px;
+  color:var(--muted);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="header-icon">🌸</span>
+  <h1>April's Agentic Learning</h1>
+  <p>Your personal portal for AI agent courses — videos, notebooks, all in one place.</p>
+</header>
+
+<svg class="wave" viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+  <path d="M0,32 C360,0 1080,64 1440,32 L1440,40 L0,40 Z" fill="#F5F0FF"/>
+</svg>
+
+<div class="grid">
+
+  <a class="card c1" href="langchain.html">
+    <div class="card-icon">🔗</div>
+    <div class="card-body">
+      <div class="card-title">LangChain Course</div>
+      <div class="card-meta">3 modules · Foundational models, tools, memory &amp; production agents</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+  <a class="card c2" href="langgraph.html">
+    <div class="card-icon">🕸️</div>
+    <div class="card-body">
+      <div class="card-title">LangGraph Course</div>
+      <div class="card-meta">6 modules · Graphs, state, memory, HITL &amp; deployment</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+  <a class="card c3" href="deep-agent.html">
+    <div class="card-icon">🤖</div>
+    <div class="card-body">
+      <div class="card-title">Project — Deep Agent</div>
+      <div class="card-meta">7 modules · Build a full AI agent from scratch</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+  <a class="card c4" href="deep-agent-research.html">
+    <div class="card-icon">🔬</div>
+    <div class="card-body">
+      <div class="card-title">Project — Deep Agent with Research</div>
+      <div class="card-meta">6 modules · Multi-agent research systems &amp; MCP</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+</div>
+
+<footer>April's Agentic Learning &nbsp;·&nbsp; tap a course to begin</footer>
+
+</body>
+</html>

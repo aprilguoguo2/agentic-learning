@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Store</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Memory Store</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><h1>Chatbot with Memory</h1>
+<h2>Review</h2>
+<p><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10410470/" target="_blank">Memory</a> is a cognitive function that allows people to store, retrieve, and use information to understand their present and future.</p>
+<p>There are <a href="https://docs.langchain.com/oss/python/concepts/memory#memory-types" target="_blank">various long-term memory types</a> that can be used in AI applications.</p>
+<h2>Goals</h2>
+<p>Here, we'll introduce the <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore" target="_blank">LangGraph Memory Store</a> as a way to save and retrieve long-term memories.</p>
+<p>We'll build a chatbot that uses both <code class="ic">short-term (within-thread)</code> and <code class="ic">long-term (across-thread)</code> memory.<br> <br>We'll focus on long-term <a href="https://docs.langchain.com/oss/python/concepts/memory#semantic-memory" target="_blank">semantic memory</a>, which will be facts about the user.</p>
+<p>These long-term memories will be used to create a personalized chatbot that can remember facts about the user.</p>
+<p>It will save memory <a href="https://docs.langchain.com/oss/python/concepts/memory#writing-memories" target="_blank">"in the hot path"</a>, as the user is chatting with it.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install -U langchain_openai langgraph langchain_core</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>We'll use <a href="https://docs.langchain.com/langsmith/home" target="_blank">LangSmith</a> for <a href="https://docs.langchain.com/langsmith/observability-concepts" target="_blank">tracing</a>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os, getpass
+
+def _set_env(var: str):
+    if not os.environ.get(var):
+        os.environ[var] = getpass.getpass(f&quot;{var}: &quot;)
+
+_set_env(&quot;LANGSMITH_API_KEY&quot;)
+os.environ[&quot;LANGSMITH_TRACING&quot;] = &quot;true&quot;
+os.environ[&quot;LANGSMITH_PROJECT&quot;] = &quot;langchain-academy&quot;</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Introduction to the LangGraph Store</h2>
+<p>The  <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore" target="_blank">LangGraph Memory Store</a> provides a way to store and retrieve information <em>across threads</em> in LangGraph.</p>
+<p>This is an  <a href="https://blog.langchain.com/launching-long-term-memory-support-in-langgraph/" target="_blank">open source base class</a> for persistent <code class="ic">key-value</code> stores.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import uuid
+from langgraph.store.memory import InMemoryStore
+in_memory_store = InMemoryStore()</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>When storing objects (e.g., memories) in the <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore" target="_blank">Store</a>, we provide:</p>
+<ul><li>The <code class="ic">namespace</code> for the object, a tuple (similar to directories)</li>
+<li>the object <code class="ic">key</code> (similar to filenames)</li>
+<li>the object <code class="ic">value</code> (similar to file contents)</li>
+</ul>
+We use the <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore.put" target="_blank">put</a> method to save an object to the store by <code class="ic">namespace</code> and <code class="ic">key</code>.
+<img src="attachment:6281b4e3-4930-467e-83ce-ba1aa837ca16.png" alt="langgraph_store.png"></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Namespace for the memory to save
+user_id = &quot;1&quot;
+namespace_for_memory = (user_id, &quot;memories&quot;)
+
+# Save a memory to namespace as key and value
+key = str(uuid.uuid4())
+
+# The value needs to be a dictionary  
+value = {&quot;food_preference&quot; : &quot;I like pizza&quot;}
+
+# Save the memory
+in_memory_store.put(namespace_for_memory, key, value)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>We use <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore.search" target="_blank">search</a> to retrieve objects from the store by <code class="ic">namespace</code>.</p>
+<p>This returns a list.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Search 
+memories = in_memory_store.search(namespace_for_memory)
+type(memories)</code></pre></div>
+      <div class="out"><pre>list</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Metatdata 
+memories[0].dict()</code></pre></div>
+      <div class="out"><pre>{'value': {'food_preference': 'I like pizza'},
+ 'key': 'a754b8c5-e8b7-40ec-834b-c426a9a7c7cc',
+ 'namespace': ['1', 'memories'],
+ 'created_at': '2024-11-04T22:48:16.727572+00:00',
+ 'updated_at': '2024-11-04T22:48:16.727574+00:00'}</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># The key, value
+print(memories[0].key, memories[0].value)</code></pre></div>
+      <div class="out out-stream"><pre>a754b8c5-e8b7-40ec-834b-c426a9a7c7cc {'food_preference': 'I like pizza'}
+</pre></div>
+    </div>
+<div class="md-cell"><p>We can also use <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore.get" target="_blank">get</a> to retrieve an object by <code class="ic">namespace</code> and <code class="ic">key</code>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Get the memory by namespace and key
+memory = in_memory_store.get(namespace_for_memory, key)
+memory.dict()</code></pre></div>
+      <div class="out"><pre>{'value': {'food_preference': 'I like pizza'},
+ 'key': 'a754b8c5-e8b7-40ec-834b-c426a9a7c7cc',
+ 'namespace': ['1', 'memories'],
+ 'created_at': '2024-11-04T22:48:16.727572+00:00',
+ 'updated_at': '2024-11-04T22:48:16.727574+00:00'}</pre></div>
+    </div>
+<div class="md-cell"><h2>Chatbot with long-term memory</h2>
+<p>We want a chatbot that <a href="https://docs.google.com/presentation/d/181mvjlgsnxudQI6S3ritg9sooNyu4AcLLFH1UK0kIuk/edit#slide=id.g30eb3c8cf10_0_156" target="_blank">has two types of memory</a>:</p>
+<ul><li><code class="ic">Short-term (within-thread) memory</code>: Chatbot can persist conversational history and / or allow interruptions in a chat session.</li>
+<li><code class="ic">Long-term (cross-thread) memory</code>: Chatbot can remember information about a specific user <em>across all chat sessions</em>.</li></ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>_set_env(&quot;OPENAI_API_KEY&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>For <code class="ic">short-term memory</code>, we'll use a <a href="https://docs.langchain.com/oss/python/langgraph/persistence#checkpointer-libraries" target="_blank">checkpointer</a>.</p>
+<p>See Module 2 and our <a href="https://docs.langchain.com/oss/python/langgraph/persistence" target="_blank">conceptual docs</a> for more on checkpointers, but in summary:</p>
+<ul><li>They write the graph state at each step to a thread.</li>
+<li>They persist the chat history in the thread.</li>
+<li>They allow the graph to be interrupted and / or resumed from any step in the thread.</li>
+</ul> 
+And, for <code class="ic">long-term memory</code>, we'll use the <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore" target="_blank">LangGraph Store</a> as introduced above.</div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Chat model 
+from langchain_openai import ChatOpenAI
+
+# Initialize the LLM
+model = ChatOpenAI(model=&quot;gpt-4o&quot;, temperature=0) </code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>The chat history will be saved to short-term memory using the checkpointer.</p>
+<p>The chatbot will reflect on the chat history.</p>
+<p>It will then create and save a memory to the <a href="https://reference.langchain.com/python/langgraph/store/?h=basestor#langgraph.store.base.BaseStore" target="_blank">LangGraph Store</a>.</p>
+<p>This memory is accessible in future chat sessions to personalize the chatbot's responses.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from IPython.display import Image, display
+
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import StateGraph, MessagesState, START, END
+from langgraph.store.base import BaseStore
+
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables.config import RunnableConfig
+
+# Chatbot instruction
+MODEL_SYSTEM_MESSAGE = &quot;&quot;&quot;You are a helpful assistant with memory that provides information about the user. 
+If you have memory for this user, use it to personalize your responses.
+Here is the memory (it may be empty): {memory}&quot;&quot;&quot;
+
+# Create new memory from the chat history and any existing memory
+CREATE_MEMORY_INSTRUCTION = &quot;&quot;&quot;&quot;You are collecting information about the user to personalize your responses.
+
+CURRENT USER INFORMATION:
+{memory}
+
+INSTRUCTIONS:
+1. Review the chat history below carefully
+2. Identify new information about the user, such as:
+   - Personal details (name, location)
+   - Preferences (likes, dislikes)
+   - Interests and hobbies
+   - Past experiences
+   - Goals or future plans
+3. Merge any new information with existing memory
+4. Format the memory as a clear, bulleted list
+5. If new information conflicts with existing memory, keep the most recent version
+
+Remember: Only include factual information directly stated by the user. Do not make assumptions or inferences.
+
+Based on the chat history below, please update the user information:&quot;&quot;&quot;
+
+def call_model(state: MessagesState, config: RunnableConfig, store: BaseStore):
+
+    &quot;&quot;&quot;Load memory from the store and use it to personalize the chatbot's response.&quot;&quot;&quot;
+    
+    # Get the user ID from the config
+    user_id = config[&quot;configurable&quot;][&quot;user_id&quot;]
+
+    # Retrieve memory from the store
+    namespace = (&quot;memory&quot;, user_id)
+    key = &quot;user_memory&quot;
+    existing_memory = store.get(namespace, key)
+
+    # Extract the actual memory content if it exists and add a prefix
+    if existing_memory:
+        # Value is a dictionary with a memory key
+        existing_memory_content = existing_memory.value.get('memory')
+    else:
+        existing_memory_content = &quot;No existing memory found.&quot;
+
+    # Format the memory in the system prompt
+    system_msg = MODEL_SYSTEM_MESSAGE.format(memory=existing_memory_content)
+    
+    # Respond using memory as well as the chat history
+    response = model.invoke([SystemMessage(content=system_msg)]+state[&quot;messages&quot;])
+
+    return {&quot;messages&quot;: response}
+
+def write_memory(state: MessagesState, config: RunnableConfig, store: BaseStore):
+
+    &quot;&quot;&quot;Reflect on the chat history and save a memory to the store.&quot;&quot;&quot;
+    
+    # Get the user ID from the config
+    user_id = config[&quot;configurable&quot;][&quot;user_id&quot;]
+
+    # Retrieve existing memory from the store
+    namespace = (&quot;memory&quot;, user_id)
+    existing_memory = store.get(namespace, &quot;user_memory&quot;)
+        
+    # Extract the memory
+    if existing_memory:
+        existing_memory_content = existing_memory.value.get('memory')
+    else:
+        existing_memory_content = &quot;No existing memory found.&quot;
+
+    # Format the memory in the system prompt
+    system_msg = CREATE_MEMORY_INSTRUCTION.format(memory=existing_memory_content)
+    new_memory = model.invoke([SystemMessage(content=system_msg)]+state['messages'])
+
+    # Overwrite the existing memory in the store 
+    key = &quot;user_memory&quot;
+
+    # Write value as a dictionary with a memory key
+    store.put(namespace, key, {&quot;memory&quot;: new_memory.content})
+
+# Define the graph
+builder = StateGraph(MessagesState)
+builder.add_node(&quot;call_model&quot;, call_model)
+builder.add_node(&quot;write_memory&quot;, write_memory)
+builder.add_edge(START, &quot;call_model&quot;)
+builder.add_edge(&quot;call_model&quot;, &quot;write_memory&quot;)
+builder.add_edge(&quot;write_memory&quot;, END)
+
+# Store for long-term (across-thread) memory
+across_thread_memory = InMemoryStore()
+
+# Checkpointer for short-term (within-thread) memory
+within_thread_memory = MemorySaver()
+
+# Compile the graph with the checkpointer fir and store
+graph = builder.compile(checkpointer=within_thread_memory, store=across_thread_memory)
+
+# View
+display(Image(graph.get_graph(xray=1).draw_mermaid_png()))</code></pre></div>
+      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+    </div>
+<div class="md-cell"><p>When we interact with the chatbot, we supply two things:</p>
+<ul><li><code class="ic">Short-term (within-thread) memory</code>: A <code class="ic">thread ID</code> for persisting the chat history.</li>
+<li><code class="ic">Long-term (cross-thread) memory</code>: A <code class="ic">user ID</code> to namespace long-term memories to the user.</li>
+</ul>
+Let's see how these work together in practice.</div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># We supply a thread ID for short-term (within-thread) memory
+# We supply a user ID for long-term (across-thread) memory 
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;, &quot;user_id&quot;: &quot;1&quot;}}
+
+# User input 
+input_messages = [HumanMessage(content=&quot;Hi, my name is Lance&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Hi, my name is Lance
+================================== Ai Message ==================================
+
+Hello, Lance! It's nice to meet you. How can I assist you today?
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># User input 
+input_messages = [HumanMessage(content=&quot;I like to bike around San Francisco&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+I like to bike around San Francisco
+================================== Ai Message ==================================
+
+That sounds like a great way to explore the city, Lance! San Francisco has some beautiful routes and views. Do you have a favorite trail or area you like to bike in?
+</pre></div>
+    </div>
+<div class="md-cell"><p>We're using the <code class="ic">MemorySaver</code> checkpointer for within-thread memory.</p>
+<p>This saves the chat history to the thread.</p>
+<p>We can look at the chat history saved to the thread.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>thread = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;}}
+state = graph.get_state(thread).values
+for m in state[&quot;messages&quot;]: 
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Hi, my name is Lance
+================================== Ai Message ==================================
+
+Hello, Lance! It's nice to meet you. How can I assist you today?
+================================ Human Message =================================
+
+I like to bike around San Francisco
+================================== Ai Message ==================================
+
+That sounds like a great way to explore the city, Lance! San Francisco has some beautiful routes and views. Do you have a favorite trail or area you like to bike in?
+</pre></div>
+    </div>
+<div class="md-cell"><p>Recall that we compiled the graph with our the store:</p>
+<pre class="md-code"><code>across_thread_memory = InMemoryStore()</code></pre>
+<p>And, we added a node to the graph (<code class="ic">write_memory</code>) that reflects on the chat history and saves a memory to the store.</p>
+<p>We can to see if the memory was saved to the store.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Namespace for the memory to save
+user_id = &quot;1&quot;
+namespace = (&quot;memory&quot;, user_id)
+existing_memory = across_thread_memory.get(namespace, &quot;user_memory&quot;)
+existing_memory.dict()</code></pre></div>
+      <div class="out"><pre>{'value': {'memory': &quot;**Updated User Information:**\n- User's name is Lance.\n- Likes to bike around San Francisco.&quot;},
+ 'key': 'user_memory',
+ 'namespace': ['memory', '1'],
+ 'created_at': '2024-11-05T00:12:17.383918+00:00',
+ 'updated_at': '2024-11-05T00:12:25.469528+00:00'}</pre></div>
+    </div>
+<div class="md-cell"><p>Now, let's kick off a <em>new thread</em> with the <em>same user ID</em>.</p>
+<p>We should see that the chatbot remembered the user's profile and used it to personalize the response.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># We supply a user ID for across-thread memory as well as a new thread ID
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;2&quot;, &quot;user_id&quot;: &quot;1&quot;}}
+
+# User input 
+input_messages = [HumanMessage(content=&quot;Hi! Where would you recommend that I go biking?&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Hi! Where would you recommend that I go biking?
+================================== Ai Message ==================================
+
+Hi Lance! Since you enjoy biking around San Francisco, there are some fantastic routes you might love. Here are a few recommendations:
+
+1. **Golden Gate Park**: This is a classic choice with plenty of trails and beautiful scenery. You can explore the park's many attractions, like the Conservatory of Flowers and the Japanese Tea Garden.
+
+2. **The Embarcadero**: A ride along the Embarcadero offers stunning views of the Bay Bridge and the waterfront. It's a great way to experience the city's vibrant atmosphere.
+
+3. **Marin Headlands**: If you're up for a bit of a challenge, biking across the Golden Gate Bridge to the Marin Headlands offers breathtaking views of the city and the Pacific Ocean.
+
+4. **Presidio**: This area has a network of trails with varying difficulty levels, and you can enjoy views of the Golden Gate Bridge and the bay.
+
+5. **Twin Peaks**: For a more challenging ride, head up to Twin Peaks. The climb is worth it for the panoramic views of the city.
+
+Let me know if you want more details on any of these routes!
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># User input 
+input_messages = [HumanMessage(content=&quot;Great, are there any bakeries nearby that I can check out? I like a croissant after biking.&quot;)]
+
+# Run the graph
+for chunk in graph.stream({&quot;messages&quot;: input_messages}, config, stream_mode=&quot;values&quot;):
+    chunk[&quot;messages&quot;][-1].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Great, are there any bakeries nearby that I can check out? I like a croissant after biking.
+================================== Ai Message ==================================
+
+Absolutely, Lance! Here are a few bakeries in San Francisco where you can enjoy a delicious croissant after your ride:
+
+1. **Tartine Bakery**: Located in the Mission District, Tartine is famous for its pastries, and their croissants are a must-try.
+
+2. **Arsicault Bakery**: This bakery in the Richmond District has been praised for its buttery, flaky croissants. It's a bit of a detour, but worth it!
+
+3. **b. Patisserie**: Situated in Lower Pacific Heights, b. Patisserie offers a variety of pastries, and their croissants are particularly popular.
+
+4. **Le Marais Bakery**: With locations in the Marina and Castro, Le Marais offers a charming French bakery experience with excellent croissants.
+
+5. **Neighbor Bakehouse**: Located in the Dogpatch, this bakery is known for its creative pastries, including some fantastic croissants.
+
+These spots should provide a delightful treat after your biking adventures. Enjoy your ride and your croissant!
+</pre></div>
+    </div>
+<div class="md-cell"><h2>Viewing traces in LangSmith</h2>
+<p>We can see that the memories are retrieved from the store and supplied as part of the system prompt, as expected:</p>
+<p>https://smith.langchain.com/public/10268d64-82ff-434e-ac02-4afa5cc15432/r</p>
+<h2>Studio</h2>
+<p>We can also interact with our chatbot in Studio.</p>
+<img src="attachment:afa216f7-4b67-4783-82af-c319e0f512ac.png" alt="Screenshot 2024-10-28 at 10.08.27 AM.png"></div>
+<div class="md-cell"></div>
+</div>
+</body>
+</html>

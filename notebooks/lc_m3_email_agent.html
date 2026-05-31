@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.5 Email Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langchain.html">← LangChain Course</a>
+  <h1>3.5 Email Agent</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><p>email agent<br><ul><li>authenticates user</li><br><li>only then are they allowed into the "inbox"</li><br><li>dynamic tools and prompt on the condition of there being an email and password in state that match hardcoded</li><br><li>checks "inbox"</li><br><li>email in tool</li><br><li>sends emails</li><br><li>human in the loop</li></ul></p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import warnings
+warnings.filterwarnings(&quot;ignore&quot;, message=&quot;.*Pydantic serializer warnings.*&quot;, category=UserWarning)
+
+from dotenv import load_dotenv
+
+load_dotenv()</code></pre></div>
+      <div class="out"><pre>True</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from dataclasses import dataclass
+
+@dataclass
+class EmailContext:
+    email_address: str = &quot;julie@example.com&quot;
+    password: str = &quot;password123&quot;</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain.agents import AgentState
+
+class AuthenticatedState(AgentState):
+    authenticated: bool</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain.tools import tool, ToolRuntime
+from langgraph.types import Command
+from langchain.messages import ToolMessage
+
+@tool
+def check_inbox() -&gt; str:
+    &quot;&quot;&quot;Check the inbox for recent emails&quot;&quot;&quot;
+    return &quot;&quot;&quot;
+    Hi Julie, 
+    I'm going to be in town next week and was wondering if we could grab a coffee?
+    - best, Jane (jane@example.com)
+    &quot;&quot;&quot;
+
+@tool
+def send_email(to: str, subject: str, body: str) -&gt; str:
+    &quot;&quot;&quot;Send an response email&quot;&quot;&quot;
+    return f&quot;Email sent to {to} with subject {subject} and body {body}&quot;
+
+@tool
+def authenticate(email: str, password: str, runtime: ToolRuntime) -&gt; Command:
+    &quot;&quot;&quot;Authenticate the user with the given email and password&quot;&quot;&quot;
+    if email == runtime.context.email_address and password == runtime.context.password:
+        return Command(update={
+            &quot;authenticated&quot;: True, 
+            &quot;messages&quot;: [ToolMessage(
+                &quot;Successfully authenticated&quot;, 
+                tool_call_id=runtime.tool_call_id)]
+        })
+    else:
+        return Command(update={
+            &quot;authenticated&quot;: False,
+            &quot;messages&quot;: [ToolMessage(
+                &quot;Authentication failed&quot;, 
+                tool_call_id=runtime.tool_call_id)]
+        })</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
+from typing import Callable
+
+@wrap_model_call
+def dynamic_tool_call(request: ModelRequest, 
+handler: Callable[[ModelRequest], ModelResponse]) -&gt; ModelResponse:
+
+    &quot;&quot;&quot;Allow read inbox and send email tools only if user provides correct email and password&quot;&quot;&quot;
+
+    authenticated = request.state.get(&quot;authenticated&quot;)
+    
+    if authenticated:
+        tools = [check_inbox, send_email]
+    else:
+        tools = [authenticate]
+
+    request = request.override(tools=tools) 
+    return handler(request)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>>Note: the prompts were modified since filming to constrain the model to more reliably match the filmed sequence. You may still experience different responses from the model, which is expected. You may need to modify the human message to provide appropriate responses.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain.agents.middleware import dynamic_prompt
+
+authenticated_prompt = &quot;&quot;&quot;You are a helpful assistant that can check the inbox and send emails. 
+Your first step after authentication is to check the inbox.&quot;&quot;&quot;
+unauthenticated_prompt = &quot;You are a helpful assistant that can authenticate users.&quot;
+
+@dynamic_prompt
+def dynamic_prompt(request: ModelRequest) -&gt; str:
+    &quot;&quot;&quot;Generate system prompt based on authentication status&quot;&quot;&quot;
+    authenticated = request.state.get(&quot;authenticated&quot;)
+
+    if authenticated:
+        return authenticated_prompt
+    else:
+        return unauthenticated_prompt</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain.agents import create_agent
+from langgraph.checkpoint.memory import InMemorySaver
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+
+agent = create_agent(
+    &quot;gpt-5-nano&quot;,
+    tools=[authenticate, check_inbox, send_email],
+    checkpointer=InMemorySaver(),
+    state_schema=AuthenticatedState,
+    context_schema=EmailContext,
+    middleware=[
+        dynamic_tool_call, 
+        dynamic_prompt,
+        HumanInTheLoopMiddleware(
+            interrupt_on={
+                &quot;authenticate&quot;: False,
+                &quot;check_inbox&quot;: False,
+                &quot;send_email&quot;: True,
+            })
+        ]
+    )
+</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain.messages import HumanMessage
+
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;}}
+
+response = agent.invoke(
+    {&quot;messages&quot;: [HumanMessage(content=&quot;julie@example.com, password123&quot;)]},
+    context=EmailContext(),
+    config=config
+)
+
+print(response['messages'][-1].content)</code></pre></div>
+      <div class="out out-stream"><pre>I checked your inbox. Here’s the message I found:
+
+From: Jane (jane@example.com)
+Subject: (not shown)
+Hello Julie,
+Hi Julie, I'm going to be in town next week and was wondering if we could grab a coffee?
+- best, Jane
+
+Would you like me to reply and suggest a few times? Here are a few draft options you can choose from (or I can tailor them to your style):
+
+Option 1 — casual and friendly
+Subject: Re: Coffee next week
+Hi Jane,
+That sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.
+Looking forward to it!
+
+Option 2 — specific times
+Subject: Re: Coffee next week
+Hi Jane,
+I’d love to meet up. How about Tuesday at 3:00 PM or Thursday at 11:00 AM? If neither works, I’m happy to adapt. Let me know what’s convenient.
+
+Option 3 — location suggestion
+Subject: Re: Coffee next week
+Hi Jane,
+I’d love to catch up. Want to meet at [Cafe Name] next week? I’m free Tue and Thu afternoon. What works for you?
+
+If you have a preferred tone or a preferred cafe, tell me and I’ll tailor the draft. Once you pick a draft, I can send the email for you.
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>
+response = agent.invoke(
+    {&quot;messages&quot;: [HumanMessage(content=&quot;any draft is fine. don't check back.&quot;)]},
+    context=EmailContext(),
+    config=config
+)
+
+print(response['messages'][-1].content)</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>print(response['__interrupt__'][0].value['action_requests'][0]['args']['body'])</code></pre></div>
+      <div class="out out-stream"><pre>Hi Jane,
+That sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.
+Looking forward to it!
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph.types import Command
+
+response = agent.invoke(
+    Command( 
+        resume={&quot;decisions&quot;: [{&quot;type&quot;: &quot;approve&quot;}]}  # or &quot;reject&quot;
+    ), 
+    config=config # Same thread ID to resume the paused conversation
+)
+
+print(response[&quot;messages&quot;][-1].content)</code></pre></div>
+      <div class="out out-stream"><pre>Email sent to jane@example.com with subject &quot;Re: Coffee next week&quot; and body:
+Hi Jane,
+That sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.
+Looking forward to it!
+</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from pprint import pprint
+
+pprint(response)</code></pre></div>
+      <div class="out out-stream"><pre>{'authenticated': True,
+ 'messages': [HumanMessage(content='julie@example.com, password123', additional_kwargs={}, response_metadata={}, id='cd6784ff-58d9-400d-bb0e-3da84fc0dc46'),
+              AIMessage(content='', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 286, 'prompt_tokens': 151, 'total_tokens': 437, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 256, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DOoSKZcepxV1pNVbCpkTQRJqWnZzV', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None}, id='lc_run--019d3ab1-5dbd-7223-9e59-5edf45a39d77-0', tool_calls=[{'name': 'authenticate', 'args': {'email': 'julie@example.com', 'password': 'password123'}, 'id': 'call_nGaIRLsjvsIr8BHfSN4dxN0k', 'type': 'tool_call'}], invalid_tool_calls=[], usage_metadata={'input_tokens': 151, 'output_tokens': 286, 'total_tokens': 437, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 256}}),
+              ToolMessage(content='Successfully authenticated', name='authenticate', id='b1d708d2-332a-4403-ad02-eb8b6a43d858', tool_call_id='call_nGaIRLsjvsIr8BHfSN4dxN0k'),
+              AIMessage(content='', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 84, 'prompt_tokens': 219, 'total_tokens': 303, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 64, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DOoSNqA3ULOidJqDO24CFIDTdtF6e', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None}, id='lc_run--019d3ab1-6da9-7a22-b448-fb38d52f717a-0', tool_calls=[{'name': 'check_inbox', 'args': {}, 'id': 'call_pAtYj0tr0cT4CIer9EFNIs1V', 'type': 'tool_call'}], invalid_tool_calls=[], usage_metadata={'input_tokens': 219, 'output_tokens': 84, 'total_tokens': 303, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 64}}),
+              ToolMessage(content=&quot;\n    Hi Julie, \n    I'm going to be in town next week and was wondering if we could grab a coffee?\n    - best, Jane (jane@example.com)\n    &quot;, name='check_inbox', id='3bc891dd-b682-4a85-ba98-140137f26754', tool_call_id='call_pAtYj0tr0cT4CIer9EFNIs1V'),
+              AIMessage(content=&quot;I checked your inbox. Here’s the message I found:\n\nFrom: Jane (jane@example.com)\nSubject: (not shown)\nHello Julie,\nHi Julie, I'm going to be in town next week and was wondering if we could grab a coffee?\n- best, Jane\n\nWould you like me to reply and suggest a few times? Here are a few draft options you can choose from (or I can tailor them to your style):\n\nOption 1 — casual and friendly\nSubject: Re: Coffee next week\nHi Jane,\nThat sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.\nLooking forward to it!\n\nOption 2 — specific times\nSubject: Re: Coffee next week\nHi Jane,\nI’d love to meet up. How about Tuesday at 3:00 PM or Thursday at 11:00 AM? If neither works, I’m happy to adapt. Let me know what’s convenient.\n\nOption 3 — location suggestion\nSubject: Re: Coffee next week\nHi Jane,\nI’d love to catch up. Want to meet at [Cafe Name] next week? I’m free Tue and Thu afternoon. What works for you?\n\nIf you have a preferred tone or a preferred cafe, tell me and I’ll tailor the draft. Once you pick a draft, I can send the email for you.&quot;, additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 1068, 'prompt_tokens': 282, 'total_tokens': 1350, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 768, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DOoSQvNgP3k0W1deRzpms7cEsF2i3', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None}, id='lc_run--019d3ab1-771e-7741-bace-bf043afec052-0', tool_calls=[], invalid_tool_calls=[], usage_metadata={'input_tokens': 282, 'output_tokens': 1068, 'total_tokens': 1350, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 768}}),
+              HumanMessage(content=&quot;any draft is fine. don't check back.&quot;, additional_kwargs={}, response_metadata={}, id='3aab7bfc-46e1-4bd7-9724-cdceac30272c'),
+              AIMessage(content='', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 595, 'prompt_tokens': 592, 'total_tokens': 1187, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 512, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DOoSdXb69hI0RspjP91GgPqKeluj0', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None}, id='lc_run--019d3ab1-a92d-7fa0-aa51-ca0841aad97f-0', tool_calls=[{'name': 'send_email', 'args': {'to': 'jane@example.com', 'subject': 'Re: Coffee next week', 'body': 'Hi Jane,\nThat sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.\nLooking forward to it!'}, 'id': 'call_Z3176PTpfLJaAAZAFngWEqKJ', 'type': 'tool_call'}], invalid_tool_calls=[], usage_metadata={'input_tokens': 592, 'output_tokens': 595, 'total_tokens': 1187, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 512}}),
+              ToolMessage(content='Email sent to jane@example.com with subject Re: Coffee next week and body Hi Jane,\nThat sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.\nLooking forward to it!', name='send_email', id='5da47fd6-a274-40d3-8165-5bebeb38dd8b', tool_call_id='call_Z3176PTpfLJaAAZAFngWEqKJ'),
+              AIMessage(content='Email sent to jane@example.com with subject &quot;Re: Coffee next week&quot; and body:\nHi Jane,\nThat sounds great! I’d love to. I’m free Tuesday or Thursday afternoon next week. Do either work for you? If you have a preferred cafe, let me know.\nLooking forward to it!', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 65, 'prompt_tokens': 739, 'total_tokens': 804, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-DOoSlLB1fh1ysL4fRM9H7zHrKpuOO', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None}, id='lc_run--019d3ab1-c937-7e91-bfb1-0b41d10a03f6-0', tool_calls=[], invalid_tool_calls=[], usage_metadata={'input_tokens': 739, 'output_tokens': 65, 'total_tokens': 804, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}})]}
+</pre></div>
+    </div>
+
+</div>
+</body>
+</html>

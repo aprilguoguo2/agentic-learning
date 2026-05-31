@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Memory</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Agent Memory</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><p><a href="https://colab.research.google.com/github/langchain-ai/langchain-academy/blob/main/module-1/agent-memory.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></a> <a href="https://academy.langchain.com/courses/take/intro-to-langgraph/lessons/58239417-lesson-7-agent-with-memory" target="_blank"><img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66e9eba12c7b7688aa3dbb5e_LCA-badge-green.svg" alt="Open in LangChain Academy"></a></p></div>
+<div class="md-cell"><h1>Agent memory</h1>
+<h2>Review</h2>
+<p>Previously, we built an agent that can:</p>
+<ul><li><code class="ic">act</code> - let the model call specific tools </li>
+<li><code class="ic">observe</code> - pass the tool output back to the model </li>
+<li><code class="ic">reason</code> - let the model reason about the tool output to decide what to do next (e.g., call another tool or just respond directly)</li>
+</ul>
+<img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dbab7453080e6802cd1703_agent-memory1.png" alt="Screenshot 2024-08-21 at 12.45.32 PM.png">
+<h2>Goals</h2>
+<p>Now, we're going extend our agent by introducing memory.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install --quiet -U langchain_openai langchain_core langgraph langgraph-prebuilt</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os, getpass
+
+def _set_env(var: str):
+    if not os.environ.get(var):
+        os.environ[var] = getpass.getpass(f&quot;{var}: &quot;)
+
+_set_env(&quot;OPENAI_API_KEY&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>We'll use <a href="https://docs.langchain.com/langsmith/home" target="_blank">LangSmith</a> for <a href="https://docs.langchain.com/langsmith/observability-concepts" target="_blank">tracing</a>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>_set_env(&quot;LANGSMITH_API_KEY&quot;)
+os.environ[&quot;LANGSMITH_TRACING&quot;] = &quot;true&quot;
+os.environ[&quot;LANGSMITH_PROJECT&quot;] = &quot;langchain-academy&quot;</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>This follows what we did previously.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain_openai import ChatOpenAI
+
+def multiply(a: int, b: int) -&gt; int:
+    &quot;&quot;&quot;Multiply a and b.
+
+    Args:
+        a: first int
+        b: second int
+    &quot;&quot;&quot;
+    return a * b
+
+# This will be a tool
+def add(a: int, b: int) -&gt; int:
+    &quot;&quot;&quot;Adds a and b.
+
+    Args:
+        a: first int
+        b: second int
+    &quot;&quot;&quot;
+    return a + b
+
+def divide(a: int, b: int) -&gt; float:
+    &quot;&quot;&quot;Divide a and b.
+
+    Args:
+        a: first int
+        b: second int
+    &quot;&quot;&quot;
+    return a / b
+
+tools = [add, multiply, divide]
+llm = ChatOpenAI(model=&quot;gpt-4o&quot;)
+llm_with_tools = llm.bind_tools(tools)</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph.graph import MessagesState
+from langchain_core.messages import HumanMessage, SystemMessage
+
+# System message
+sys_msg = SystemMessage(content=&quot;You are a helpful assistant tasked with performing arithmetic on a set of inputs.&quot;)
+
+# Node
+def assistant(state: MessagesState):
+   return {&quot;messages&quot;: [llm_with_tools.invoke([sys_msg] + state[&quot;messages&quot;])]}</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph.graph import START, StateGraph
+from langgraph.prebuilt import tools_condition, ToolNode
+from IPython.display import Image, display
+
+# Graph
+builder = StateGraph(MessagesState)
+
+# Define nodes: these do the work
+builder.add_node(&quot;assistant&quot;, assistant)
+builder.add_node(&quot;tools&quot;, ToolNode(tools))
+
+# Define edges: these determine how the control flow moves
+builder.add_edge(START, &quot;assistant&quot;)
+builder.add_conditional_edges(
+    &quot;assistant&quot;,
+    # If the latest message (result) from assistant is a tool call -&gt; tools_condition routes to tools
+    # If the latest message (result) from assistant is a not a tool call -&gt; tools_condition routes to END
+    tools_condition,
+)
+builder.add_edge(&quot;tools&quot;, &quot;assistant&quot;)
+react_graph = builder.compile()
+
+# Show
+display(Image(react_graph.get_graph(xray=True).draw_mermaid_png()))</code></pre></div>
+      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+    </div>
+<div class="md-cell"><h2>Memory</h2>
+<p>Let's run our agent, as before.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>messages = [HumanMessage(content=&quot;Add 3 and 4.&quot;)]
+messages = react_graph.invoke({&quot;messages&quot;: messages})
+for m in messages['messages']:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Add 3 and 4.
+================================== Ai Message ==================================
+Tool Calls:
+  add (call_zZ4JPASfUinchT8wOqg9hCZO)
+ Call ID: call_zZ4JPASfUinchT8wOqg9hCZO
+  Args:
+    a: 3
+    b: 4
+================================= Tool Message =================================
+Name: add
+
+7
+================================== Ai Message ==================================
+
+The sum of 3 and 4 is 7.
+</pre></div>
+    </div>
+<div class="md-cell"><p>Now, let's multiply by 2!</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>messages = [HumanMessage(content=&quot;Multiply that by 2.&quot;)]
+messages = react_graph.invoke({&quot;messages&quot;: messages})
+for m in messages['messages']:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Multiply that by 2.
+================================== Ai Message ==================================
+Tool Calls:
+  multiply (call_prnkuG7OYQtbrtVQmH2d3Nl7)
+ Call ID: call_prnkuG7OYQtbrtVQmH2d3Nl7
+  Args:
+    a: 2
+    b: 2
+================================= Tool Message =================================
+Name: multiply
+
+4
+================================== Ai Message ==================================
+
+The result of multiplying 2 by 2 is 4.
+</pre></div>
+    </div>
+<div class="md-cell"><p>We don't retain memory of 7 from our initial chat!</p>
+<p>This is because <a href="https://github.com/langchain-ai/langgraph/discussions/352#discussioncomment-9291220" target="_blank">state is transient</a> to a single graph execution.</p>
+<p>Of course, this limits our ability to have multi-turn conversations with interruptions.</p>
+<p>We can use <a href="https://docs.langchain.com/oss/python/langgraph/persistence" target="_blank">persistence</a> to address this!</p>
+<p>LangGraph can use a checkpointer to automatically save the graph state after each step.</p>
+<p>This built-in persistence layer gives us memory, allowing LangGraph to pick up from the last state update.</p>
+<p>One of the easiest checkpointers to use is the <code class="ic">MemorySaver</code>, an in-memory key-value store for Graph state.</p>
+<p>All we need to do is simply compile the graph with a checkpointer, and our graph has memory!</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph.checkpoint.memory import MemorySaver
+memory = MemorySaver()
+react_graph_memory = builder.compile(checkpointer=memory)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>When we use memory, we need to specify a <code class="ic">thread_id</code>.</p>
+<p>This <code class="ic">thread_id</code> will store our collection of graph states.</p>
+<p>Here is a cartoon:</p>
+<ul><li>The checkpointer write the state at every step of the graph</li>
+<li>These checkpoints are saved in a thread </li>
+<li>We can access that thread in the future using the <code class="ic">thread_id</code></li>
+</ul>
+<img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66e0e9f526b41a4ed9e2d28b_agent-memory2.png" alt="state.jpg"></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Specify a thread
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;}}
+
+# Specify an input
+messages = [HumanMessage(content=&quot;Add 3 and 4.&quot;)]
+
+# Run
+messages = react_graph_memory.invoke({&quot;messages&quot;: messages},config)
+for m in messages['messages']:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Add 3 and 4.
+================================== Ai Message ==================================
+Tool Calls:
+  add (call_MSupVAgej4PShIZs7NXOE6En)
+ Call ID: call_MSupVAgej4PShIZs7NXOE6En
+  Args:
+    a: 3
+    b: 4
+================================= Tool Message =================================
+Name: add
+
+7
+================================== Ai Message ==================================
+
+The sum of 3 and 4 is 7.
+</pre></div>
+    </div>
+<div class="md-cell"><p>If we pass the same <code class="ic">thread_id</code>, then we can proceed from from the previously logged state checkpoint!</p>
+<p>In this case, the above conversation is captured in the thread.</p>
+<p>The <code class="ic">HumanMessage</code> we pass (<code class="ic">"Multiply that by 2."</code>) is appended to the above conversation.</p>
+<p>So, the model now know that <code class="ic">that</code> refers to the <code class="ic">The sum of 3 and 4 is 7.</code>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>messages = [HumanMessage(content=&quot;Multiply that by 2.&quot;)]
+messages = react_graph_memory.invoke({&quot;messages&quot;: messages}, config)
+for m in messages['messages']:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Add 3 and 4.
+================================== Ai Message ==================================
+Tool Calls:
+  add (call_MSupVAgej4PShIZs7NXOE6En)
+ Call ID: call_MSupVAgej4PShIZs7NXOE6En
+  Args:
+    a: 3
+    b: 4
+================================= Tool Message =================================
+Name: add
+
+7
+================================== Ai Message ==================================
+
+The sum of 3 and 4 is 7.
+================================ Human Message =================================
+
+Multiply that by 2.
+================================== Ai Message ==================================
+Tool Calls:
+  multiply (call_fWN7lnSZZm82tAg7RGeuWusO)
+ Call ID: call_fWN7lnSZZm82tAg7RGeuWusO
+  Args:
+    a: 7
+    b: 2
+================================= Tool Message =================================
+Name: multiply
+
+14
+================================== Ai Message ==================================
+
+The result of multiplying 7 by 2 is 14.
+</pre></div>
+    </div>
+<div class="md-cell"><h2>Studio</h2>
+<p><strong>⚠️ Notice</strong></p>
+<p>Since filming these videos, we've updated Studio so that it can now be run locally and accessed through your browser. This is the preferred way to run Studio instead of using the Desktop App shown in the video. It is now called _LangSmith Studio_ instead of _LangGraph Studio_. Detailed setup instructions are available in the "Getting Setup" guide at the start of the course. You can find a description of Studio <a href="https://docs.langchain.com/langsmith/studio" target="_blank">here</a>, and specific details for local deployment <a href="https://docs.langchain.com/langsmith/quick-start-studio#local-development-server" target="_blank">here</a>.  <br>To start the local development server, run the following command in your terminal in the <code class="ic">/studio</code> directory in this module:</p>
+<pre class="md-code"><code>langgraph dev</code></pre>
+<p>You should see the following output:<br><pre class="md-code"><code>- 🚀 API: http://127.0.0.1:2024<br><ul><li>🎨 Studio UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024</li><br><li>📚 API Docs: http://127.0.0.1:2024/docs</code></pre></li><br></ul><br>Open your browser and navigate to the <strong>Studio UI</strong> URL shown above.<br>Load the <code class="ic">agent</code> in Studio, which uses <code class="ic">module-1/studio/agent.py</code> set in <code class="ic">module-1/studio/langgraph.json</code>.</p></div>
+</div>
+</body>
+</html>

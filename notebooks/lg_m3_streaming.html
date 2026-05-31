@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Streaming Interruption</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Streaming Interruption</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><p><a href="https://colab.research.google.com/github/langchain-ai/langchain-academy/blob/main/module-3/streaming-interruption.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></a> <a href="https://academy.langchain.com/courses/take/intro-to-langgraph/lessons/58239464-lesson-1-streaming" target="_blank"><img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66e9eba12c7b7688aa3dbb5e_LCA-badge-green.svg" alt="Open in LangChain Academy"></a></p></div>
+<div class="md-cell"><h1>Streaming</h1>
+<h2>Review</h2>
+<p>In module 2, covered a few ways to customize graph state and memory.<br> <br>We built up to a Chatbot with external memory that can sustain long-running conversations.</p>
+<h2>Goals</h2>
+<p>This module will dive into <code class="ic">human-in-the-loop</code>, which builds on memory and allows users to interact directly with graphs in various ways.</p>
+<p>To set the stage for <code class="ic">human-in-the-loop</code>, we'll first dive into streaming, which provides several ways to visualize graph output (e.g., node state or chat model tokens) over the course of execution.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install --quiet -U langgraph langchain_openai langgraph_sdk</code></pre></div>
+      
+    </div>
+<div class="md-cell"><h2>Streaming</h2>
+<p>LangGraph is built with <a href="https://docs.langchain.com/oss/python/langgraph/streaming" target="_blank">first class support for streaming</a>.</p>
+<p>Let's set up our Chatbot from Module 2, and show various way to stream outputs from the graph during execution.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os, getpass
+
+def _set_env(var: str):
+    if not os.environ.get(var):
+        os.environ[var] = getpass.getpass(f&quot;{var}: &quot;)
+
+_set_env(&quot;OPENAI_API_KEY&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>Note that we use <code class="ic">RunnableConfig</code> with <code class="ic">call_model</code> to enable token-wise streaming. This is <a href="https://langchain-ai.github.io/langgraph/how-tos/streaming-tokens/" target="_blank">only needed with python < 3.11</a>. We include in case you are running this notebook in CoLab, which will use python 3.x.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from IPython.display import Image, display
+from typing import Literal
+
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage
+from langchain_core.runnables import RunnableConfig
+
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph import MessagesState
+
+# LLM
+model = ChatOpenAI(model=&quot;gpt-4o&quot;, temperature=0) 
+
+# State 
+class State(MessagesState):
+    summary: str
+
+# Define the logic to call the model
+def call_model(state: State, config: RunnableConfig):
+    
+    # Get summary if it exists
+    summary = state.get(&quot;summary&quot;, &quot;&quot;)
+
+    # If there is summary, then we add it
+    if summary:
+        
+        # Add summary to system message
+        system_message = f&quot;Summary of conversation earlier: {summary}&quot;
+
+        # Append summary to any newer messages
+        messages = [SystemMessage(content=system_message)] + state[&quot;messages&quot;]
+    
+    else:
+        messages = state[&quot;messages&quot;]
+    
+    response = model.invoke(messages, config)
+    return {&quot;messages&quot;: response}
+
+def summarize_conversation(state: State):
+    
+    # First, we get any existing summary
+    summary = state.get(&quot;summary&quot;, &quot;&quot;)
+
+    # Create our summarization prompt 
+    if summary:
+        
+        # A summary already exists
+        summary_message = (
+            f&quot;This is summary of the conversation to date: {summary}\n\n&quot;
+            &quot;Extend the summary by taking into account the new messages above:&quot;
+        )
+        
+    else:
+        summary_message = &quot;Create a summary of the conversation above:&quot;
+
+    # Add prompt to our history
+    messages = state[&quot;messages&quot;] + [HumanMessage(content=summary_message)]
+    response = model.invoke(messages)
+    
+    # Delete all but the 2 most recent messages
+    delete_messages = [RemoveMessage(id=m.id) for m in state[&quot;messages&quot;][:-2]]
+    return {&quot;summary&quot;: response.content, &quot;messages&quot;: delete_messages}
+
+# Determine whether to end or summarize the conversation
+def should_continue(state: State)-&gt; Literal [&quot;summarize_conversation&quot;,END]:
+    
+    &quot;&quot;&quot;Return the next node to execute.&quot;&quot;&quot;
+    
+    messages = state[&quot;messages&quot;]
+    
+    # If there are more than six messages, then we summarize the conversation
+    if len(messages) &gt; 6:
+        return &quot;summarize_conversation&quot;
+    
+    # Otherwise we can just end
+    return END
+
+# Define a new graph
+workflow = StateGraph(State)
+workflow.add_node(&quot;conversation&quot;, call_model)
+workflow.add_node(summarize_conversation)
+
+# Set the entrypoint as conversation
+workflow.add_edge(START, &quot;conversation&quot;)
+workflow.add_conditional_edges(&quot;conversation&quot;, should_continue)
+workflow.add_edge(&quot;summarize_conversation&quot;, END)
+
+# Compile
+memory = MemorySaver()
+graph = workflow.compile(checkpointer=memory)
+display(Image(graph.get_graph().draw_mermaid_png()))</code></pre></div>
+      <div class="out"><img src="data:image/png;base64,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" alt="output"></div>
+    </div>
+<div class="md-cell"><h3>Streaming full state</h3>
+<p>Now, let's talk about ways to <a href="https://docs.langchain.com/oss/python/langgraph/streaming#supported-stream-modes" target="_blank">stream our graph state</a>.</p>
+<p><code class="ic">.stream</code> and <code class="ic">.astream</code> are sync and async methods for streaming back results. <br> <br>LangGraph supports a few <a href="https://docs.langchain.com/oss/python/langgraph/streaming#stream-graph-state" target="_blank">different streaming modes</a> for graph state.<br> <br><ul><li><code class="ic">values</code>: This streams the full state of the graph after each node is called.</li><br><li><code class="ic">updates</code>: This streams updates to the state of the graph after each node is called.</li><br></ul><br><img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dbaf892d24625a201744e5_streaming1.png" alt="values_vs_updates.png"></p>
+<p>Let's look at <code class="ic">stream_mode="updates"</code>.</p>
+<p>Because we stream with <code class="ic">updates</code>, we only see updates to the state after node in the graph is run.</p>
+<p>Each <code class="ic">chunk</code> is a dict with <code class="ic">node_name</code> as the key and the updated state as the value.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Create a thread
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;1&quot;}}
+
+# Start conversation
+for chunk in graph.stream({&quot;messages&quot;: [HumanMessage(content=&quot;hi! I'm Lance&quot;)]}, config, stream_mode=&quot;updates&quot;):
+    print(chunk)</code></pre></div>
+      <div class="out out-stream"><pre>{'conversation': {'messages': AIMessage(content='Hello Lance! How can I assist you today?', additional_kwargs={'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 10, 'prompt_tokens': 11, 'total_tokens': 21, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_f64f290af2', 'id': 'chatcmpl-CSqvbTb4Lar7zEfryASuhaZVBnKOw', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None}, id='lc_run--b612e04b-3ff6-4b47-8b88-628f35e44aa7-0', usage_metadata={'input_tokens': 11, 'output_tokens': 10, 'total_tokens': 21, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}})}}
+</pre></div>
+    </div>
+<div class="md-cell"><p>Let's now just print the state update.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Start conversation
+for chunk in graph.stream({&quot;messages&quot;: [HumanMessage(content=&quot;hi! I'm Lance&quot;)]}, config, stream_mode=&quot;updates&quot;):
+    chunk['conversation'][&quot;messages&quot;].pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================== Ai Message ==================================
+
+Hi Lance! How's it going? What can I do for you today?
+</pre></div>
+    </div>
+<div class="md-cell"><p>Now, we can see <code class="ic">stream_mode="values"</code>.</p>
+<p>This is the <code class="ic">full state</code> of the graph after the <code class="ic">conversation</code> node is called.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Start conversation, again
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;2&quot;}}
+
+# Start conversation
+input_message = HumanMessage(content=&quot;hi! I'm Lance&quot;)
+for event in graph.stream({&quot;messages&quot;: [input_message]}, config, stream_mode=&quot;values&quot;):
+    for m in event['messages']:
+        m.pretty_print()
+    print(&quot;---&quot;*25)</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+hi! I'm Lance
+---------------------------------------------------------------------------
+================================ Human Message =================================
+
+hi! I'm Lance
+================================== Ai Message ==================================
+
+Hello, Lance! How can I assist you today?
+---------------------------------------------------------------------------
+</pre></div>
+    </div>
+<div class="md-cell"><h3>Streaming tokens</h3>
+<p>We often want to stream more than graph state.</p>
+<p>In particular, with chat model calls it is common to stream the tokens as they are generated.</p>
+<p>We can do this <a href="https://docs.langchain.com/oss/python/langchain/models#advanced-streaming-topics:streaming-events" target="_blank">using the <code class="ic">.astream_events</code> method</a>, which streams back events as they happen inside nodes!</p>
+<p>Each event is a dict with a few keys:<br> <br><ul><li><code class="ic">event</code>: This is the type of event that is being emitted. </li><br><li><code class="ic">name</code>: This is the name of event.</li><br><li><code class="ic">data</code>: This is the data associated with the event.</li><br><li><code class="ic">metadata</code>: Contains<code class="ic">langgraph_node</code>, the node emitting the event.</li><br></ul><br>Let's have a look.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;3&quot;}}
+input_message = HumanMessage(content=&quot;Tell me about the 49ers NFL team&quot;)
+async for event in graph.astream_events({&quot;messages&quot;: [input_message]}, config, version=&quot;v2&quot;):
+    print(f&quot;Node: {event['metadata'].get('langgraph_node','')}. Type: {event['event']}. Name: {event['name']}&quot;)</code></pre></div>
+      <div class="out out-stream"><pre>Node: . Type: on_chain_start. Name: LangGraph
+Node: conversation. Type: on_chain_start. Name: conversation
+Node: conversation. Type: on_chat_model_start. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_stream. Name: ChatOpenAI
+Node: conversation. Type: on_chat_model_end. Name: ChatOpenAI
+Node: conversation. Type: on_chain_start. Name: should_continue
+Node: conversation. Type: on_chain_end. Name: should_continue
+Node: conversation. Type: on_chain_stream. Name: conversation
+Node: conversation. Type: on_chain_end. Name: conversation
+Node: . Type: on_chain_stream. Name: LangGraph
+Node: . Type: on_chain_end. Name: LangGraph
+</pre></div>
+    </div>
+<div class="md-cell"><p>The central point is that tokens from chat models within your graph have the <code class="ic">on_chat_model_stream</code> type.</p>
+<p>We can use <code class="ic">event['metadata']['langgraph_node']</code> to select the node to stream from.</p>
+<p>And we can use <code class="ic">event['data']</code> to get the actual data for each event, which in this case is an <code class="ic">AIMessageChunk</code>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>node_to_stream = 'conversation'
+config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;4&quot;}}
+input_message = HumanMessage(content=&quot;Tell me about the 49ers NFL team&quot;)
+async for event in graph.astream_events({&quot;messages&quot;: [input_message]}, config, version=&quot;v2&quot;):
+    # Get chat model tokens from a particular node 
+    if event[&quot;event&quot;] == &quot;on_chat_model_stream&quot; and event['metadata'].get('langgraph_node','') == node_to_stream:
+        print(event[&quot;data&quot;])</code></pre></div>
+      <div class="out out-stream"><pre>{'chunk': AIMessageChunk(content='', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='The', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' San', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Francisco', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='49', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ers', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' are', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' a', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' professional', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' American', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' football', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' team', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' based', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' in', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' San', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Francisco', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Bay', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Area', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' They', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' compete', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' in', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' National', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Football', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' League', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' (', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='NFL', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=')', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' as', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' a', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' member', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' club', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' of', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' league', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=&quot;'s&quot;, additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' National', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Football', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Conference', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' (', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='N', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='FC', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=')', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' West', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' division', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' The', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' team', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' was', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' founded', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' in', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='194', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='6', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' as', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' a', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' charter', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' member', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' of', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' All', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='-Amer', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ica', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Football', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Conference', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' (', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='AA', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='FC', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=')', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' joined', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' NFL', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' in', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='194', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='9', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' when', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' leagues', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' merged', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.\n\n', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='###', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Key', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Points', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=':\n\n', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='-', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' **', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='St', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='adium', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='**', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=':', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' The', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='49', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ers', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' play', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' their', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' home', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' games', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' at', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Levi', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=&quot;'s&quot;, additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Stadium', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' in', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Santa', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Clara', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' California', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' which', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' they', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' moved', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' to', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' in', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='201', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='4', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Before', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' that', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' they', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' played', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' at', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Cand', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='lestick', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Park', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' in', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' San', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Francisco', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.\n\n', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='-', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' **', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='Team', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Colors', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Masc', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ot', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='**', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=':', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' The', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=&quot; team's&quot;, additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' colors', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' are', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' red', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' gold', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' white', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' their', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' mascot', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' is', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' S', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ourd', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ough', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Sam', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.\n\n', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='-', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' **', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='Champ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ionship', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='s', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='**', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=':', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' The', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='49', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ers', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' have', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' won', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' five', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Super', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Bowl', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' championships', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' (', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='Super', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Bowl', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' XVI', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' XIX', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' XX', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='III', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' XX', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='IV', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' XX', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='IX', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='),', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' with', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' their', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' most', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' successful', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' period', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' being', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='198', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='0', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='s', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' early', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='199', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='0', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='s', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.\n\n', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='-', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' **', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='Not', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='able', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Figures', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='**', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=':', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' The', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' team', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' has', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' had', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' several', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Hall', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' of', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Fame', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' players', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' including', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Joe', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Montana', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Jerry', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Rice', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Steve', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Young', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Ronnie', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' L', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ott', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Charles', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Haley', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Bill', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Walsh', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' legendary', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' head', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' coach', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' is', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' credited', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' with', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' developing', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' West', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Coast', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' offense', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' which', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' became', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' a', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' staple', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' of', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=&quot; team's&quot;, additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' success', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.\n\n', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='-', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' **', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='R', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ival', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ries', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='**', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=':', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' The', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='49', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ers', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' have', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' notable', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' rival', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ries', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' with', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Seattle', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Seahawks', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Los', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Angeles', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Rams', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' historically', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' with', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Dallas', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Cowboys', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Green', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Bay', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Packers', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.\n\n', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='-', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' **', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='Recent', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Performance', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='**', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=':', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' In', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' recent', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' years', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='49', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ers', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' have', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' experienced', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' a', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' resurgence', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' including', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' a', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Super', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Bowl', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' appearance', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' in', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='201', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='9', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' season', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' (', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='Super', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Bowl', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' LIV', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='),', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' where', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' they', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' were', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' defeated', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' by', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Kansas', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' City', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' Chiefs', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.\n\n', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='The', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' ', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='49', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='ers', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' are', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' known', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' for', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' their', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' rich', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' history', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' passionate', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' fan', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' base', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=',', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' significant', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' contributions', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' to', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' the', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' NFL', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=&quot;'s&quot;, additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' development', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' and', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content=' popularity', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='.', additional_kwargs={}, response_metadata={'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8')}
+{'chunk': AIMessageChunk(content='', additional_kwargs={}, response_metadata={'finish_reason': 'stop', 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_eb3c3cb84d', 'service_tier': 'default', 'model_provider': 'openai'}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8', chunk_position='last')}
+{'chunk': AIMessageChunk(content='', additional_kwargs={}, response_metadata={}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8', usage_metadata={'input_tokens': 16, 'output_tokens': 382, 'total_tokens': 398, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}})}
+{'chunk': AIMessageChunk(content='', additional_kwargs={}, response_metadata={}, id='lc_run--2dc940a7-76b1-4cb1-8e3c-4c18bd4598a8', chunk_position='last')}
+</pre></div>
+    </div>
+<div class="md-cell"><p>As you see above, just use the <code class="ic">chunk</code> key to get the <code class="ic">AIMessageChunk</code>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;5&quot;}}
+input_message = HumanMessage(content=&quot;Tell me about the 49ers NFL team&quot;)
+async for event in graph.astream_events({&quot;messages&quot;: [input_message]}, config, version=&quot;v2&quot;):
+    # Get chat model tokens from a particular node 
+    if event[&quot;event&quot;] == &quot;on_chat_model_stream&quot; and event['metadata'].get('langgraph_node','') == node_to_stream:
+        data = event[&quot;data&quot;]
+        print(data[&quot;chunk&quot;].content, end=&quot;|&quot;)</code></pre></div>
+      <div class="out out-stream"><pre>|The| San| Francisco| |49|ers| are| a| professional| American| football| team| based| in| the| San| Francisco| Bay| Area|.| They| compete| in| the| National| Football| League| (|NFL|)| as| a| member| club| of| the| league|'s| National| Football| Conference| (|N|FC|)| West| division|.| The| team| was| founded| in| |194|6| as| a| charter| member| of| the| All|-Amer|ica| Football| Conference| (|AA|FC|)| and| joined| the| NFL| in| |194|9| when| the| leagues| merged|.
+
+|The| |49|ers| have| a| rich| history| and| are| one| of| the| most| successful| teams| in| NFL| history|.| They| have| won| five| Super| Bowl| championships|,| with| victories| in| Super| Bow|ls| XVI|,| XIX|,| XX|III|,| XX|IV|,| and| XX|IX|.| The| team| has| also| won| numerous| division| titles| and| made| several| playoff| appearances|.
+
+|The| |49|ers| are| known| for| their| iconic| players| and| coaches|,| including| Hall| of| Fam|ers| like| Joe| Montana|,| Jerry| Rice|,| Steve| Young|,| Ronnie| L|ott|,| and| coach| Bill| Walsh|,| who| is| credited| with| popular|izing| the| West| Coast| offense|.| The| team's| colors| are| red| and| gold|,| and| they| play| their| home| games| at| Levi|'s| Stadium| in| Santa| Clara|,| California|,| which| they| moved| to| in| |201|4| after| previously| playing| at| Cand|lestick| Park| in| San| Francisco|.
+
+|The| |49|ers| have| a| passionate| fan| base| and| a| stor|ied| rivalry| with| teams| like| the| Dallas| Cowboys|,| Green| Bay| Packers|,| and| Seattle| Seahawks|.| The| team's| success| in| the| |198|0|s| and| |199|0|s|,| particularly| under| the| leadership| of| Bill| Walsh| and| George| Se|if|ert|,| helped| establish| them| as| one| of| the| premier| franchises| in| the| NFL|.||||</pre></div>
+    </div>
+<div class="md-cell"><h3>Streaming with LangGraph API</h3>
+<p><strong>⚠️ Notice</strong></p>
+<p>Since filming these videos, we've updated Studio so that it can now be run locally and accessed through your browser. This is the preferred way to run Studio instead of using the Desktop App shown in the video. It is now called _LangSmith Studio_ instead of _LangGraph Studio_. Detailed setup instructions are available in the "Getting Setup" guide at the start of the course. You can find a description of Studio <a href="https://docs.langchain.com/langsmith/studio" target="_blank">here</a>, and specific details for local deployment <a href="https://docs.langchain.com/langsmith/quick-start-studio#local-development-server" target="_blank">here</a>.  <br>To start the local development server, run the following command in your terminal in the <code class="ic">/studio</code> directory in this module:</p>
+<pre class="md-code"><code>langgraph dev</code></pre>
+<p>You should see the following output:<br><pre class="md-code"><code>- 🚀 API: http://127.0.0.1:2024<br><ul><li>🎨 Studio UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024</li><br><li>📚 API Docs: http://127.0.0.1:2024/docs</code></pre></li><br></ul><br>Open your browser and navigate to the <strong>Studio UI</strong> URL shown above.</p>
+<p>The LangGraph API  <a href="https://docs.langchain.com/langsmith/add-human-in-the-loop" target="_blank">supports editing graph state</a>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>if 'google.colab' in str(get_ipython()):
+    raise Exception(&quot;Unfortunately LangGraph Studio is currently not supported on Google Colab&quot;)</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph_sdk import get_client
+
+# This is the URL of the local development server
+URL = &quot;http://127.0.0.1:2024&quot;
+client = get_client(url=URL)
+
+# Search all hosted graphs
+assistants = await client.assistants.search()</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>Let's <a href="https://docs.langchain.com/oss/python/langgraph/streaming#stream-graph-state" target="_blank">stream <code class="ic">values</code></a>, like before.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code># Create a new thread
+thread = await client.threads.create()
+# Input message
+input_message = HumanMessage(content=&quot;Multiply 2 and 3&quot;)
+async for event in client.runs.stream(thread[&quot;thread_id&quot;], 
+                                      assistant_id=&quot;agent&quot;, 
+                                      input={&quot;messages&quot;: [input_message]}, 
+                                      stream_mode=&quot;values&quot;):
+    print(event)</code></pre></div>
+      <div class="out out-stream"><pre>StreamPart(event='metadata', data={'run_id': '019a0358-31b4-7143-af47-2feeac0b27ce', 'attempt': 1})
+StreamPart(event='values', data={'messages': [{'content': 'Multiply 2 and 3', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'human', 'name': None, 'id': '9aaa247f-1e6e-4451-af25-ac678fe46d82'}]})
+StreamPart(event='values', data={'messages': [{'content': 'Multiply 2 and 3', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'human', 'name': None, 'id': '9aaa247f-1e6e-4451-af25-ac678fe46d82'}, {'content': '', 'additional_kwargs': {'refusal': None}, 'response_metadata': {'token_usage': {'completion_tokens': 17, 'prompt_tokens': 134, 'total_tokens': 151, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_eb3c3cb84d', 'id': 'chatcmpl-CSqw4HhOXHahA4tIr4mIdEhQB1QB4', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None}, 'type': 'ai', 'name': None, 'id': 'lc_run--4a3794f6-52c3-41b5-9620-1710d6e8392d-0', 'tool_calls': [{'name': 'multiply', 'args': {'a': 2, 'b': 3}, 'id': 'call_3sCWZZ89AoUe91MYc3ZBtJ0P', 'type': 'tool_call'}], 'invalid_tool_calls': [], 'usage_metadata': {'input_tokens': 134, 'output_tokens': 17, 'total_tokens': 151, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}}]})
+StreamPart(event='values', data={'messages': [{'content': 'Multiply 2 and 3', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'human', 'name': None, 'id': '9aaa247f-1e6e-4451-af25-ac678fe46d82'}, {'content': '', 'additional_kwargs': {'refusal': None}, 'response_metadata': {'token_usage': {'completion_tokens': 17, 'prompt_tokens': 134, 'total_tokens': 151, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_eb3c3cb84d', 'id': 'chatcmpl-CSqw4HhOXHahA4tIr4mIdEhQB1QB4', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None}, 'type': 'ai', 'name': None, 'id': 'lc_run--4a3794f6-52c3-41b5-9620-1710d6e8392d-0', 'tool_calls': [{'name': 'multiply', 'args': {'a': 2, 'b': 3}, 'id': 'call_3sCWZZ89AoUe91MYc3ZBtJ0P', 'type': 'tool_call'}], 'invalid_tool_calls': [], 'usage_metadata': {'input_tokens': 134, 'output_tokens': 17, 'total_tokens': 151, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}}, {'content': '6', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'tool', 'name': 'multiply', 'id': 'f05da6b3-27be-4896-967a-3ff60aa06d85', 'tool_call_id': 'call_3sCWZZ89AoUe91MYc3ZBtJ0P', 'artifact': None, 'status': 'success'}]})
+StreamPart(event='values', data={'messages': [{'content': 'Multiply 2 and 3', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'human', 'name': None, 'id': '9aaa247f-1e6e-4451-af25-ac678fe46d82'}, {'content': '', 'additional_kwargs': {'refusal': None}, 'response_metadata': {'token_usage': {'completion_tokens': 17, 'prompt_tokens': 134, 'total_tokens': 151, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_eb3c3cb84d', 'id': 'chatcmpl-CSqw4HhOXHahA4tIr4mIdEhQB1QB4', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None}, 'type': 'ai', 'name': None, 'id': 'lc_run--4a3794f6-52c3-41b5-9620-1710d6e8392d-0', 'tool_calls': [{'name': 'multiply', 'args': {'a': 2, 'b': 3}, 'id': 'call_3sCWZZ89AoUe91MYc3ZBtJ0P', 'type': 'tool_call'}], 'invalid_tool_calls': [], 'usage_metadata': {'input_tokens': 134, 'output_tokens': 17, 'total_tokens': 151, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}}, {'content': '6', 'additional_kwargs': {}, 'response_metadata': {}, 'type': 'tool', 'name': 'multiply', 'id': 'f05da6b3-27be-4896-967a-3ff60aa06d85', 'tool_call_id': 'call_3sCWZZ89AoUe91MYc3ZBtJ0P', 'artifact': None, 'status': 'success'}, {'content': 'The result of multiplying 2 and 3 is 6.', 'additional_kwargs': {'refusal': None}, 'response_metadata': {'token_usage': {'completion_tokens': 14, 'prompt_tokens': 159, 'total_tokens': 173, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_eb3c3cb84d', 'id': 'chatcmpl-CSqw4xk8t3sPODL5beks5TlJBozgB', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None}, 'type': 'ai', 'name': None, 'id': 'lc_run--33a25ab0-f748-4c7f-a086-d9249e25fdc0-0', 'tool_calls': [], 'invalid_tool_calls': [], 'usage_metadata': {'input_tokens': 159, 'output_tokens': 14, 'total_tokens': 173, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}}]})
+</pre></div>
+    </div>
+<div class="md-cell"><p>The streamed objects have:</p>
+<ul><li><code class="ic">event</code>: Type</li>
+<li><code class="ic">data</code>: State</li></ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain_core.messages import convert_to_messages
+thread = await client.threads.create()
+input_message = HumanMessage(content=&quot;Multiply 2 and 3&quot;)
+async for event in client.runs.stream(thread[&quot;thread_id&quot;], assistant_id=&quot;agent&quot;, input={&quot;messages&quot;: [input_message]}, stream_mode=&quot;values&quot;):
+    messages = event.data.get('messages',None)
+    if messages:
+        print(convert_to_messages(messages)[-1])
+    print('='*25)</code></pre></div>
+      <div class="out out-stream"><pre>=========================
+content='Multiply 2 and 3' additional_kwargs={} response_metadata={} id='c3ec872a-99a1-4eec-bcb6-a04973f48ac5'
+=========================
+content='' additional_kwargs={'invalid_tool_calls': [], 'usage_metadata': {'input_tokens': 134, 'output_tokens': 17, 'total_tokens': 151, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}, 'refusal': None} response_metadata={'token_usage': {'completion_tokens': 17, 'prompt_tokens': 134, 'total_tokens': 151, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_f64f290af2', 'id': 'chatcmpl-CSqw6HYoyCI7z2AuKAAfSTQGbvzla', 'service_tier': 'default', 'finish_reason': 'tool_calls', 'logprobs': None} id='lc_run--c91028e7-7a0a-4746-a4f5-edcff5380abc-0' tool_calls=[{'name': 'multiply', 'args': {'a': 2, 'b': 3}, 'id': 'call_AFChrxIQGbr7mmzr8buxymY0', 'type': 'tool_call'}]
+=========================
+content='6' name='multiply' id='f69a844b-5f82-4256-96dd-92b044e888d9' tool_call_id='call_AFChrxIQGbr7mmzr8buxymY0'
+=========================
+content='The result of multiplying 2 and 3 is 6.' additional_kwargs={'invalid_tool_calls': [], 'usage_metadata': {'input_tokens': 159, 'output_tokens': 14, 'total_tokens': 173, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}, 'refusal': None} response_metadata={'token_usage': {'completion_tokens': 14, 'prompt_tokens': 159, 'total_tokens': 173, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_provider': 'openai', 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_eb3c3cb84d', 'id': 'chatcmpl-CSqw7xBeinGuHlx0upkmo2tryppco', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None} id='lc_run--dba1c4af-ed8f-4fed-8770-2c3429603cd0-0'
+=========================
+</pre></div>
+    </div>
+<div class="md-cell"><p>There are some new streaming mode that are only supported via the API.</p>
+<p>For example, we can  <a href="https://docs.langchain.com/oss/python/langgraph/streaming#supported-stream-modes" target="_blank">use <code class="ic">messages</code> mode</a> to better handle the above case!</p>
+<p>This mode currently assumes that you have a <code class="ic">messages</code> key in your graph, which is a list of messages.</p>
+<p>All events emitted using <code class="ic">messages</code> mode have two attributes:</p>
+<ul><li><code class="ic">event</code>: This is the name of the event</li>
+<li><code class="ic">data</code>: This is data associated with the event</li></ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>thread = await client.threads.create()
+input_message = HumanMessage(content=&quot;Multiply 2 and 3&quot;)
+async for event in client.runs.stream(thread[&quot;thread_id&quot;], 
+                                      assistant_id=&quot;agent&quot;, 
+                                      input={&quot;messages&quot;: [input_message]}, 
+                                      stream_mode=&quot;messages&quot;):
+    print(event.event)</code></pre></div>
+      <div class="out out-stream"><pre>metadata
+messages/metadata
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/metadata
+messages/complete
+messages/metadata
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+messages/partial
+</pre></div>
+    </div>
+<div class="md-cell"><p>We can see a few events:</p>
+<ul><li><code class="ic">metadata</code>: metadata about the run</li>
+<li><code class="ic">messages/complete</code>: fully formed message </li>
+<li><code class="ic">messages/partial</code>: chat model tokens</li>
+</ul>
+<!--You can dig further into the types <a href="https://langchain-ai.github.io/langgraph/cloud/concepts/api/#modemessages" target="_blank">~here~</a> <a href="https://docs.langchain.com/oss/python/langgraph/concepts/langgraph_server" target="_blank">here</a>. -->
+<p>Now, let's show how to stream these messages.</p>
+<p>We'll define a helper function for better formatting of the tool calls in messages.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>thread = await client.threads.create()
+input_message = HumanMessage(content=&quot;Multiply 2 and 3&quot;)
+
+def format_tool_calls(tool_calls):
+    &quot;&quot;&quot;
+    Format a list of tool calls into a readable string.
+
+    Args:
+        tool_calls (list): A list of dictionaries, each representing a tool call.
+            Each dictionary should have 'id', 'name', and 'args' keys.
+
+    Returns:
+        str: A formatted string of tool calls, or &quot;No tool calls&quot; if the list is empty.
+
+    &quot;&quot;&quot;
+
+    if tool_calls:
+        formatted_calls = []
+        for call in tool_calls:
+            formatted_calls.append(
+                f&quot;Tool Call ID: {call['id']}, Function: {call['name']}, Arguments: {call['args']}&quot;
+            )
+        return &quot;\n&quot;.join(formatted_calls)
+    return &quot;No tool calls&quot;
+
+async for event in client.runs.stream(
+    thread[&quot;thread_id&quot;],
+    assistant_id=&quot;agent&quot;,
+    input={&quot;messages&quot;: [input_message]},
+    stream_mode=&quot;messages&quot;,):
+    
+    # Handle metadata events
+    if event.event == &quot;metadata&quot;:
+        print(f&quot;Metadata: Run ID - {event.data['run_id']}&quot;)
+        print(&quot;-&quot; * 50)
+    
+    # Handle partial message events
+    elif event.event == &quot;messages/partial&quot;:
+        for data_item in event.data:
+            # Process user messages
+            if &quot;role&quot; in data_item and data_item[&quot;role&quot;] == &quot;user&quot;:
+                print(f&quot;Human: {data_item['content']}&quot;)
+            else:
+                # Extract relevant data from the event
+                tool_calls = data_item.get(&quot;tool_calls&quot;, [])
+                invalid_tool_calls = data_item.get(&quot;invalid_tool_calls&quot;, [])
+                content = data_item.get(&quot;content&quot;, &quot;&quot;)
+                response_metadata = data_item.get(&quot;response_metadata&quot;, {})
+
+                if content:
+                    print(f&quot;AI: {content}&quot;)
+
+                if tool_calls:
+                    print(&quot;Tool Calls:&quot;)
+                    print(format_tool_calls(tool_calls))
+
+                if invalid_tool_calls:
+                    print(&quot;Invalid Tool Calls:&quot;)
+                    print(format_tool_calls(invalid_tool_calls))
+
+                if response_metadata and response_metadata.get(&quot;finish_reason&quot;):
+                    print(f&quot;Response Metadata: Finish Reason - {response_metadata['finish_reason']}&quot;)                    
+        print(&quot;-&quot; * 50)</code></pre></div>
+      <div class="out out-stream"><pre>Metadata: Run ID - 019a0358-57dc-76f9-bc63-633eee467a86
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2, 'b': 3}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2, 'b': 3}
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2, 'b': 3}
+Response Metadata: Finish Reason - tool_calls
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2, 'b': 3}
+Response Metadata: Finish Reason - tool_calls
+--------------------------------------------------
+Tool Calls:
+Tool Call ID: call_mDtKBiuzkpN5ITWykhEFN0XU, Function: multiply, Arguments: {'a': 2, 'b': 3}
+Response Metadata: Finish Reason - tool_calls
+--------------------------------------------------
+--------------------------------------------------
+AI: The
+--------------------------------------------------
+AI: The result
+--------------------------------------------------
+AI: The result of
+--------------------------------------------------
+AI: The result of multiplying
+--------------------------------------------------
+AI: The result of multiplying 
+--------------------------------------------------
+AI: The result of multiplying 2
+--------------------------------------------------
+AI: The result of multiplying 2 and
+--------------------------------------------------
+AI: The result of multiplying 2 and 
+--------------------------------------------------
+AI: The result of multiplying 2 and 3
+--------------------------------------------------
+AI: The result of multiplying 2 and 3 is
+--------------------------------------------------
+AI: The result of multiplying 2 and 3 is 
+--------------------------------------------------
+AI: The result of multiplying 2 and 3 is 6
+--------------------------------------------------
+AI: The result of multiplying 2 and 3 is 6.
+--------------------------------------------------
+AI: The result of multiplying 2 and 3 is 6.
+Response Metadata: Finish Reason - stop
+--------------------------------------------------
+AI: The result of multiplying 2 and 3 is 6.
+Response Metadata: Finish Reason - stop
+--------------------------------------------------
+AI: The result of multiplying 2 and 3 is 6.
+Response Metadata: Finish Reason - stop
+--------------------------------------------------
+</pre></div>
+    </div>
+
+</div>
+</body>
+</html>

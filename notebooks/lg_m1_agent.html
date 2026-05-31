@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Agent</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><p><a href="https://colab.research.google.com/github/langchain-ai/langchain-academy/blob/main/module-1/agent.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></a> <a href="https://academy.langchain.com/courses/take/intro-to-langgraph/lessons/58239232-lesson-6-agent" target="_blank"><img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66e9eba12c7b7688aa3dbb5e_LCA-badge-green.svg" alt="Open in LangChain Academy"></a></p></div>
+<div class="md-cell"><h1>Agent</h1>
+<h2>Review</h2>
+<p>We built a router.</p>
+<ul><li>Our chat model will decide to make a tool call or not based upon the user input</li>
+<li>We use a conditional edge to route to a node that will call our tool or simply end</li>
+</ul>
+<img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dbac0ba0bd34b541c448cc_agent1.png" alt="Screenshot 2024-08-21 at 12.44.33 PM.png">
+<h2>Goals</h2>
+<p>Now, we can extend this into a generic agent architecture.</p>
+<p>In the above router, we invoked the model and, if it chose to call a tool, we returned a <code class="ic">ToolMessage</code> to the user.<br> <br>But, what if we simply pass that <code class="ic">ToolMessage</code> <em>back to the model</em>?</p>
+<p>We can let it either (1) call another tool or (2) respond directly.</p>
+<p>This is the intuition behind <a href="https://react-lm.github.io/" target="_blank">ReAct</a>, a general agent architecture.<br>  <br><ul><li><code class="ic">act</code> - let the model call specific tools </li><br><li><code class="ic">observe</code> - pass the tool output back to the model </li><br><li><code class="ic">reason</code> - let the model reason about the tool output to decide what to do next (e.g., call another tool or just respond directly)</li><br></ul><br>This <a href="https://blog.langchain.com/planning-for-agents/" target="_blank">general purpose architecture</a> can be applied to many types of tools.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install --quiet -U langchain_openai langchain_core langgraph langgraph-prebuilt</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>import os, getpass
+
+def _set_env(var: str):
+    if not os.environ.get(var):
+        os.environ[var] = getpass.getpass(f&quot;{var}: &quot;)
+
+_set_env(&quot;OPENAI_API_KEY&quot;)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>Here, we'll use <a href="https://docs.langchain.com/langsmith/home" target="_blank">LangSmith</a> for <a href="https://docs.langchain.com/langsmith/observability-concepts" target="_blank">tracing</a>.</p>
+<p>We'll log to a project, <code class="ic">langchain-academy</code>.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>_set_env(&quot;LANGSMITH_API_KEY&quot;)
+os.environ[&quot;LANGSMITH_TRACING&quot;] = &quot;true&quot;
+os.environ[&quot;LANGSMITH_PROJECT&quot;] = &quot;langchain-academy&quot;</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langchain_openai import ChatOpenAI
+
+def multiply(a: int, b: int) -&gt; int:
+    &quot;&quot;&quot;Multiply a and b.
+
+    Args:
+        a: first int
+        b: second int
+    &quot;&quot;&quot;
+    return a * b
+
+# This will be a tool
+def add(a: int, b: int) -&gt; int:
+    &quot;&quot;&quot;Adds a and b.
+
+    Args:
+        a: first int
+        b: second int
+    &quot;&quot;&quot;
+    return a + b
+
+def divide(a: int, b: int) -&gt; float:
+    &quot;&quot;&quot;Divide a and b.
+
+    Args:
+        a: first int
+        b: second int
+    &quot;&quot;&quot;
+    return a / b
+
+tools = [add, multiply, divide]
+llm = ChatOpenAI(model=&quot;gpt-4o&quot;)
+
+# For this ipynb we set parallel tool calling to false as math generally is done sequentially, and this time we have 3 tools that can do math
+# the OpenAI model specifically defaults to parallel tool calling for efficiency, see https://python.langchain.com/docs/how_to/tool_calling_parallel/
+# play around with it and see how the model behaves with math equations!
+llm_with_tools = llm.bind_tools(tools, parallel_tool_calls=False)</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>Let's create our LLM and prompt it with the overall desired agent behavior.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph.graph import MessagesState
+from langchain_core.messages import HumanMessage, SystemMessage
+
+# System message
+sys_msg = SystemMessage(content=&quot;You are a helpful assistant tasked with performing arithmetic on a set of inputs.&quot;)
+
+# Node
+def assistant(state: MessagesState):
+   return {&quot;messages&quot;: [llm_with_tools.invoke([sys_msg] + state[&quot;messages&quot;])]}</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>As before, we use <code class="ic">MessagesState</code> and define a <code class="ic">Tools</code> node with our list of tools.</p>
+<p>The <code class="ic">Assistant</code> node is just our model with bound tools.</p>
+<p>We create a graph with <code class="ic">Assistant</code> and <code class="ic">Tools</code> nodes.</p>
+<p>We add <code class="ic">tools_condition</code> edge, which routes to <code class="ic">End</code> or to <code class="ic">Tools</code> based on  whether the <code class="ic">Assistant</code> calls a tool.</p>
+<p>Now, we add one new step:</p>
+<p>We connect the <code class="ic">Tools</code> node <em>back</em> to the <code class="ic">Assistant</code>, forming a loop.</p>
+<ul><li>After the <code class="ic">assistant</code> node executes, <code class="ic">tools_condition</code> checks if the model's output is a tool call.</li>
+<li>If it is a tool call, the flow is directed to the <code class="ic">tools</code> node.</li>
+<li>The <code class="ic">tools</code> node connects back to <code class="ic">assistant</code>.</li>
+<li>This loop continues as long as the model decides to call tools.</li>
+<li>If the model response is not a tool call, the flow is directed to END, terminating the process.</li></ul></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>from langgraph.graph import START, StateGraph
+from langgraph.prebuilt import tools_condition
+from langgraph.prebuilt import ToolNode
+from IPython.display import Image, display
+
+# Graph
+builder = StateGraph(MessagesState)
+
+# Define nodes: these do the work
+builder.add_node(&quot;assistant&quot;, assistant)
+builder.add_node(&quot;tools&quot;, ToolNode(tools))
+
+# Define edges: these determine how the control flow moves
+builder.add_edge(START, &quot;assistant&quot;)
+builder.add_conditional_edges(
+    &quot;assistant&quot;,
+    # If the latest message (result) from assistant is a tool call -&gt; tools_condition routes to tools
+    # If the latest message (result) from assistant is a not a tool call -&gt; tools_condition routes to END
+    tools_condition,
+)
+builder.add_edge(&quot;tools&quot;, &quot;assistant&quot;)
+react_graph = builder.compile()
+
+# Show
+display(Image(react_graph.get_graph(xray=True).draw_mermaid_png()))</code></pre></div>
+      <div class="out"><pre>&lt;IPython.core.display.Image object&gt;</pre></div>
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>messages = [HumanMessage(content=&quot;Add 3 and 4. Multiply the output by 2. Divide the output by 5&quot;)]
+messages = react_graph.invoke({&quot;messages&quot;: messages})</code></pre></div>
+      
+    </div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>for m in messages['messages']:
+    m.pretty_print()</code></pre></div>
+      <div class="out out-stream"><pre>================================ Human Message =================================
+
+Add 3 and 4. Multiply the output by 2. Divide the output by 5
+================================== Ai Message ==================================
+Tool Calls:
+  add (call_i8zDfMTdvmIG34w4VBA3m93Z)
+ Call ID: call_i8zDfMTdvmIG34w4VBA3m93Z
+  Args:
+    a: 3
+    b: 4
+================================= Tool Message =================================
+Name: add
+
+7
+================================== Ai Message ==================================
+Tool Calls:
+  multiply (call_nE62D40lrGQC7b67nVOzqGYY)
+ Call ID: call_nE62D40lrGQC7b67nVOzqGYY
+  Args:
+    a: 7
+    b: 2
+================================= Tool Message =================================
+Name: multiply
+
+14
+================================== Ai Message ==================================
+Tool Calls:
+  divide (call_6Q9SjxD2VnYJqEBXFt7O1moe)
+ Call ID: call_6Q9SjxD2VnYJqEBXFt7O1moe
+  Args:
+    a: 14
+    b: 5
+================================= Tool Message =================================
+Name: divide
+
+2.8
+================================== Ai Message ==================================
+
+The final result after performing the operations \( (3 + 4) \times 2 \div 5 \) is 2.8.
+</pre></div>
+    </div>
+<div class="md-cell"><h2>LangSmith</h2>
+<p>We can look at traces in LangSmith.</p></div>
+</div>
+</body>
+</html>

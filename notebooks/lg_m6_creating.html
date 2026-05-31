@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creating</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
+  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
+  --border:#EAD9F5;--radius:10px;
+}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+a{color:var(--accent)}
+
+/* top bar */
+.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* notebook body */
+.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+
+/* markdown */
+.md-cell{margin:8px 0 16px}
+.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
+.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
+.md-cell h3{font-size:1.08em;margin:16px 0 6px}
+.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
+.md-cell p{margin:6px 0}
+.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
+.md-cell li{margin:3px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
+.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+
+/* code cells */
+.code-cell{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.code-in{background:var(--code-bg);padding:16px;overflow-x:auto}
+.code-in pre{margin:0}
+.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.5;white-space:pre}
+.out{background:#fff;padding:12px 16px;border-top:1px solid var(--border);overflow-x:auto}
+.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.out img{max-width:100%;border-radius:6px}
+.out-stream{background:#fafafa}
+.out-error{background:#fff5f5}
+.out-error pre{color:#b00020}
+.out-html{overflow-x:auto}
+.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600}
+.out-html td{padding:5px 10px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#f9f5ff}
+
+.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
+.raw-cell pre{font-size:.84em;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../langgraph.html">← LangGraph Course</a>
+  <h1>Creating</h1>
+</div>
+<div class="nb">
+<div class="md-cell"><h1>Creating a deployment</h1>
+<p>Let's create a deployment of the <code class="ic">task_maistro</code> app that we created in module 5.</p>
+<h2>Code structure</h2>
+<p><a href="https://docs.langchain.com/langsmith/application-structure" target="_blank">The following information should be provided</a> to create a LangGraph Platform deployment:</p>
+<ul><li>A <a href="https://docs.langchain.com/langsmith/application-structure#configuration-file" target="_blank">LangGraph API Configuration file</a> - <code class="ic">langgraph.json</code></li>
+<li>The graphs that implement the logic of the application - e.g., <code class="ic">task_maistro.py</code></li>
+<li>A file that specifies dependencies required to run the application - <code class="ic">requirements.txt</code></li>
+<li>Supply environment variables needed for the application to run - <code class="ic">.env</code> or <code class="ic">docker-compose.yml</code></li>
+</ul>
+We have this already in the <code class="ic">module-6/deployment</code> directory!
+<h2>CLI</h2>
+<p>The <a href="https://docs.langchain.com/langsmith/cli" target="_blank">LangGraph CLI</a> is a command-line interface for creating a LangGraph Platform deployment.</p></div>
+<div class="code-cell">
+      <div class="code-in"><pre><code>%%capture --no-stderr
+%pip install -U langgraph-cli</code></pre></div>
+      
+    </div>
+<div class="md-cell"><p>To create a <!-- <a href="https://langchain-ai.github.io/langgraph/how-tos/deploy-self-hosted/#how-to-do-a-self-hosted-deployment-of-langgraph" target="_blank">~self-hosted deployment~</a> --> <a href="https://docs.langchain.com/langsmith/self_hosted_data_plane" target="_blank">self-hosted deployment</a>, we'll follow a few steps.</p>
+<h3>Build Docker Image for LangGraph Server</h3>
+<p>We first use the langgraph CLI to create a Docker image for the <a href="https://docs.google.com/presentation/d/18MwIaNR2m4Oba6roK_2VQcBE_8Jq_SI7VHTXJdl7raU/edit#slide=id.g313fb160676_0_32" target="_blank">LangGraph Server</a>.</p>
+<p>This will package our graph and dependencies into a Docker image.</p>
+<p>A Docker image is a template for a Docker container that contains the code and dependencies required to run the application.</p>
+<p>Ensure that <a href="https://docs.docker.com/engine/install/" target="_blank">Docker</a> is installed and then run the following command to create the Docker image, <code class="ic">my-image</code>:</p>
+<pre class="md-code"><code>$ cd module-6/deployment
+$ langgraph build -t my-image</code></pre>
+<h3>Set Up Redis and PostgreSQL</h3>
+<p>If you already have Redis and PostgreSQL running (e.g., locally or on other servers), then create and run the LangGraph Server container  <a href="https://docs.langchain.com/langsmith/deploy-hybrid#running-the-application-locally" target="_blank">by itself</a> with the URIs for Redis and PostgreSQL:</p>
+<pre class="md-code"><code>docker run \
+    --env-file .env \
+    -p 8123:8000 \
+    -e REDIS_URI=&quot;foo&quot; \
+    -e DATABASE_URI=&quot;bar&quot; \
+    -e LANGSMITH_API_KEY=&quot;baz&quot; \
+    my-image</code></pre>
+<p>Alternatively, you can use the provided <code class="ic">docker-compose.yml</code> file to create three separate containers based on the services defined:</p>
+<ul><li><code class="ic">langgraph-redis</code>: Creates a new container using the official Redis image.</li>
+<li><code class="ic">langgraph-postgres</code>: Creates a new container using the official Postgres image.</li>
+<li><code class="ic">langgraph-api</code>: Creates a new container using your pre-built image.</li>
+</ul>
+Simply copy the <code class="ic">docker-compose-example.yml</code> and add the following environment variables to run the deployed <code class="ic">task_maistro</code> app:
+<ul><li><code class="ic">IMAGE_NAME</code> (e.g., <code class="ic">my-image</code>) </li>
+<li><code class="ic">LANGSMITH_API_KEY</code></li>
+<li><code class="ic">OPENAI_API_KEY</code></li>
+</ul>
+Then, <!-- <a href="https://langchain-ai.github.io/langgraph/how-tos/deploy-self-hosted/#using-docker-compose" target="_blank">~launch the deployment~</a> <a href="https://docs.langchain.com/langsmith/self_hosted_data_plane" target="_blank">launch the deployment</a>: --> launch the deployment!
+<pre class="md-code"><code>$ cd module-6/deployment
+$ docker compose up</code></pre></div>
+<div class="md-cell"></div>
+</div>
+</body>
+</html>
