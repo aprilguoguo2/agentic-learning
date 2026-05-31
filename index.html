@@ -4,173 +4,265 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>April's Agentic Learning</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#F5F0FF;
-  --card:#FDF5FF;
-  --accent:#C084A8;
-  --accent2:#9B6FA8;
-  --accent-light:#F0E6F6;
-  --text:#2D1B3D;
-  --muted:#8B7A9A;
-  --border:#E8D5F0;
-  --radius:18px;
-  --shadow:0 4px 24px rgba(160,100,180,.13);
-}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-}
-
-/* ── header ── */
-header{
-  background:linear-gradient(135deg,#C084A8 0%,#9B6FA8 100%);
-  padding:48px 24px 40px;
-  text-align:center;
-}
-.header-icon{font-size:48px;margin-bottom:12px;display:block}
-header h1{
-  font-size:clamp(24px,6vw,36px);
-  font-weight:700;
-  color:#fff;
-  letter-spacing:-.5px;
-  margin-bottom:10px;
-}
-header p{
-  color:rgba(255,255,255,.82);
-  font-size:15px;
-  max-width:360px;
-  margin:0 auto;
-  line-height:1.6;
-}
-
-/* ── wave divider ── */
-.wave{display:block;width:100%;margin-bottom:-2px}
-
-/* ── grid ── */
-.grid{
-  max-width:680px;
-  margin:0 auto;
-  padding:32px 20px 60px;
-  display:grid;
-  gap:20px;
-}
-
-/* ── course card ── */
-.card{
-  background:var(--card);
-  border-radius:var(--radius);
-  border:1px solid var(--border);
-  box-shadow:var(--shadow);
-  text-decoration:none;
-  color:inherit;
-  display:flex;
-  align-items:center;
-  gap:18px;
-  padding:22px 24px;
-  transition:transform .18s ease,box-shadow .18s ease;
-  -webkit-tap-highlight-color:transparent;
-}
-.card:hover,.card:focus{
-  transform:translateY(-3px);
-  box-shadow:0 8px 32px rgba(160,100,180,.22);
-  outline:none;
-}
-.card:active{transform:translateY(0)}
-
-.card-icon{
-  width:56px;height:56px;border-radius:14px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:26px;flex-shrink:0;
-}
-.c1 .card-icon{background:#F3E8FF}
-.c2 .card-icon{background:#FDE8F5}
-.c3 .card-icon{background:#E8F0FF}
-.c4 .card-icon{background:#FFF0E8}
-
-.card-body{flex:1;min-width:0}
-.card-title{
-  font-size:17px;font-weight:700;
-  color:var(--text);
-  margin-bottom:4px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.card-meta{font-size:13px;color:var(--muted);line-height:1.5}
-.card-arrow{
-  font-size:20px;color:var(--accent);flex-shrink:0;
-  margin-left:4px;opacity:.7;
-}
-
-/* ── footer ── */
-footer{
-  text-align:center;
-  padding:20px;
-  font-size:12px;
-  color:var(--muted);
-}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/agentic-learning/sw.js'));
 }
 </script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8F4;
+  --card:#FFFFFF;
+  --text:#1C1917;
+  --muted:#78716C;
+  --accent:#B8621A;
+  --accent-light:#FDF0E4;
+  --border:#E7E0D6;
+  --shadow:0 2px 16px rgba(28,25,23,.07);
+  --shadow-hover:0 8px 32px rgba(28,25,23,.13);
+  --radius:14px;
+}
+
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  line-height:1.6;
+}
+
+/* ── hero ── */
+.hero{
+  padding:72px 24px 56px;
+  text-align:center;
+  max-width:680px;
+  margin:0 auto;
+}
+.hero-label{
+  display:inline-block;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--accent);
+  border:1px solid var(--accent);
+  padding:4px 14px;
+  border-radius:20px;
+  margin-bottom:28px;
+}
+.hero h1{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:clamp(36px,8vw,58px);
+  font-weight:700;
+  line-height:1.1;
+  color:var(--text);
+  margin-bottom:6px;
+  letter-spacing:-1px;
+}
+.hero h1 em{
+  font-style:italic;
+  color:var(--accent);
+}
+.hero-rule{
+  width:48px;height:2px;
+  background:var(--accent);
+  margin:20px auto;
+}
+.hero p{
+  font-size:16px;
+  color:var(--muted);
+  font-weight:400;
+  max-width:420px;
+  margin:0 auto;
+  line-height:1.7;
+}
+
+/* ── course grid ── */
+.grid{
+  max-width:720px;
+  margin:0 auto;
+  padding:8px 20px 80px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+/* ── course card ── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  text-decoration:none;
+  color:inherit;
+  display:flex;
+  align-items:stretch;
+  overflow:hidden;
+  transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease;
+  position:relative;
+}
+.card:hover{
+  box-shadow:var(--shadow-hover);
+  transform:translateY(-2px);
+  border-color:var(--accent);
+}
+.card:active{transform:translateY(0)}
+
+/* left accent strip */
+.card-strip{
+  width:4px;
+  flex-shrink:0;
+}
+.c1 .card-strip{background:linear-gradient(180deg,#B8621A,#E8A06B)}
+.c2 .card-strip{background:linear-gradient(180deg,#2D6A4F,#74C69D)}
+.c3 .card-strip{background:linear-gradient(180deg,#1D3557,#457B9D)}
+.c4 .card-strip{background:linear-gradient(180deg,#6B2D8B,#C77DFF)}
+
+.card-body{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  padding:22px 24px;
+  flex:1;
+  min-width:0;
+}
+
+/* large course number */
+.card-num{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:40px;
+  font-weight:700;
+  color:var(--border);
+  line-height:1;
+  flex-shrink:0;
+  width:48px;
+  text-align:center;
+  transition:color .2s;
+}
+.card:hover .card-num{color:var(--accent)}
+
+.card-info{flex:1;min-width:0}
+.card-title{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:18px;
+  font-weight:600;
+  color:var(--text);
+  margin-bottom:4px;
+  line-height:1.3;
+}
+.card-meta{
+  font-size:13px;
+  color:var(--muted);
+  font-weight:400;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.card-arrow{
+  font-size:20px;
+  color:var(--border);
+  flex-shrink:0;
+  transition:color .2s,transform .2s;
+}
+.card:hover .card-arrow{
+  color:var(--accent);
+  transform:translateX(3px);
+}
+
+/* ── scroll fade-in ── */
+.fade-up{
+  opacity:0;
+  transform:translateY(18px);
+  transition:opacity .5s ease,transform .5s ease;
+}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+
+/* ── footer ── */
+footer{
+  text-align:center;
+  padding:24px;
+  font-size:12px;
+  color:var(--border);
+  letter-spacing:.5px;
+}
+</style>
 </head>
 <body>
 
-<header>
-  <span class="header-icon">🌸</span>
-  <h1>April's Agentic Learning</h1>
-  <p>Your personal portal for AI agent courses — videos, notebooks, all in one place.</p>
-</header>
-
-<svg class="wave" viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-  <path d="M0,32 C360,0 1080,64 1440,32 L1440,40 L0,40 Z" fill="#F5F0FF"/>
-</svg>
+<div class="hero fade-up">
+  <div class="hero-label">Learning Portal</div>
+  <h1>April's<br><em>Agentic</em> Learning</h1>
+  <div class="hero-rule"></div>
+  <p>A personal archive of AI agent courses — lessons, notebooks, and videos, all in one place.</p>
+</div>
 
 <div class="grid">
 
-  <a class="card c1" href="langchain.html">
-    <div class="card-icon">🔗</div>
+  <a class="card c1 fade-up" href="langchain.html">
+    <div class="card-strip"></div>
     <div class="card-body">
-      <div class="card-title">LangChain Course</div>
-      <div class="card-meta">3 modules · Foundational models, tools, memory &amp; production agents</div>
+      <div class="card-num">01</div>
+      <div class="card-info">
+        <div class="card-title">LangChain Course</div>
+        <div class="card-meta">3 modules · Foundational models, tools, memory &amp; production agents</div>
+      </div>
+      <div class="card-arrow">→</div>
     </div>
-    <div class="card-arrow">›</div>
   </a>
 
-  <a class="card c2" href="langgraph.html">
-    <div class="card-icon">🕸️</div>
+  <a class="card c2 fade-up" href="langgraph.html">
+    <div class="card-strip"></div>
     <div class="card-body">
-      <div class="card-title">LangGraph Course</div>
-      <div class="card-meta">6 modules · Graphs, state, memory, HITL &amp; deployment</div>
+      <div class="card-num">02</div>
+      <div class="card-info">
+        <div class="card-title">LangGraph Course</div>
+        <div class="card-meta">7 modules · Graphs, state, memory, human-in-the-loop &amp; deployment</div>
+      </div>
+      <div class="card-arrow">→</div>
     </div>
-    <div class="card-arrow">›</div>
   </a>
 
-  <a class="card c3" href="deep-agent.html">
-    <div class="card-icon">🤖</div>
+  <a class="card c3 fade-up" href="deep-agent.html">
+    <div class="card-strip"></div>
     <div class="card-body">
-      <div class="card-title">Project — Deep Agent</div>
-      <div class="card-meta">7 modules · Build a full AI agent from scratch</div>
+      <div class="card-num">03</div>
+      <div class="card-info">
+        <div class="card-title">Project — Deep Agent</div>
+        <div class="card-meta">7 modules · Build a full AI agent from scratch</div>
+      </div>
+      <div class="card-arrow">→</div>
     </div>
-    <div class="card-arrow">›</div>
   </a>
 
-  <a class="card c4" href="deep-agent-research.html">
-    <div class="card-icon">🔬</div>
+  <a class="card c4 fade-up" href="deep-agent-research.html">
+    <div class="card-strip"></div>
     <div class="card-body">
-      <div class="card-title">Project — Deep Agent with Research</div>
-      <div class="card-meta">6 modules · Multi-agent research systems &amp; MCP</div>
+      <div class="card-num">04</div>
+      <div class="card-info">
+        <div class="card-title">Project — Deep Agent with Research</div>
+        <div class="card-meta">6 modules · Multi-agent research systems &amp; MCP</div>
+      </div>
+      <div class="card-arrow">→</div>
     </div>
-    <div class="card-arrow">›</div>
   </a>
 
 </div>
 
-<footer>April's Agentic Learning &nbsp;·&nbsp; tap a course to begin</footer>
+<footer>April's Agentic Learning</footer>
 
+<script>
+const obs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+</script>
 </body>
 </html>

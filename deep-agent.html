@@ -5,112 +5,166 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Project — Deep Agent — April's Agentic Learning</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F5F0FF;--card:#FDF5FF;--accent:#C084A8;--accent2:#9B6FA8;
-  --accent-light:#F0E6F6;--text:#2D1B3D;--muted:#8B7A9A;
-  --border:#E8D5F0;--radius:16px;--shadow:0 2px 16px rgba(160,100,180,.11);
+  --bg:#FAF8F4;--card:#FFFFFF;--text:#1C1917;--muted:#78716C;
+  --accent:#B8621A;--accent-light:#FDF0E4;--accent-dark:#7A4B1F;
+  --border:#E7E0D6;--radius:12px;
+  --shadow:0 1px 8px rgba(28,25,23,.06),0 2px 20px rgba(28,25,23,.04);
+  --shadow-hover:0 4px 24px rgba(28,25,23,.12);
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px;line-height:1.6}
 
-/* top bar */
-.topbar{background:linear-gradient(135deg,#C084A8,#9B6FA8);padding:16px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(120,60,140,.2)}
-.back{color:#fff;text-decoration:none;font-size:13px;background:rgba(255,255,255,.22);padding:7px 16px;border-radius:20px;white-space:nowrap;flex-shrink:0;font-weight:600;letter-spacing:.2px}
-.topbar h1{color:#fff;font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ── top bar ── */
+.topbar{
+  background:var(--text);
+  padding:14px 20px;display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:20;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.back{
+  color:rgba(255,255,255,.7);text-decoration:none;font-size:12px;
+  font-weight:500;letter-spacing:.3px;white-space:nowrap;flex-shrink:0;
+  display:flex;align-items:center;gap:6px;transition:color .15s;
+}
+.back:hover{color:#fff}
+.topbar-title{
+  font-family:'Playfair Display',Georgia,serif;
+  color:#fff;font-size:16px;font-weight:600;font-style:italic;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;
+}
+.topbar-course{
+  font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-light);
+  padding:3px 10px;border-radius:20px;flex-shrink:0;
+}
 
-/* page subtitle */
-.page-sub{max-width:720px;margin:28px auto 8px;padding:0 20px;font-size:13px;color:var(--muted);font-weight:500;letter-spacing:.4px;text-transform:uppercase}
+/* ── page header ── */
+.page-head{max-width:720px;margin:0 auto;padding:36px 24px 20px}
+.page-head h2{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:28px;font-weight:700;color:var(--text);
+  margin-bottom:6px;
+}
+.page-head p{font-size:13px;color:var(--muted)}
+.page-rule{width:36px;height:2px;background:var(--accent);margin:14px 0}
 
-/* modules */
-.modules{max-width:720px;margin:0 auto;padding:0 16px}
-.module{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+/* ── modules ── */
+.modules{max-width:720px;margin:0 auto;padding:0 20px}
+.module{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  margin-bottom:14px;overflow:hidden;
+}
 
-/* module header / accordion */
+/* ── module accordion header ── */
 .mod-hdr{
   width:100%;background:none;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:18px 20px;text-align:left;gap:12px;
+  display:flex;align-items:center;gap:16px;
+  padding:18px 20px;text-align:left;
   -webkit-tap-highlight-color:transparent;
+  transition:background .15s;
 }
-.mod-hdr:hover{background:var(--accent-light)}
-.mod-hdr-left{display:flex;align-items:center;gap:12px}
+.mod-hdr:hover{background:#FAFAF8}
 .mod-num{
-  width:32px;height:32px;border-radius:50%;
-  background:var(--accent-light);color:var(--accent2);
-  font-size:13px;font-weight:700;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:22px;font-weight:700;color:var(--border);
+  flex-shrink:0;width:32px;text-align:center;
+  transition:color .2s;line-height:1;
 }
-.mod-title{font-size:15px;font-weight:700;color:var(--text)}
-.mod-count{font-size:12px;color:var(--muted);margin-top:2px}
-.chevron{font-size:18px;color:var(--accent);transition:transform .25s ease;flex-shrink:0}
-.chevron.open{transform:rotate(180deg)}
+.mod-hdr:hover .mod-num,.mod-hdr.active .mod-num{color:var(--accent)}
+.mod-info{flex:1;min-width:0}
+.mod-title{font-size:14px;font-weight:600;color:var(--text);line-height:1.3}
+.mod-count{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.2px}
+.chevron{
+  font-size:12px;color:var(--muted);
+  transition:transform .25s ease;flex-shrink:0;
+  font-weight:600;
+}
+.chevron.open{transform:rotate(180deg);color:var(--accent)}
 
-/* module body */
-.mod-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+/* ── module body ── */
+.mod-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}
 .mod-body.open{max-height:9999px}
-.mod-inner{padding:0 16px 16px}
+.mod-inner{padding:4px 16px 16px}
 
-/* lesson */
+/* ── lesson card ── */
 .lesson{
-  border:1px solid var(--border);border-radius:12px;
-  margin-bottom:14px;overflow:hidden;background:#fff;
+  border:1px solid var(--border);border-radius:10px;
+  margin-bottom:12px;overflow:hidden;background:#fff;
+  transition:box-shadow .2s;
 }
+.lesson:hover{box-shadow:var(--shadow-hover)}
+
 .lesson-title{
-  font-size:14px;font-weight:700;color:var(--text);
-  padding:14px 16px 10px;
-  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;color:var(--text);
+  padding:13px 16px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid transparent;
 }
-.lesson-title::before{content:'▶';font-size:10px;color:var(--accent);flex-shrink:0}
-
-/* video */
-.video-wrap{background:#000;border-top:1px solid var(--border)}
-.video-wrap video{width:100%;display:block;aspect-ratio:16/9;max-height:420px}
-.video-placeholder{
-  background:linear-gradient(135deg,#f3e8ff,#fde8f5);
-  padding:28px 20px;text-align:center;
-  font-size:13px;color:var(--muted);
-  border-top:1px solid var(--border);
+.lesson-title::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--accent);flex-shrink:0;opacity:.7;
 }
-.video-placeholder span{font-size:22px;display:block;margin-bottom:6px}
-.video-placeholder p{margin-top:4px;font-size:12px}
 
-/* notebooks */
-.nb-links{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--border);background:var(--accent-light)}
+/* ── video player ── */
+.video-wrap{background:#0a0a0a}
+.video-wrap video{
+  width:100%;display:block;
+  aspect-ratio:16/9;max-height:400px;
+}
+
+/* ── notebook links ── */
+.nb-links{
+  padding:10px 14px;display:flex;flex-wrap:wrap;gap:7px;
+  background:#FAFAF8;border-top:1px solid var(--border);
+}
 .nb-link{
-  display:inline-flex;align-items:center;gap:6px;
-  background:#fff;color:var(--accent2);
-  border:1px solid var(--border);border-radius:20px;
-  padding:6px 14px;font-size:13px;font-weight:600;
-  text-decoration:none;transition:background .15s,transform .15s;
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--card);color:var(--accent-dark);
+  border:1px solid var(--border);border-radius:6px;
+  padding:5px 12px;font-size:12px;font-weight:500;
+  text-decoration:none;
+  transition:background .15s,border-color .15s,transform .15s;
   -webkit-tap-highlight-color:transparent;
 }
-.nb-link:hover,.nb-link:focus{background:var(--accent-light);transform:translateY(-1px);outline:none}
-.nb-link::before{content:'📓';font-size:14px}
+.nb-link:hover{
+  background:var(--accent-light);
+  border-color:var(--accent);
+  transform:translateY(-1px);
+}
+.nb-link-icon{font-size:12px;opacity:.8}
 
-/* notebook-only row (no video) */
-.nb-only{padding:14px 16px;border-top:1px solid var(--border)}
+/* ── fade-up animation ── */
+.fade-up{opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .45s ease}
+.fade-up.visible{opacity:1;transform:none}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <a class="back" href="index.html">← Home</a>
-  <h1>🤖 Project — Deep Agent</h1>
+  <a class="back" href="index.html">&#8592; Home</a>
+  <span class="topbar-title">Project — Deep Agent</span>
+  <span class="topbar-course">Course</span>
 </div>
 
-<div class="page-sub">Modules</div>
+<div class="page-head">
+  <h2>Project — Deep Agent</h2>
+  <div class="page-rule"></div>
+  <p>7 modules &middot; tap any module to expand</p>
+</div>
+
 <div class="modules">
 
-    <div class="module">
+    <div class="module fade-up">
       <button class="mod-hdr">
-        <div class="mod-hdr-left">
-          <div class="mod-num">1</div>
-          <div>
-            <div class="mod-title">Module 1 — Course Overview</div>
-            <div class="mod-count">1 lesson</div>
-          </div>
+        <div class="mod-num">01</div>
+        <div class="mod-info">
+          <div class="mod-title">Module 1 — Course Overview</div>
+          <div class="mod-count">1 lesson</div>
         </div>
-        <div class="chevron">⌄</div>
+        <div class="chevron">&#8964;</div>
       </button>
       <div class="mod-body">
         <div class="mod-inner">
@@ -121,16 +175,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
-    <div class="module">
+    <div class="module fade-up">
       <button class="mod-hdr">
-        <div class="mod-hdr-left">
-          <div class="mod-num">2</div>
-          <div>
-            <div class="mod-title">Module 2 — Create Agent</div>
-            <div class="mod-count">1 lesson</div>
-          </div>
+        <div class="mod-num">02</div>
+        <div class="mod-info">
+          <div class="mod-title">Module 2 — Create Agent</div>
+          <div class="mod-count">1 lesson</div>
         </div>
-        <div class="chevron">⌄</div>
+        <div class="chevron">&#8964;</div>
       </button>
       <div class="mod-body">
         <div class="mod-inner">
@@ -142,16 +194,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
-    <div class="module">
+    <div class="module fade-up">
       <button class="mod-hdr">
-        <div class="mod-hdr-left">
-          <div class="mod-num">3</div>
-          <div>
-            <div class="mod-title">Module 3 — Todo Lists</div>
-            <div class="mod-count">1 lesson</div>
-          </div>
+        <div class="mod-num">03</div>
+        <div class="mod-info">
+          <div class="mod-title">Module 3 — Todo Lists</div>
+          <div class="mod-count">1 lesson</div>
         </div>
-        <div class="chevron">⌄</div>
+        <div class="chevron">&#8964;</div>
       </button>
       <div class="mod-body">
         <div class="mod-inner">
@@ -163,16 +213,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
-    <div class="module">
+    <div class="module fade-up">
       <button class="mod-hdr">
-        <div class="mod-hdr-left">
-          <div class="mod-num">4</div>
-          <div>
-            <div class="mod-title">Module 4 — Files</div>
-            <div class="mod-count">1 lesson</div>
-          </div>
+        <div class="mod-num">04</div>
+        <div class="mod-info">
+          <div class="mod-title">Module 4 — Files</div>
+          <div class="mod-count">1 lesson</div>
         </div>
-        <div class="chevron">⌄</div>
+        <div class="chevron">&#8964;</div>
       </button>
       <div class="mod-body">
         <div class="mod-inner">
@@ -184,16 +232,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
-    <div class="module">
+    <div class="module fade-up">
       <button class="mod-hdr">
-        <div class="mod-hdr-left">
-          <div class="mod-num">5</div>
-          <div>
-            <div class="mod-title">Module 5 — Subagents</div>
-            <div class="mod-count">1 lesson</div>
-          </div>
+        <div class="mod-num">05</div>
+        <div class="mod-info">
+          <div class="mod-title">Module 5 — Subagents</div>
+          <div class="mod-count">1 lesson</div>
         </div>
-        <div class="chevron">⌄</div>
+        <div class="chevron">&#8964;</div>
       </button>
       <div class="mod-body">
         <div class="mod-inner">
@@ -205,16 +251,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
-    <div class="module">
+    <div class="module fade-up">
       <button class="mod-hdr">
-        <div class="mod-hdr-left">
-          <div class="mod-num">6</div>
-          <div>
-            <div class="mod-title">Module 6 — Full Agent</div>
-            <div class="mod-count">1 lesson</div>
-          </div>
+        <div class="mod-num">06</div>
+        <div class="mod-info">
+          <div class="mod-title">Module 6 — Full Agent</div>
+          <div class="mod-count">1 lesson</div>
         </div>
-        <div class="chevron">⌄</div>
+        <div class="chevron">&#8964;</div>
       </button>
       <div class="mod-body">
         <div class="mod-inner">
@@ -226,16 +270,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
-    <div class="module">
+    <div class="module fade-up">
       <button class="mod-hdr">
-        <div class="mod-hdr-left">
-          <div class="mod-num">7</div>
-          <div>
-            <div class="mod-title">Module 7 — Conclusion</div>
-            <div class="mod-count">1 lesson</div>
-          </div>
+        <div class="mod-num">07</div>
+        <div class="mod-info">
+          <div class="mod-title">Module 7 — Conclusion</div>
+          <div class="mod-count">1 lesson</div>
         </div>
-        <div class="chevron">⌄</div>
+        <div class="chevron">&#8964;</div>
       </button>
       <div class="mod-body">
         <div class="mod-inner">
@@ -258,14 +300,26 @@ function initModules() {
   document.querySelectorAll('.mod-hdr').forEach((btn, i) => {
     const body = btn.nextElementSibling;
     const chev = btn.querySelector('.chevron');
-    if (i === 0) { body.classList.add('open'); chev.classList.add('open'); }
+    if (i === 0) { body.classList.add('open'); chev.classList.add('open'); btn.classList.add('active'); }
     btn.addEventListener('click', () => {
       const isOpen = body.classList.contains('open');
       body.classList.toggle('open', !isOpen);
       chev.classList.toggle('open', !isOpen);
+      btn.classList.toggle('active', !isOpen);
     });
   });
 }
+
+// fade-in on scroll
+const obs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 60);
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.05 });
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
 
 window.addEventListener('DOMContentLoaded', initModules);
 </script>

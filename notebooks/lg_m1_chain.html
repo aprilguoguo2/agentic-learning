@@ -5,69 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chain</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#FAF8FF;--card:#fff;--accent:#C084A8;--accent-light:#F3EAF7;
-  --text:#2D1B3D;--muted:#8B7A9A;--code-bg:#1e1e2e;--code-fg:#cdd6f4;
-  --border:#EAD9F5;--radius:10px;
+  --bg:#FAF8F4;--card:#fff;--accent:#B8621A;--accent-light:#FDF0E4;
+  --accent-dark:#7A4B1F;--text:#1C1917;--muted:#78716C;
+  --code-bg:#1a1a2a;--code-fg:#e2e8f0;
+  --border:#E7E0D6;--radius:10px;
 }
-body{font-family:Georgia,serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:60px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:16px;padding-bottom:72px}
 a{color:var(--accent)}
 
 /* top bar */
-.topbar{background:var(--accent);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.back{color:#fff;text-decoration:none;font-family:sans-serif;font-size:13px;background:rgba(255,255,255,.22);padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
-.topbar h1{color:#fff;font-size:15px;font-weight:600;font-family:sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar{background:var(--text);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.back{color:rgba(255,255,255,.7);text-decoration:none;font-size:12px;font-weight:500;letter-spacing:.3px;white-space:nowrap;flex-shrink:0;transition:color .15s}
+.back:hover{color:#fff}
+.topbar-title{font-family:'Playfair Display',Georgia,serif;color:#fff;font-size:15px;font-weight:600;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* notebook body */
-.nb{max-width:860px;margin:0 auto;padding:24px 16px}
+.nb{max-width:820px;margin:0 auto;padding:28px 18px}
 
 /* markdown */
-.md-cell{margin:8px 0 16px}
-.md-cell h1{font-size:1.55em;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:8px;margin:24px 0 12px}
-.md-cell h2{font-size:1.25em;color:var(--text);margin:20px 0 8px}
-.md-cell h3{font-size:1.08em;margin:16px 0 6px}
-.md-cell h4,.md-cell h5{font-size:1em;margin:12px 0 4px}
-.md-cell p{margin:6px 0}
-.md-cell ul,.md-cell ol{padding-left:22px;margin:6px 0}
-.md-cell li{margin:3px 0}
-.md-cell hr{border:none;border-top:1px solid var(--border);margin:18px 0}
-.md-cell blockquote{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0}
-.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0}
-.ic{background:var(--accent-light);color:var(--text);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.86em}
-.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-family:monospace;font-size:.84em;line-height:1.5}
+.md-cell{margin:6px 0 18px;font-family:'Inter',system-ui,sans-serif}
+.md-cell h1{font-family:'Playfair Display',Georgia,serif;font-size:1.7em;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:10px;margin:28px 0 14px;font-weight:700}
+.md-cell h2{font-family:'Playfair Display',Georgia,serif;font-size:1.3em;color:var(--text);margin:22px 0 8px;font-weight:600}
+.md-cell h3{font-size:1.05em;font-weight:600;margin:18px 0 6px;color:var(--text)}
+.md-cell h4,.md-cell h5{font-size:.95em;font-weight:600;margin:12px 0 4px;color:var(--muted)}
+.md-cell p{margin:7px 0;color:var(--text);line-height:1.75}
+.md-cell ul,.md-cell ol{padding-left:24px;margin:7px 0}
+.md-cell li{margin:4px 0}
+.md-cell hr{border:none;border-top:1px solid var(--border);margin:20px 0}
+.md-cell blockquote{border-left:3px solid var(--accent);padding:8px 16px;margin:12px 0;background:var(--accent-light);border-radius:0 var(--radius) var(--radius) 0;color:var(--muted)}
+.md-cell img{max-width:100%;border-radius:var(--radius);margin:8px 0;display:block}
+.md-cell a{color:var(--accent);text-underline-offset:3px}
+.ic{background:var(--accent-light);color:var(--accent-dark);padding:2px 7px;border-radius:4px;font-family:monospace;font-size:.85em;font-weight:500}
+.md-code{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:var(--radius);overflow-x:auto;margin:14px 0;font-family:monospace;font-size:.83em;line-height:1.6}
 
 /* code cells */
-.code-cell{margin:20px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(160,100,180,.08)}
+.code-cell{margin:18px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 6px rgba(28,25,23,.06)}
 .code-in{background:var(--code-bg);padding:16px;overflow-x:auto;position:relative}
-.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:sans-serif;color:#6b7280;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
+.code-in::before{content:'In';position:absolute;top:8px;right:10px;font-size:10px;font-family:monospace;color:rgba(255,255,255,.25);letter-spacing:.5px}
 .code-in pre{margin:0}
-.code-in code{color:var(--code-fg);font-family:monospace;font-size:.84em;line-height:1.6;white-space:pre}
+.code-in code{color:var(--code-fg);font-family:'SF Mono','Fira Code',monospace;font-size:.83em;line-height:1.65;white-space:pre}
 
 /* output area */
-.out-wrap{border-top:2px solid var(--accent-light)}
-.out-label{font-family:sans-serif;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-light);padding:3px 10px;letter-spacing:.6px;text-transform:uppercase}
+.out-wrap{border-top:1px solid #2a2a3a}
+.out-label{font-size:10px;font-weight:600;color:var(--accent);background:var(--accent-light);padding:3px 12px;letter-spacing:.8px;text-transform:uppercase;font-family:'Inter',sans-serif}
 .out{background:#fff;padding:14px 16px;overflow-x:auto}
-.out pre{font-family:monospace;font-size:.84em;white-space:pre-wrap;word-break:break-word;line-height:1.6;color:#1a1a2e}
-.out img{max-width:100%;border-radius:6px;margin:4px 0}
-.out-stream{background:#fefefe}
-.out-error{background:#fff5f5}
-.out-error pre{color:#b00020}
+.out pre{font-family:'SF Mono','Fira Code',monospace;font-size:.83em;white-space:pre-wrap;word-break:break-word;line-height:1.65;color:#2d2d2d}
+.out img{max-width:100%;border-radius:6px;margin:4px 0;display:block}
+.out-stream{background:#FAFAF8}
+.out-error{background:#FFF5F5}
+.out-error pre{color:#c0392b}
 .out-html{overflow-x:auto}
-.out-html table{border-collapse:collapse;font-size:.85em;font-family:sans-serif;width:100%}
-.out-html th{background:var(--accent-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--text)}
-.out-html td{padding:6px 10px;border-top:1px solid var(--border)}
-.out-html tr:hover td{background:#f9f5ff}
+.out-html table{border-collapse:collapse;font-size:.84em;font-family:'Inter',sans-serif;width:100%}
+.out-html th{background:var(--accent-light);padding:8px 12px;text-align:left;font-weight:600;color:var(--text);font-size:.8em;letter-spacing:.3px;text-transform:uppercase}
+.out-html td{padding:7px 12px;border-top:1px solid var(--border)}
+.out-html tr:hover td{background:#FAF8F4}
 
-.raw-cell{margin:12px 0;background:#f5f5f5;border-radius:var(--radius);padding:12px 16px}
-.raw-cell pre{font-size:.84em;white-space:pre-wrap}
-.no-output-note{font-family:sans-serif;font-size:12px;color:var(--muted);text-align:center;padding:12px;background:var(--accent-light);border-radius:0 0 var(--radius) var(--radius);font-style:italic}
+.raw-cell{margin:12px 0;background:#F5F4F1;border-radius:var(--radius);padding:12px 16px;border:1px solid var(--border)}
+.raw-cell pre{font-size:.83em;white-space:pre-wrap;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <a class="back" href="../langgraph.html">← LangGraph Course</a>
-  <h1>Chain</h1>
+  <a class="back" href="../langgraph.html">&#8592; LangGraph Course</a>
+  <span class="topbar-title">Chain</span>
 </div>
 <div class="nb">
 <div class="md-cell"><p><a href="https://colab.research.google.com/github/langchain-ai/langchain-academy/blob/main/module-1/chain.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></a> <a href="https://academy.langchain.com/courses/take/intro-to-langgraph/lessons/58238466-lesson-4-chain" target="_blank"><img src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66e9eba12c7b7688aa3dbb5e_LCA-badge-green.svg" alt="Open in LangChain Academy"></a></p></div>
